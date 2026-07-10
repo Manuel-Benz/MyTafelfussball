@@ -21,9 +21,10 @@
     --border: #334155;
     --input-bg: #0f172a;
   }
-  /* Hell: warmes, helles Sandweiss */
+  /* Hell: warmes, helles Sandweiss.
+     Auto (kein data-theme): folgt dem System. Manuell: data-theme="light"/"dark" gewinnt. */
   @media (prefers-color-scheme: light) {
-    :root {
+    :root:not([data-theme="dark"]) {
       --bg: #f6f1e7;
       --panel: #fdfaf3;
       --panel-2: #efe8d8;
@@ -32,6 +33,15 @@
       --border: #ded5c1;
       --input-bg: #ffffff;
     }
+  }
+  :root[data-theme="light"] {
+    --bg: #f6f1e7;
+    --panel: #fdfaf3;
+    --panel-2: #efe8d8;
+    --text: #33302a;
+    --muted: #857f6f;
+    --border: #ded5c1;
+    --input-bg: #ffffff;
   }
   * { box-sizing: border-box; }
   html, body { height: 100%; margin: 0; }
@@ -557,6 +567,12 @@ A: 56
         <button data-lang="de" class="active">DE</button>
         <button data-lang="en">EN</button>
       </div>
+      <label class="field-label" data-i18n="theme">Darstellung</label>
+      <div class="toggle-group" id="themeToggle">
+        <button data-theme-choice="auto" class="active" data-i18n="themeAuto">Auto</button>
+        <button data-theme-choice="light" data-i18n="themeLight">Hell</button>
+        <button data-theme-choice="dark" data-i18n="themeDark">Dunkel</button>
+      </div>
     </div>
 
     <div class="panel">
@@ -661,6 +677,7 @@ A: 56
       settings: 'Einstellungen',
       stations: 'Stationen pro Seite (1–6)',
       language: 'Sprache',
+      theme: 'Darstellung', themeAuto: 'Auto', themeLight: 'Hell', themeDark: 'Dunkel',
       name1: 'Name Team 1', name2: 'Name Team 2',
       addTaskTitle: 'Aufgabe hinzufügen',
       qPh: 'z. B. Was ist 7 × 8?', aPh: 'z. B. 56',
@@ -719,6 +736,7 @@ A: 56
       settings: 'Settings',
       stations: 'Stations per side (1–6)',
       language: 'Language',
+      theme: 'Appearance', themeAuto: 'Auto', themeLight: 'Light', themeDark: 'Dark',
       name1: 'Team 1 name', name2: 'Team 2 name',
       addTaskTitle: 'Add a task',
       qPh: 'e.g. What is 7 × 8?', aPh: 'e.g. 56',
@@ -762,9 +780,21 @@ A: 56
     catch { return "de"; }
   }
 
+  // ---------- Darstellung (auto/hell/dunkel) ----------
+  // "auto": kein data-theme -> CSS-Media-Query folgt dem System. Manuell gewinnt das Attribut.
+  function applyTheme(setting) {
+    if (setting === "light" || setting === "dark") document.documentElement.dataset.theme = setting;
+    else document.documentElement.removeAttribute("data-theme");
+  }
+  function storedTheme() {
+    try { const t = JSON.parse(localStorage.getItem(STORAGE_KEY))?.theme; return t === "light" || t === "dark" ? t : "auto"; }
+    catch { return "auto"; }
+  }
+
   if (view !== "beamer" && view !== "lehrer") {
     currentLang = storedLang();
     applyTranslations();
+    applyTheme(storedTheme());
 
     // Launcher: Beamer-Ansicht als eigenes Fenster öffnen (statt neuem Tab)
     const beamerCard = document.getElementById("cardBeamer");
@@ -807,6 +837,7 @@ A: 56
     revealed: false,         // Lösung für die Klasse aufgedeckt?
     order: "sequential",     // "sequential" | "random"
     lang: "de",              // UI-Sprache (de/en), synchronisiert beide Fenster
+    theme: "auto",           // Darstellung: auto (System) / light / dark
     seqPointer: -1,
     rev: 0                   // Änderungszähler zur Konfliktvermeidung
   });
@@ -827,6 +858,7 @@ A: 56
         ? [Math.max(0, s.scores[0] | 0), Math.max(0, s.scores[1] | 0)] : [0, 0];
       if (s.order !== "random") s.order = "sequential";
       s.lang = s.lang === "en" ? "en" : "de";
+      if (s.theme !== "light" && s.theme !== "dark") s.theme = "auto";
       s.revealed = s.revealed === true;
       s.finished = s.finished === true;
       if (!Array.isArray(s.history)) s.history = [];
@@ -954,8 +986,14 @@ A: 56
   let lastRenderedQ = null, lastRenderedA = null; // KaTeX nur bei Textänderung neu rendern
   let lastTaskListSig = null; // Aufgabenliste nur bei Änderung neu bauen
   let lastLang = null; // Sprachwechsel erkennen
+  let lastTheme = null; // Theme-Wechsel erkennen
 
   function render() {
+    // Darstellung anwenden (beim Start und bei Wechsel; synchronisiert auch den Beamer)
+    if (lastTheme !== state.theme) {
+      applyTheme(state.theme);
+      lastTheme = state.theme;
+    }
     // Sprache anwenden (beim Start und bei Wechsel; synchronisiert auch den Beamer)
     if (lastLang !== state.lang) {
       currentLang = state.lang;
@@ -1029,6 +1067,9 @@ A: 56
     });
     document.querySelectorAll("#langToggle button").forEach(b => {
       b.classList.toggle("active", b.dataset.lang === state.lang);
+    });
+    document.querySelectorAll("#themeToggle button").forEach(b => {
+      b.classList.toggle("active", b.dataset.themeChoice === state.theme);
     });
 
     // Ein Button führt durchs Spiel: Starten -> Antwort aufdecken -> Nächste Frage -> ... -> Runde beendet
@@ -1304,6 +1345,9 @@ A: 56
     });
     document.querySelectorAll("#langToggle button").forEach(b => {
       b.onclick = () => { state.lang = b.dataset.lang === "en" ? "en" : "de"; persistAndSync(); };
+    });
+    document.querySelectorAll("#themeToggle button").forEach(b => {
+      b.onclick = () => { state.theme = b.dataset.themeChoice; persistAndSync(); };
     });
 
     // Stationen

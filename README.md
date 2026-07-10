@@ -32,6 +32,10 @@ Beide Fenster synchronisieren sich live über `BroadcastChannel`, mit `localStor
 
 In den Einstellungen der Lehrer-Ansicht lässt sich die Oberfläche zwischen **Deutsch und Englisch** umschalten (DE/EN) — Beamer-Ansicht und Startseite wechseln mit. Der Import versteht `F:` und `Q:` als Frage-Marker.
 
+## Darstellung
+
+Ebenfalls in den Einstellungen: **Auto / Hell / Dunkel**. „Auto" folgt der Systemeinstellung (dunkles Blau bzw. warmes Sandweiß), Hell/Dunkel erzwingen das jeweilige Schema — synchron in beiden Fenstern.
+
 ## Aufgaben aus PDF importieren
 
 1. Aufgabenblatt (PDF) in einem KI-Tool (Claude/ChatGPT) öffnen.
