@@ -96,44 +96,6 @@
   .launch-card h2 { margin: 0 0 8px; font-size: 24px; }
   .launch-card p { font-size: 14px; }
 
-  /* Launcher: Import-Infobox */
-  .info-box {
-    background: var(--panel);
-    border: 1px solid var(--border);
-    border-radius: 16px;
-    max-width: 760px;
-    width: 100%;
-    text-align: left;
-    overflow: hidden;
-  }
-  .info-box > summary {
-    list-style: none;
-    cursor: pointer;
-    padding: 18px 22px;
-    font-size: 18px;
-    font-weight: 800;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    user-select: none;
-  }
-  .info-box > summary::-webkit-details-marker { display: none; }
-  .info-box > summary::after { content: "▸"; margin-left: auto; color: var(--muted); transition: transform .15s; }
-  .info-box[open] > summary::after { transform: rotate(90deg); }
-  .info-body { padding: 0 22px 22px; }
-  .info-body ol { margin: 0 0 16px; padding-left: 22px; line-height: 1.6; }
-  .info-body li { margin-bottom: 6px; }
-  .info-body code { background: var(--input-bg); border: 1px solid var(--border); border-radius: 5px; padding: 1px 6px; font-size: 13px; }
-  .prompt-block {
-    background: var(--input-bg);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 14px 16px;
-    font-size: 14px;
-    line-height: 1.5;
-    color: var(--text);
-    white-space: pre-wrap;
-  }
   .format-example {
     background: var(--input-bg);
     border: 1px dashed var(--border);
@@ -146,12 +108,6 @@
     margin-top: 10px;
     overflow-x: auto;
   }
-  .copy-row { display: flex; justify-content: flex-end; margin-top: 10px; }
-  .copy-row button {
-    font: inherit; font-weight: 700; border: none; border-radius: 10px;
-    padding: 10px 16px; background: #2563eb; color: #fff; cursor: pointer;
-  }
-  .copy-row button:hover { filter: brightness(1.1); }
 
   /* ---------- App shell ---------- */
   #app { display: none; height: 100%; }
@@ -404,6 +360,13 @@
   .task-item .task-actions button { padding: 4px 8px; font-size: 12px; background: transparent; }
   .counter { font-size: 12px; color: var(--muted); }
   .help-box { font-size: 12px; color: var(--muted); background: var(--input-bg); border: 1px dashed var(--border); border-radius: 8px; padding: 8px; line-height: 1.4; }
+  .import-steps { margin-bottom: 8px; }
+  .import-steps summary { cursor: pointer; font-size: 13px; font-weight: 700; color: var(--muted); padding: 2px 0; user-select: none; }
+  .import-steps summary:hover { color: var(--text); }
+  .import-steps ol { margin: 6px 0; padding-left: 18px; font-size: 12.5px; line-height: 1.55; color: var(--muted); }
+  .import-steps li { margin-bottom: 4px; }
+  .import-steps code { background: var(--input-bg); border: 1px solid var(--border); border-radius: 4px; padding: 0 4px; font-size: 11px; }
+  .import-steps .format-example { font-size: 12px; margin-top: 6px; }
 
   /* Confetti canvas */
   #confetti { position: fixed; inset: 0; pointer-events: none; z-index: 100; }
@@ -453,40 +416,17 @@
 <div id="launcher">
   <div class="launcher-inner">
   <h1><span class="logo-ball" id="logoBall"></span> Tafelfussball</h1>
-  <p data-i18n-html="intro">Öffne die <b>Beamer-Ansicht</b> im Vollbild auf dem Projektor und die <b>Lehrer-Ansicht</b> auf deinem Laptop. Beide Fenster synchronisieren sich automatisch.</p>
+  <p data-i18n-html="intro">Öffne die <b>Beamer-Ansicht</b> im Vollbild auf dem Projektor und die <b>Lehrer:innen-Ansicht</b> auf deinem Laptop. Beide Fenster synchronisieren sich automatisch.</p>
   <div class="launch-cards">
     <a class="launch-card" id="cardBeamer" href="?view=beamer" target="_blank" rel="noopener">
       <h2 data-i18n="beamerCardTitle">Beamer-Ansicht</h2>
       <p data-i18n="beamerCardText">Für die Klasse. Spielfeld, Punkte, Frage — ohne Lösung. Öffnet als eigenes Fenster.</p>
     </a>
     <a class="launch-card" href="?view=lehrer" target="_blank" rel="noopener">
-      <h2 data-i18n="teacherCardTitle">Lehrer-Ansicht</h2>
+      <h2 data-i18n="teacherCardTitle">Lehrer:innen-Ansicht</h2>
       <p data-i18n="teacherCardText">Steuerung, Aufgabenverwaltung und die Lösung.</p>
     </a>
   </div>
-  <details class="info-box">
-    <summary data-i18n="importHow">📄 Aufgaben aus einem PDF importieren — so geht's</summary>
-    <div class="info-body">
-      <ol data-i18n-html="steps">
-        <li>Öffne dein Aufgabenblatt (PDF) in einem KI-Tool wie <b>Claude</b> oder <b>ChatGPT</b>.</li>
-        <li>Kopiere den Prompt unten und füge ihn zusammen mit dem PDF ein.</li>
-        <li>Die KI liefert dir alle Aufgaben im Format <code>F:</code> / <code>A:</code> / <code>---</code>.</li>
-        <li>Kopiere diese Ausgabe und füge sie in der <b>Lehrer-Ansicht</b> unter „Import" ein — die Aufgaben werden automatisch angehängt.</li>
-      </ol>
-
-      <div class="prompt-block" id="promptText" data-i18n="kiPrompt">Extrahiere alle Übungsaufgaben und deren Lösungen aus diesem PDF. Formatiere die Ausgabe exakt so: Für jede Aufgabe eine Zeile 'F: &lt;Frage&gt;', eine Zeile 'A: &lt;Antwort&gt;', dann eine Zeile mit nur '---' als Trennzeichen. Mathematische Formeln als LaTeX in Dollarzeichen schreiben ($...$ für inline, $$...$$ für abgesetzt). Keine zusätzlichen Erklärungen oder Nummerierungen. Gib das Ergebnis als reinen Text aus, den ich als .txt-Datei speichern kann.</div>
-      <div class="copy-row">
-        <button id="launchCopyPrompt" data-i18n="copyPromptBtn">📋 Prompt kopieren</button>
-      </div>
-
-      <div class="format-example" data-i18n="formatExample">F: Was ist die Hauptstadt der Schweiz?
-A: Bern
----
-F: Wie viel ist 7 × 8?
-A: 56
----</div>
-    </div>
-  </details>
 
   <p style="font-size:13px" data-i18n="launcherTip">Tipp: Für die beste Synchronisation die Datei über einen lokalen Webserver öffnen (funktioniert aber meist auch per Doppelklick).</p>
   </div>
@@ -601,6 +541,11 @@ A: 56
 
     <div class="panel">
       <h3 data-i18n="importTitle">Import (KI-Vorverarbeitung)</h3>
+      <details class="import-steps">
+        <summary data-i18n="importHow">📄 Aufgaben aus einem PDF importieren — so geht's</summary>
+        <ol data-i18n-html="steps"></ol>
+        <div class="format-example" data-i18n="formatExample"></div>
+      </details>
       <div class="help-box" data-i18n-html="importHelp">
         PDF → KI-Tool (Claude/ChatGPT) mit dem Prompt unten → Ausgabe hier einfügen.<br>
         Format je Aufgabe: <code>F: Frage</code> · <code>A: Antwort</code> · <code>---</code><br>
@@ -648,15 +593,14 @@ A: 56
   // ---------- Sprache (DE/EN) ----------
   const I18N = {
     de: {
-      intro: 'Öffne die <b>Beamer-Ansicht</b> im Vollbild auf dem Projektor und die <b>Lehrer-Ansicht</b> auf deinem Laptop. Beide Fenster synchronisieren sich automatisch.',
+      intro: 'Öffne die <b>Beamer-Ansicht</b> im Vollbild auf dem Projektor und die <b>Lehrer:innen-Ansicht</b> auf deinem Laptop. Beide Fenster synchronisieren sich automatisch.',
       beamerCardTitle: 'Beamer-Ansicht',
       beamerCardText: 'Für die Klasse. Spielfeld, Punkte, Frage — ohne Lösung. Öffnet als eigenes Fenster.',
-      teacherCardTitle: 'Lehrer-Ansicht',
+      teacherCardTitle: 'Lehrer:innen-Ansicht',
       teacherCardText: 'Steuerung, Aufgabenverwaltung und die Lösung.',
       importHow: "📄 Aufgaben aus einem PDF importieren — so geht's",
-      steps: '<li>Öffne dein Aufgabenblatt (PDF) in einem KI-Tool wie <b>Claude</b> oder <b>ChatGPT</b>.</li><li>Kopiere den Prompt unten und füge ihn zusammen mit dem PDF ein.</li><li>Die KI liefert dir alle Aufgaben im Format <code>F:</code> / <code>A:</code> / <code>---</code>.</li><li>Kopiere diese Ausgabe und füge sie in der <b>Lehrer-Ansicht</b> unter „Import" ein — die Aufgaben werden automatisch angehängt.</li>',
+      steps: '<li>Öffne dein Aufgabenblatt (PDF) in einem KI-Tool wie <b>Claude</b> oder <b>ChatGPT</b>.</li><li>Kopiere den KI-Prompt (Button unten) und füge ihn zusammen mit dem PDF ein.</li><li>Die KI liefert dir alle Aufgaben im Format <code>F:</code> / <code>A:</code> / <code>---</code>.</li><li>Füge die Ausgabe unten ins Textfeld ein — oder speichere sie als .txt und ziehe die Datei ins Fenster.</li>',
       kiPrompt: "Extrahiere alle Übungsaufgaben und deren Lösungen aus diesem PDF. Formatiere die Ausgabe exakt so: Für jede Aufgabe eine Zeile 'F: <Frage>', eine Zeile 'A: <Antwort>', dann eine Zeile mit nur '---' als Trennzeichen. Mathematische Formeln als LaTeX in Dollarzeichen schreiben ($...$ für inline, $$...$$ für abgesetzt). Keine zusätzlichen Erklärungen oder Nummerierungen. Gib das Ergebnis als reinen Text aus, den ich als .txt-Datei speichern kann.",
-      copyPromptBtn: '📋 Prompt kopieren',
       formatExample: 'F: Was ist die Hauptstadt der Schweiz?\nA: Bern\n---\nF: Wie viel ist 7 × 8?\nA: 56\n---',
       launcherTip: 'Tipp: Für die beste Synchronisation die Datei über einen lokalen Webserver öffnen (funktioniert aber meist auch per Doppelklick).',
       qLabel: 'Frage', aLabel: 'Lösung',
@@ -713,9 +657,8 @@ A: 56
       teacherCardTitle: 'Teacher view',
       teacherCardText: 'Controls, task management, and the answers.',
       importHow: "📄 Import tasks from a PDF — here's how",
-      steps: '<li>Open your worksheet (PDF) in an AI tool like <b>Claude</b> or <b>ChatGPT</b>.</li><li>Copy the prompt below and paste it together with the PDF.</li><li>The AI returns all tasks in the format <code>Q:</code> / <code>A:</code> / <code>---</code>.</li><li>Copy that output and paste it into the <b>teacher view</b> under "Import" — the tasks are appended automatically.</li>',
+      steps: '<li>Open your worksheet (PDF) in an AI tool like <b>Claude</b> or <b>ChatGPT</b>.</li><li>Copy the AI prompt (button below) and paste it together with the PDF.</li><li>The AI returns all tasks in the format <code>Q:</code> / <code>A:</code> / <code>---</code>.</li><li>Paste the output into the text field below — or save it as .txt and drag the file into the window.</li>',
       kiPrompt: "Extract all exercises and their solutions from this PDF. Format the output exactly like this: for each task one line 'Q: <question>', one line 'A: <answer>', then a line containing only '---' as separator. Write mathematical formulas as LaTeX in dollar signs ($...$ inline, $$...$$ display). No additional explanations or numbering. Return plain text that I can save as a .txt file.",
-      copyPromptBtn: '📋 Copy prompt',
       formatExample: 'Q: What is the capital of Switzerland?\nA: Bern\n---\nQ: What is 7 × 8?\nA: 56\n---',
       launcherTip: 'Tip: for the most reliable sync, serve the file from a local web server (usually double-clicking works too).',
       qLabel: 'Question', aLabel: 'Answer',
@@ -823,14 +766,6 @@ A: 56
       else window.open("?view=beamer", "_blank"); // Fallback, falls Popup blockiert
     });
 
-    // Launcher: Copy-Button aktivieren
-    const btn = document.getElementById("launchCopyPrompt");
-    if (btn) btn.onclick = async () => {
-      try { await navigator.clipboard.writeText(tr("kiPrompt")); }
-      catch { prompt(tr("copyFallback"), tr("kiPrompt")); return; }
-      const old = btn.textContent; btn.textContent = tr("copied");
-      setTimeout(() => { btn.textContent = old; }, 1400);
-    };
     return; // keine Spiellogik nötig
   }
 

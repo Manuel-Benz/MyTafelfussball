@@ -13,7 +13,7 @@ Die Lehrperson stellt Fragen. Die richtig antwortende Mannschaft bewegt den Ball
 Öffne die App und wähle im Launcher eine Ansicht (jeweils in einem eigenen Fenster):
 
 - **📺 Beamer-Ansicht** (`?view=beamer`) — für die Klasse auf dem Projektor. Zeigt Spielfeld, Ball, Punkte und Frage. **Nie die Lösung.**
-- **🎛️ Lehrer-Ansicht** (`?view=lehrer`) — auf dem Laptop. Steuerung, Aufgabenverwaltung und die Lösung.
+- **🎛️ Lehrer:innen-Ansicht** (`?view=lehrer`) — auf dem Laptop. Steuerung, Aufgabenverwaltung und die Lösung.
 
 Beide Fenster synchronisieren sich live über `BroadcastChannel`, mit `localStorage` als Fallback und Persistenz.
 
@@ -30,7 +30,7 @@ Beide Fenster synchronisieren sich live über `BroadcastChannel`, mit `localStor
 
 ## Sprache
 
-In den Einstellungen der Lehrer-Ansicht lässt sich die Oberfläche zwischen **Deutsch und Englisch** umschalten (DE/EN) — Beamer-Ansicht und Startseite wechseln mit. Der Import versteht `F:` und `Q:` als Frage-Marker.
+In den Einstellungen der Lehrer:innen-Ansicht lässt sich die Oberfläche zwischen **Deutsch und Englisch** umschalten (DE/EN) — Beamer-Ansicht und Startseite wechseln mit. Der Import versteht `F:` und `Q:` als Frage-Marker.
 
 ## Darstellung
 
@@ -43,7 +43,7 @@ Ebenfalls in den Einstellungen: **Auto / Hell / Dunkel**. „Auto" folgt der Sys
 
    > Extrahiere alle Übungsaufgaben und deren Lösungen aus diesem PDF. Formatiere die Ausgabe exakt so: Für jede Aufgabe eine Zeile 'F: &lt;Frage&gt;', eine Zeile 'A: &lt;Antwort&gt;', dann eine Zeile mit nur '---' als Trennzeichen. Mathematische Formeln als LaTeX in Dollarzeichen schreiben ($...$ für inline, $$...$$ für abgesetzt). Keine zusätzlichen Erklärungen oder Nummerierungen. Gib das Ergebnis als reinen Text aus, den ich als .txt-Datei speichern kann.
 
-3. Die Ausgabe in der Lehrer-Ansicht unter „Import" einbringen — auf drei Wegen:
+3. Die Ausgabe in der Lehrer:innen-Ansicht unter „Import" einbringen — auf drei Wegen:
    - Text **direkt einfügen** ins Feld, oder
    - eine **`.txt`-Datei** aufs Fenster **ziehen** (Drag & Drop), oder
    - im Import-Panel auf die Ablage-Fläche **klicken** und die Datei auswählen.
