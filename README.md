@@ -19,11 +19,11 @@ Beide Fenster synchronisieren sich live über `BroadcastChannel`, mit `localStor
 
 ## Bedienung
 
-- **▶ Spiel starten / Nächste Frage** — zeigt die erste bzw. nächste Frage (sequenziell oder zufällig).
+- **Ein Button führt durchs Spiel**: „▶ Spiel starten" → „👁 Antwort aufdecken" → „Nächste Frage ▶" → … Die aufgedeckte Antwort erscheint auch auf dem Beamer.
+- **⌘/Strg + →** — derselbe Schritt per Tastatur: Frage zeigen, Antwort aufdecken, nächste Frage, … So klickt man sich durchs ganze Spiel.
+- **⌘/Strg + ←** — Frage zurück (Verlauf, funktioniert auch im Zufallsmodus).
 - **◀ Team 1 / Team 2 ▶** oder **Pfeiltasten ← / →** — bewegen den Ball. Hinter der letzten Station fällt er ins Tor: Punkt, Jubel, zurück zur Mitte.
-- **⌘/Strg + → / ←** — nächste Frage / Frage zurück (Verlauf, funktioniert auch im Zufallsmodus).
-- **L** — Lösung auf-/verdecken.
-- **👁 Lösung aufdecken** — zeigt die Lösung auch auf dem Beamer (bei „Nächste Frage" automatisch wieder versteckt).
+- **L** — Lösung auf-/verdecken (Abkürzung).
 - **↺ Fragen zurücksetzen** — startet die Runde neu (Aufgaben bleiben erhalten); „Punkte → 0" und „Ball → Mitte" setzen den Spielstand separat zurück.
 
 ## Aufgaben aus PDF importieren

@@ -505,16 +505,13 @@ A: 56
       <div class="row grow" style="margin-top:8px">
         <button class="ghost danger" id="resetScore">Punkte zurücksetzen</button>
       </div>
-      <div class="counter" style="margin-top:8px">Tastatur: ←/→ Ball · ⌘←/⌘→ Frage zurück/vor · L Lösung</div>
+      <div class="counter" style="margin-top:8px">Tastatur: ←/→ Ball · ⌘→ weiter (Frage/Antwort) · ⌘← Frage zurück · L Lösung</div>
     </div>
 
     <div class="panel">
       <h3>Aktuelle Frage</h3>
       <div class="row grow">
         <button class="primary start-mode" id="nextTask">▶ Spiel starten</button>
-      </div>
-      <div class="row grow" style="margin-top:8px">
-        <button class="ghost" id="revealBtn">👁 Lösung aufdecken</button>
       </div>
       <div class="row grow" style="margin-top:8px">
         <button class="ghost" id="resetTasksBtn" title="Zurück zum Start — Aufgaben bleiben erhalten">↺ Fragen zurücksetzen</button>
@@ -847,17 +844,15 @@ A: 56
       b.classList.toggle("active", b.dataset.order === state.order);
     });
 
-    // Start-/Nächste-Frage-Button
+    // Ein Button führt durchs Spiel: Starten -> Antwort aufdecken -> Nächste Frage -> ...
     const nextBtn = document.getElementById("nextTask");
     const started = state.currentTaskId !== null;
-    nextBtn.textContent = started ? "Nächste Frage ▶" : "▶ Spiel starten";
+    nextBtn.textContent = !started ? "▶ Spiel starten"
+      : !state.revealed ? "👁 Antwort aufdecken"
+      : "Nächste Frage ▶";
     nextBtn.classList.toggle("start-mode", !started);
     nextBtn.disabled = state.tasks.length === 0;
 
-    // Aufdeck- und Fragen-Reset-Button
-    const revealBtn = document.getElementById("revealBtn");
-    revealBtn.textContent = state.revealed ? "🙈 Lösung verbergen" : "👁 Lösung aufdecken";
-    revealBtn.disabled = !started;
     document.getElementById("resetTasksBtn").disabled = !started;
 
     // Task list — nur neu bauen, wenn sich Aufgaben/Auswahl geändert haben.
@@ -979,7 +974,17 @@ A: 56
     if (state.history.length > 300) state.history.shift();
   }
 
-  // Tastatur (Lehrer- UND Beamer-Fenster): ←/→ Ball · ⌘/Strg+→ nächste Frage ·
+  // Ein Schritt "weiter" führt durchs Spiel: Frage zeigen -> Antwort aufdecken -> nächste Frage -> ...
+  function stepForward() {
+    if (state.currentTaskId !== null && !state.revealed) {
+      state.revealed = true;
+      persistAndSync();
+    } else {
+      nextTask(); // startet auch das Spiel; deckt die neue Frage wieder zu
+    }
+  }
+
+  // Tastatur (Lehrer- UND Beamer-Fenster): ←/→ Ball · ⌘/Strg+→ weiter (Frage/Antwort) ·
   // ⌘/Strg+← Frage zurück · L Lösung auf-/verdecken
   window.addEventListener("keydown", (e) => {
     const t = e.target;
@@ -987,7 +992,7 @@ A: 56
     const mod = e.metaKey || e.ctrlKey;
     if (e.key === "ArrowRight") {
       e.preventDefault();
-      mod ? nextTask() : moveBall(1);
+      mod ? stepForward() : moveBall(1);
     } else if (e.key === "ArrowLeft") {
       e.preventDefault();
       mod ? prevTask() : moveBall(-1);
@@ -1078,11 +1083,7 @@ A: 56
     document.getElementById("resetScore").onclick = () => {
       if (confirm("Punktestand beider Teams auf 0 setzen?")) { state.scores = [0,0]; persistAndSync(); }
     };
-    document.getElementById("nextTask").onclick = nextTask;
-    document.getElementById("revealBtn").onclick = () => {
-      state.revealed = !state.revealed;
-      persistAndSync();
-    };
+    document.getElementById("nextTask").onclick = stepForward;
     document.getElementById("resetTasksBtn").onclick = () => {
       // Runde neu starten: Aufgaben bleiben, nur Auswahl/Reihenfolge zurück auf Anfang
       state.currentTaskId = null;
