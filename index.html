@@ -406,10 +406,10 @@
   <h1>⚽ Tafelfussball</h1>
   <p>Öffne die <b>Beamer-Ansicht</b> im Vollbild auf dem Projektor und die <b>Lehrer-Ansicht</b> auf deinem Laptop. Beide Fenster synchronisieren sich automatisch.</p>
   <div class="launch-cards">
-    <a class="launch-card" href="?view=beamer" target="_blank" rel="noopener">
+    <a class="launch-card" id="cardBeamer" href="?view=beamer" target="_blank" rel="noopener">
       <div class="emoji">📺</div>
       <h2>Beamer-Ansicht</h2>
-      <p>Für die Klasse. Spielfeld, Punkte, Frage — ohne Lösung.</p>
+      <p>Für die Klasse. Spielfeld, Punkte, Frage — ohne Lösung. Öffnet als eigenes Fenster.</p>
     </a>
     <a class="launch-card" href="?view=lehrer" target="_blank" rel="noopener">
       <div class="emoji">🎛️</div>
@@ -579,7 +579,21 @@ A: 56
   const KI_PROMPT = "Extrahiere alle Übungsaufgaben und deren Lösungen aus diesem PDF. Formatiere die Ausgabe exakt so: Für jede Aufgabe eine Zeile 'F: <Frage>', eine Zeile 'A: <Antwort>', dann eine Zeile mit nur '---' als Trennzeichen. Keine zusätzlichen Erklärungen oder Nummerierungen.";
 
   if (view !== "beamer" && view !== "lehrer") {
-    // Launcher: nur den Copy-Button aktivieren
+    // Launcher: Beamer-Ansicht als eigenes Fenster öffnen (statt neuem Tab)
+    const beamerCard = document.getElementById("cardBeamer");
+    if (beamerCard) beamerCard.addEventListener("click", (e) => {
+      e.preventDefault();
+      const w = Math.min(screen.availWidth || 1400, 1600);
+      const h = Math.min(screen.availHeight || 900, 1000);
+      const left = Math.max(0, ((screen.availWidth || w) - w) / 2 | 0);
+      const top = Math.max(0, ((screen.availHeight || h) - h) / 2 | 0);
+      const win = window.open("?view=beamer", "tafelfussball_beamer",
+        `popup=yes,width=${w},height=${h},left=${left},top=${top}`);
+      if (win) win.focus();
+      else window.open("?view=beamer", "_blank"); // Fallback, falls Popup blockiert
+    });
+
+    // Launcher: Copy-Button aktivieren
     const btn = document.getElementById("launchCopyPrompt");
     if (btn) btn.onclick = async () => {
       try { await navigator.clipboard.writeText(KI_PROMPT); }
