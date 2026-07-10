@@ -433,7 +433,7 @@
         <li>Kopiere diese Ausgabe und füge sie in der <b>Lehrer-Ansicht</b> unter „Import" ein — die Aufgaben werden automatisch angehängt.</li>
       </ol>
 
-      <div class="prompt-block" id="promptText">Extrahiere alle Übungsaufgaben und deren Lösungen aus diesem PDF. Formatiere die Ausgabe exakt so: Für jede Aufgabe eine Zeile 'F: &lt;Frage&gt;', eine Zeile 'A: &lt;Antwort&gt;', dann eine Zeile mit nur '---' als Trennzeichen. Mathematische Formeln als LaTeX in Dollarzeichen schreiben ($...$ für inline, $$...$$ für abgesetzt). Keine zusätzlichen Erklärungen oder Nummerierungen.</div>
+      <div class="prompt-block" id="promptText">Extrahiere alle Übungsaufgaben und deren Lösungen aus diesem PDF. Formatiere die Ausgabe exakt so: Für jede Aufgabe eine Zeile 'F: &lt;Frage&gt;', eine Zeile 'A: &lt;Antwort&gt;', dann eine Zeile mit nur '---' als Trennzeichen. Mathematische Formeln als LaTeX in Dollarzeichen schreiben ($...$ für inline, $$...$$ für abgesetzt). Keine zusätzlichen Erklärungen oder Nummerierungen. Gib das Ergebnis als reinen Text aus, den ich als .txt-Datei speichern kann.</div>
       <div class="copy-row">
         <button id="launchCopyPrompt">📋 Prompt kopieren</button>
       </div>
@@ -584,7 +584,7 @@ A: 56
     view === "lehrer" ? "view-lehrer" : "view-launcher"
   );
 
-  const KI_PROMPT = "Extrahiere alle Übungsaufgaben und deren Lösungen aus diesem PDF. Formatiere die Ausgabe exakt so: Für jede Aufgabe eine Zeile 'F: <Frage>', eine Zeile 'A: <Antwort>', dann eine Zeile mit nur '---' als Trennzeichen. Mathematische Formeln als LaTeX in Dollarzeichen schreiben ($...$ für inline, $$...$$ für abgesetzt). Keine zusätzlichen Erklärungen oder Nummerierungen.";
+  const KI_PROMPT = "Extrahiere alle Übungsaufgaben und deren Lösungen aus diesem PDF. Formatiere die Ausgabe exakt so: Für jede Aufgabe eine Zeile 'F: <Frage>', eine Zeile 'A: <Antwort>', dann eine Zeile mit nur '---' als Trennzeichen. Mathematische Formeln als LaTeX in Dollarzeichen schreiben ($...$ für inline, $$...$$ für abgesetzt). Keine zusätzlichen Erklärungen oder Nummerierungen. Gib das Ergebnis als reinen Text aus, den ich als .txt-Datei speichern kann.";
 
   if (view !== "beamer" && view !== "lehrer") {
     // Launcher: Beamer-Ansicht als eigenes Fenster öffnen (statt neuem Tab)

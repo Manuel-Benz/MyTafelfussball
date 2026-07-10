@@ -22,7 +22,7 @@ Beide Fenster synchronisieren sich live über `BroadcastChannel`, mit `localStor
 1. Aufgabenblatt (PDF) in einem KI-Tool (Claude/ChatGPT) öffnen.
 2. Diesen Prompt zusammen mit dem PDF einfügen:
 
-   > Extrahiere alle Übungsaufgaben und deren Lösungen aus diesem PDF. Formatiere die Ausgabe exakt so: Für jede Aufgabe eine Zeile 'F: &lt;Frage&gt;', eine Zeile 'A: &lt;Antwort&gt;', dann eine Zeile mit nur '---' als Trennzeichen. Mathematische Formeln als LaTeX in Dollarzeichen schreiben ($...$ für inline, $$...$$ für abgesetzt). Keine zusätzlichen Erklärungen oder Nummerierungen.
+   > Extrahiere alle Übungsaufgaben und deren Lösungen aus diesem PDF. Formatiere die Ausgabe exakt so: Für jede Aufgabe eine Zeile 'F: &lt;Frage&gt;', eine Zeile 'A: &lt;Antwort&gt;', dann eine Zeile mit nur '---' als Trennzeichen. Mathematische Formeln als LaTeX in Dollarzeichen schreiben ($...$ für inline, $$...$$ für abgesetzt). Keine zusätzlichen Erklärungen oder Nummerierungen. Gib das Ergebnis als reinen Text aus, den ich als .txt-Datei speichern kann.
 
 3. Die Ausgabe in der Lehrer-Ansicht unter „Import" einbringen — auf drei Wegen:
    - Text **direkt einfügen** ins Feld, oder
