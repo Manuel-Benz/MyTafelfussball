@@ -25,7 +25,8 @@ Beide Fenster synchronisieren sich live über `BroadcastChannel`, mit `localStor
 - **⌘/Strg + ←** — Frage zurück (Verlauf, funktioniert auch im Zufallsmodus).
 - **◀ Team 1 / Team 2 ▶** oder **Pfeiltasten ← / →** — bewegen den Ball. Hinter der letzten Station fällt er ins Tor: Punkt, Jubel, zurück zur Mitte.
 - **L** — Lösung auf-/verdecken (Abkürzung).
-- **↺ Fragen zurücksetzen** — startet die Runde neu (Aufgaben bleiben erhalten); „Punkte → 0" und „Ball → Mitte" setzen den Spielstand separat zurück.
+- **↺ Fragen zurücksetzen** — startet die Runde neu (Aufgaben bleiben erhalten); „Punkte zurücksetzen" und „Ball in die Mitte" wirken separat.
+- **Alles zurücksetzen** — Punkte, Ball und Fragerunde in einem Klick; die Aufgabenliste bleibt erhalten.
 
 ## Aufgaben aus PDF importieren
 

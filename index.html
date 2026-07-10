@@ -518,6 +518,9 @@ A: 56
       <div class="row grow" style="margin-top:8px">
         <button class="ghost danger" id="resetScore">Punkte zurücksetzen</button>
       </div>
+      <div class="row grow" style="margin-top:8px">
+        <button class="ghost danger" id="resetAll" title="Punkte, Ball und Fragerunde zurücksetzen — Aufgaben bleiben erhalten">Alles zurücksetzen</button>
+      </div>
       <div class="counter" style="margin-top:8px">Tastatur: ←/→ Ball · ⌘→ weiter (Frage/Antwort) · ⌘← Frage zurück · L Lösung</div>
     </div>
 
@@ -1110,6 +1113,18 @@ A: 56
     document.getElementById("resetBall").onclick = () => { state.ball = 0; persistAndSync(); };
     document.getElementById("resetScore").onclick = () => {
       if (confirm("Punktestand beider Teams auf 0 setzen?")) { state.scores = [0,0]; persistAndSync(); }
+    };
+    document.getElementById("resetAll").onclick = () => {
+      if (!confirm("Alles zurücksetzen? Punkte, Ball und Fragerunde starten neu — die Aufgaben bleiben erhalten.")) return;
+      state.scores = [0, 0];
+      state.ball = 0;
+      state.currentTaskId = null;
+      state.seqPointer = -1;
+      state.history = [];
+      state.asked = [];
+      state.finished = false;
+      state.revealed = false;
+      persistAndSync();
     };
     document.getElementById("nextTask").onclick = stepForward;
     document.getElementById("resetTasksBtn").onclick = () => {
