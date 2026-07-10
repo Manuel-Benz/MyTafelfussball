@@ -138,7 +138,7 @@
   }
   body.view-lehrer #app {
     grid-template-columns: 1fr 380px;
-    grid-template-rows: auto 1fr auto;
+    grid-template-rows: auto auto 1fr; /* Frage rückt direkt unters kompakte Feld */
     grid-template-areas:
       "score   controls"
       "field   controls"
@@ -191,7 +191,8 @@
     position: relative;
     overflow: hidden;
   }
-  body.view-lehrer .field { max-height: none; }
+  body.view-lehrer .field { height: 220px; } /* Lehrer: kompaktes Feld, mehr Platz für Frage/Lösung */
+  body.view-lehrer .field::after { width: 70px; height: 70px; }
   /* Mittellinie */
   .field::before {
     content: "";
@@ -503,6 +504,9 @@ A: 56
       <div class="row grow" style="margin-top:8px">
         <button class="ghost" id="revealBtn">👁 Lösung aufdecken</button>
       </div>
+      <div class="row grow" style="margin-top:8px">
+        <button class="ghost" id="resetTasksBtn" title="Zurück zum Start — Aufgaben bleiben erhalten">↺ Fragen zurücksetzen</button>
+      </div>
       <label class="field-label">Reihenfolge</label>
       <div class="toggle-group" id="orderToggle">
         <button data-order="sequential" class="active">Der Reihe nach</button>
@@ -805,10 +809,11 @@ A: 56
     nextBtn.classList.toggle("start-mode", !started);
     nextBtn.disabled = state.tasks.length === 0;
 
-    // Aufdeck-Button
+    // Aufdeck- und Fragen-Reset-Button
     const revealBtn = document.getElementById("revealBtn");
     revealBtn.textContent = state.revealed ? "🙈 Lösung verbergen" : "👁 Lösung aufdecken";
     revealBtn.disabled = !started;
+    document.getElementById("resetTasksBtn").disabled = !started;
 
     // Task list — nur neu bauen, wenn sich Aufgaben/Auswahl geändert haben.
     // (Sonst wird bei jedem Ballzug die Liste zerstört, inkl. laufendem Drag&Drop.)
@@ -984,6 +989,13 @@ A: 56
     document.getElementById("nextTask").onclick = nextTask;
     document.getElementById("revealBtn").onclick = () => {
       state.revealed = !state.revealed;
+      persistAndSync();
+    };
+    document.getElementById("resetTasksBtn").onclick = () => {
+      // Runde neu starten: Aufgaben bleiben, nur Auswahl/Reihenfolge zurück auf Anfang
+      state.currentTaskId = null;
+      state.seqPointer = -1;
+      state.revealed = false;
       persistAndSync();
     };
 
