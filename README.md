@@ -17,6 +17,12 @@ Die Lehrperson stellt Fragen. Die richtig antwortende Mannschaft bewegt den Ball
 
 Beide Fenster synchronisieren sich live über `BroadcastChannel`, mit `localStorage` als Fallback und Persistenz.
 
+## Bedienung
+
+- **▶ Spiel starten / Nächste Frage** — zeigt die erste bzw. nächste Frage (sequenziell oder zufällig).
+- **◀ Team 1 / Team 2 ▶** oder **Pfeiltasten ← / →** — bewegen den Ball. Hinter der letzten Station fällt er ins Tor: Punkt, Jubel, zurück zur Mitte.
+- **👁 Lösung aufdecken** — zeigt die Lösung auch auf dem Beamer (bei „Nächste Frage" automatisch wieder versteckt).
+
 ## Aufgaben aus PDF importieren
 
 1. Aufgabenblatt (PDF) in einem KI-Tool (Claude/ChatGPT) öffnen.
