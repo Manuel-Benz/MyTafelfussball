@@ -34,15 +34,20 @@
   #launcher {
     display: none;
     height: 100%;
+    overflow-y: auto;  /* eigener Scroll-Kontext */
+  }
+  body.view-launcher #launcher { display: block; }
+  .launcher-inner {
+    min-height: 100%;         /* füllt den Screen -> zentriert bei wenig Inhalt */
+    box-sizing: border-box;
+    display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: safe center; /* zentriert, klippt aber nicht bei Überlauf */
+    justify-content: center;  /* wächst der Inhalt, entsteht kein Clipping */
     gap: 24px;
     padding: 40px 24px;
     text-align: center;
-    overflow-y: auto;
   }
-  body.view-launcher #launcher { display: flex; }
   #launcher h1 { font-size: clamp(32px, 6vw, 64px); margin: 0; }
   #launcher p { color: var(--muted); max-width: 640px; margin: 0; line-height: 1.5; }
   .launch-cards { display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; }
@@ -403,6 +408,7 @@
 
 <!-- ============ Launcher ============ -->
 <div id="launcher">
+  <div class="launcher-inner">
   <h1>⚽ Tafelfussball</h1>
   <p>Öffne die <b>Beamer-Ansicht</b> im Vollbild auf dem Projektor und die <b>Lehrer-Ansicht</b> auf deinem Laptop. Beide Fenster synchronisieren sich automatisch.</p>
   <div class="launch-cards">
@@ -442,6 +448,7 @@ A: 56
   </details>
 
   <p style="font-size:13px">Tipp: Für die beste Synchronisation die Datei über einen lokalen Webserver öffnen (funktioniert aber meist auch per Doppelklick).</p>
+  </div>
 </div>
 
 <!-- ============ App ============ -->
@@ -535,7 +542,8 @@ A: 56
       <h3>Import (KI-Vorverarbeitung)</h3>
       <div class="help-box">
         PDF → KI-Tool (Claude/ChatGPT) mit dem Prompt unten → Ausgabe hier einfügen.<br>
-        Format je Aufgabe: <code>F: Frage</code> · <code>A: Antwort</code> · <code>---</code>
+        Format je Aufgabe: <code>F: Frage</code> · <code>A: Antwort</code> · <code>---</code><br>
+        Formeln als LaTeX: <code>$…$</code> bzw. <code>$$…$$</code>
       </div>
       <div class="row" style="margin:8px 0">
         <button class="ghost" id="copyPrompt">📋 KI-Prompt kopieren</button>
