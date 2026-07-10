@@ -20,6 +20,7 @@ Beide Fenster synchronisieren sich live über `BroadcastChannel`, mit `localStor
 ## Bedienung
 
 - **Ein Button führt durchs Spiel**: „▶ Spiel starten" → „👁 Antwort aufdecken" → „Nächste Frage ▶" → … Die aufgedeckte Antwort erscheint auch auf dem Beamer.
+- **Jede Frage kommt genau einmal pro Runde** — auch im Zufallsmodus. Sind alle durch, zeigt die App „🏁 Runde beendet"; „↺ Fragen zurücksetzen" startet eine neue Runde.
 - **⌘/Strg + →** — derselbe Schritt per Tastatur: Frage zeigen, Antwort aufdecken, nächste Frage, … So klickt man sich durchs ganze Spiel.
 - **⌘/Strg + ←** — Frage zurück (Verlauf, funktioniert auch im Zufallsmodus).
 - **◀ Team 1 / Team 2 ▶** oder **Pfeiltasten ← / →** — bewegen den Ball. Hinter der letzten Station fällt er ins Tor: Punkt, Jubel, zurück zur Mitte.
