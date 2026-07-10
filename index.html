@@ -695,20 +695,26 @@ A: 56
   function positionBall() {
     const ballEl = document.getElementById("ballEl");
     if (!ballEl) return;
-    const lane = fieldEl.querySelector(".lane");
-    const cellsEls = lane ? lane.querySelectorAll(".cell") : [];
     const n = state.stationsPerSide;
-    const idx = state.ball + n; // 0 .. 2n
-    const target = cellsEls[idx];
+    let target;
+    if (state.ball > n) {
+      target = fieldEl.querySelector(".goal.right .net");  // Ball im rechten Tor
+    } else if (state.ball < -n) {
+      target = fieldEl.querySelector(".goal.left .net");   // Ball im linken Tor
+    } else {
+      const cellsEls = fieldEl.querySelectorAll(".lane .cell");
+      target = cellsEls[state.ball + n];                   // Station 0 .. 2n
+    }
     if (!target) return;
-    const laneRect = fieldEl.getBoundingClientRect();
+    const fieldRect = fieldEl.getBoundingClientRect();
     const cRect = target.getBoundingClientRect();
-    const left = (cRect.left - laneRect.left) + cRect.width / 2;
+    const left = (cRect.left - fieldRect.left) + cRect.width / 2;
     ballEl.style.left = left + "px";
   }
 
   // ---------- Render ----------
   let lastStations = null;
+  let lastScores = state.scores.slice(); // zur Tor-Erkennung (feiert in Lehrer- UND Beamer-Fenster)
 
   function render() {
     // Scoreboard
@@ -739,6 +745,15 @@ A: 56
       renderMath(aEl);
       renderControls();
     }
+    celebrateIfGoal();
+  }
+
+  // Feiert, sobald ein Punktestand seit dem letzten Render gestiegen ist.
+  function celebrateIfGoal() {
+    for (let t = 0; t < 2; t++) {
+      if (state.scores[t] > (lastScores[t] || 0)) celebrate(t);
+    }
+    lastScores = state.scores.slice();
   }
 
   function renderControls() {
@@ -815,24 +830,27 @@ A: 56
   }
 
   // ---------- Game actions ----------
-  function moveBall(dir) { // dir: -1 (Team1 Richtung linkes... nein)
-    // Team1 schiesst Richtung Team2-Tor (rechts, +). Team2 Richtung links (-).
-    const team = dir > 0 ? 0 : 1;
-    state.ball += dir;
-    if (state.ball >= maxIndex()) {
-      goal(0); // Ball im rechten Tor -> Team1 punktet
-    } else if (state.ball <= -maxIndex()) {
-      goal(1); // Ball im linken Tor -> Team2 punktet
+  function moveBall(dir) {
+    // Team 1 schiesst Richtung Team-2-Tor (rechts, +), Team 2 nach links (-).
+    // Der Ball besetzt die n Stationen 1..n; erst der Schritt DAHINTER ist das Tor.
+    if (Math.abs(state.ball) > maxIndex()) return; // Ball ist gerade im Tor (Feier läuft)
+    const next = state.ball + dir;
+    if (next > maxIndex()) {
+      goal(0); // rechts ins Tor -> Team 1 punktet
+    } else if (next < -maxIndex()) {
+      goal(1); // links ins Tor -> Team 2 punktet
     } else {
+      state.ball = next;
       persistAndSync();
     }
   }
 
   function goal(team) {
     state.scores[team]++;
-    state.ball = 0;
-    persistAndSync();
-    celebrate(team);
+    // Ball sichtbar ins Tor gleiten lassen, dann zurück auf die Mitte.
+    state.ball = team === 0 ? maxIndex() + 1 : -(maxIndex() + 1);
+    persistAndSync(); // Konfetti/„TOR!" laufen via render() -> celebrateIfGoal (auch im Beamer)
+    setTimeout(() => { state.ball = 0; persistAndSync(); }, 1000);
   }
 
   function nextTask() {
