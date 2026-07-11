@@ -329,7 +329,6 @@
   button.t2 { background: var(--team2); color: #fff; }
   button.ghost { background: transparent; border: 1px solid var(--border); }
   button.danger { background: #7f1d1d; color: #fff; }
-  button.big { padding: 16px 8px; font-size: 16px; }
   button.icon { padding: 6px 10px; }
   button.start-mode { background: #16a34a; color: #fff; } /* gleiche Grösse wie "Nächste Frage", nur grün */
   button:disabled { opacity: .45; cursor: not-allowed; filter: none; }
@@ -539,8 +538,8 @@
         <button class="primary start-mode" id="nextTask">▶ Spiel starten</button>
       </div>
       <div class="row grow" style="margin-top:8px">
-        <button class="t1 big" id="moveT1">Punkt Team 1</button>
-        <button class="t2 big" id="moveT2">Punkt Team 2</button>
+        <button class="t1" id="moveT1">Punkt Team 1</button>
+        <button class="t2" id="moveT2">Punkt Team 2</button>
       </div>
       <div class="counter" id="taskCounter" style="margin-top:8px"></div>
       <div class="counter" style="margin-top:8px" data-i18n="kbHint">Tastatur: ←/→ Ball · ⌘→ weiter (Frage/Antwort) · ⌘← Frage zurück · L Lösung</div>
