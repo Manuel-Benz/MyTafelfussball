@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-Digitales Quizspiel „Tafelfussball" für den Unterricht. Features und Bedienung: siehe README.md. Offene Vorhaben: siehe PLAN.md.
+Digitales Quizspiel „MyTafelfussball" für den Unterricht. Features und Bedienung: siehe README.md. Offene Vorhaben: siehe PLAN.md.
 
 ## Architektur-Grundsätze
 

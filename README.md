@@ -1,8 +1,8 @@
-# ⚽ Tafelfussball
+# ⚽ MyTafelfussball
 
 Ein digitales Quizspiel im Stil von „Tafelfussball" für den Unterricht — komplett clientseitig, kein Backend, keine Kosten. Läuft in jedem modernen Browser.
 
-**Live:** https://manuel-benz.github.io/tafelfussball/
+**Live:** https://manuel-benz.github.io/MyTafelfussball/
 
 ## Idee
 
