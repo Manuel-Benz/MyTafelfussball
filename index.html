@@ -330,6 +330,36 @@
   button.ghost { background: transparent; border: 1px solid var(--border); }
   button.danger { background: #7f1d1d; color: #fff; }
   button.icon { padding: 6px 10px; }
+  /* Sprechblase über "Spiel starten", wenn noch keine Aufgaben da sind */
+  .hint-anchor { position: relative; }
+  .hint-anchor button:disabled { pointer-events: none; } /* Hover/Klick landen auf dem Wrapper */
+  .hint-bubble {
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 0; right: 0;
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 8px 10px;
+    font-size: 12px;
+    font-weight: 400;
+    line-height: 1.4;
+    color: var(--text);
+    box-shadow: 0 4px 12px rgba(0,0,0,.25);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .15s;
+    z-index: 5;
+  }
+  .hint-bubble.show { opacity: 1; }
+  .hint-bubble::after {
+    content: "";
+    position: absolute;
+    top: 100%;
+    left: 24px;
+    border: 6px solid transparent;
+    border-top-color: var(--panel-2);
+  }
   button.start-mode { background: #16a34a; color: #fff; } /* gleiche Grösse wie "Nächste Frage", nur grün */
   button:disabled { opacity: .45; cursor: not-allowed; filter: none; }
 
@@ -534,8 +564,9 @@
 
     <div class="panel">
       <h3 data-i18n="game">Spiel</h3>
-      <div class="row grow">
+      <div class="row grow hint-anchor" id="startWrap">
         <button class="primary start-mode" id="nextTask">▶ Spiel starten</button>
+        <div class="hint-bubble" id="startHint" data-i18n="startHint">Keine Aufgaben erfasst — oben unter „Aufgaben" hinzufügen oder eine .txt-Datei ins Fenster ziehen.</div>
       </div>
       <div class="row grow" style="margin-top:8px">
         <button class="t1" id="moveT1">Punkt Team 1</button>
@@ -586,7 +617,7 @@
       teacherCardTitle: 'Lehrer:innen-Ansicht',
       teacherCardText: 'Steuerung, Aufgabenverwaltung und die Lösung.',
       importHow: "So geht's",
-      steps: '<li>Öffne dein Aufgabenblatt (PDF) in einem KI-Tool wie <b>Claude</b> oder <b>ChatGPT</b>.</li><li>Kopiere den KI-Prompt (Button unten) und füge ihn zusammen mit dem PDF ein.</li><li>Die KI erstellt dir eine .txt-Datei mit allen Aufgaben im Format <code>F:</code> / <code>A:</code> / <code>---</code>.</li><li>Ziehe die Datei unten in die Ablage-Fläche — oder klicke darauf und wähle sie aus.</li>',
+      steps: '<li>Kopiere den KI-Prompt (Button unten).</li><li>Füge ihn zusammen mit deinem Aufgabenblatt (PDF) in ein KI-Tool wie <b>Claude</b> oder <b>ChatGPT</b> ein.</li><li>Die KI erstellt dir eine .txt-Datei mit allen Aufgaben im Format <code>F:</code> / <code>A:</code> / <code>---</code>.</li><li>Ziehe die Datei unten in die Ablage-Fläche — oder klicke darauf und wähle sie aus.</li>',
       kiPrompt: "Extrahiere alle Übungsaufgaben und deren Lösungen aus diesem PDF. Formatiere sie exakt so: Für jede Aufgabe eine Zeile 'F: <Frage>', eine Zeile 'A: <Antwort>', dann eine Zeile mit nur '---' als Trennzeichen. Mathematische Formeln als LaTeX in Dollarzeichen schreiben ($...$ für inline, $$...$$ für abgesetzt). Keine zusätzlichen Erklärungen oder Nummerierungen. Erstelle daraus direkt eine .txt-Datei zum Herunterladen; falls du Dateien direkt speichern kannst, lege sie in meinen Downloads oder auf dem Desktop ab.",
       formatExample: 'F: Was ist die Hauptstadt der Schweiz?\nA: Bern\n---\nF: Wie viel ist 7 × 8?\nA: 56\n---',
       qLabel: 'Frage', aLabel: 'Lösung',
@@ -604,7 +635,8 @@
       resetTasks: 'Fragen zurücksetzen',
       resetTasksTitle: 'Zurück zum Start — Aufgaben bleiben erhalten',
       order: 'Reihenfolge', orderSeq: 'Der Reihe nach', orderRnd: 'Zufällig',
-      counterNone: 'Keine Aufgaben erfasst — oben unter „Aufgaben" hinzufügen oder eine .txt-Datei ins Fenster ziehen.',
+      counterNone: 'Keine Aufgaben erfasst.',
+      startHint: 'Keine Aufgaben erfasst — oben unter „Aufgaben" hinzufügen oder eine .txt-Datei ins Fenster ziehen.',
       counterDone: n => `🏁 Runde beendet — alle ${n} Fragen gespielt`,
       counterPos: (x, y) => `Frage ${x} von ${y}`,
       counterReady: n => `${n} Aufgaben bereit`,
@@ -636,7 +668,7 @@
       teacherCardTitle: 'Teacher view',
       teacherCardText: 'Controls, task management, and the answers.',
       importHow: "Here's how",
-      steps: '<li>Open your worksheet (PDF) in an AI tool like <b>Claude</b> or <b>ChatGPT</b>.</li><li>Copy the AI prompt (button below) and paste it together with the PDF.</li><li>The AI creates a .txt file with all tasks in the format <code>Q:</code> / <code>A:</code> / <code>---</code>.</li><li>Drag the file onto the drop area below — or click it and choose the file.</li>',
+      steps: '<li>Copy the AI prompt (button below).</li><li>Paste it together with your worksheet (PDF) into an AI tool like <b>Claude</b> or <b>ChatGPT</b>.</li><li>The AI creates a .txt file with all tasks in the format <code>Q:</code> / <code>A:</code> / <code>---</code>.</li><li>Drag the file onto the drop area below — or click it and choose the file.</li>',
       kiPrompt: "Extract all exercises and their solutions from this PDF. Format them exactly like this: for each task one line 'Q: <question>', one line 'A: <answer>', then a line containing only '---' as separator. Write mathematical formulas as LaTeX in dollar signs ($...$ inline, $$...$$ display). No additional explanations or numbering. Create a .txt file directly for me to download; if you can save files directly, put it in my Downloads folder or on my Desktop.",
       formatExample: 'Q: What is the capital of Switzerland?\nA: Bern\n---\nQ: What is 7 × 8?\nA: 56\n---',
       qLabel: 'Question', aLabel: 'Answer',
@@ -654,7 +686,8 @@
       resetTasks: 'Reset questions',
       resetTasksTitle: 'Back to the start — tasks are kept',
       order: 'Order', orderSeq: 'In order', orderRnd: 'Random',
-      counterNone: 'No tasks yet — add them under “Tasks” above or drag a .txt file into the window.',
+      counterNone: 'No tasks yet.',
+      startHint: 'No tasks yet — add them under “Tasks” above or drag a .txt file into the window.',
       counterDone: n => `🏁 Round finished — all ${n} questions played`,
       counterPos: (x, y) => `Question ${x} of ${y}`,
       counterReady: n => `${n} tasks ready`,
@@ -1231,6 +1264,20 @@
   if (isTeacher) {
     document.getElementById("moveT1").onclick = () => moveBall(+1); // Team1 -> rechts
     document.getElementById("moveT2").onclick = () => moveBall(-1); // Team2 -> links
+
+    // Sprechblase am (deaktivierten) Start-Button, solange keine Aufgaben da sind
+    const startWrap = document.getElementById("startWrap");
+    const startHint = document.getElementById("startHint");
+    let startHintTimer = null;
+    function showStartHint() {
+      if (state.tasks.length > 0) return;
+      startHint.classList.add("show");
+      clearTimeout(startHintTimer);
+      startHintTimer = setTimeout(() => startHint.classList.remove("show"), 4000);
+    }
+    startWrap.addEventListener("mouseenter", showStartHint);
+    startWrap.addEventListener("mouseleave", () => { clearTimeout(startHintTimer); startHint.classList.remove("show"); });
+    startWrap.addEventListener("click", showStartHint);
     document.getElementById("resetScore").onclick = () => {
       if (confirm(tr("confirmScore"))) { state.scores = [0,0]; persistAndSync(); }
     };

@@ -37,12 +37,11 @@ Ebenfalls in den Einstellungen: **Auto / Hell / Dunkel**. „Auto" folgt der Sys
 
 ## Aufgaben aus PDF importieren
 
-1. Aufgabenblatt (PDF) in einem KI-Tool (Claude/ChatGPT) öffnen.
-2. Diesen Prompt zusammen mit dem PDF einfügen:
+1. Diesen Prompt (in der App: Button „KI-Prompt kopieren") zusammen mit dem Aufgabenblatt (PDF) in ein KI-Tool (Claude/ChatGPT) einfügen:
 
    > Extrahiere alle Übungsaufgaben und deren Lösungen aus diesem PDF. Formatiere sie exakt so: Für jede Aufgabe eine Zeile 'F: &lt;Frage&gt;', eine Zeile 'A: &lt;Antwort&gt;', dann eine Zeile mit nur '---' als Trennzeichen. Mathematische Formeln als LaTeX in Dollarzeichen schreiben ($...$ für inline, $$...$$ für abgesetzt). Keine zusätzlichen Erklärungen oder Nummerierungen. Erstelle daraus direkt eine .txt-Datei zum Herunterladen; falls du Dateien direkt speichern kannst, lege sie in meinen Downloads oder auf dem Desktop ab.
 
-3. Die erhaltene `.txt`-Datei in der Lehrer:innen-Ansicht einbringen (Box „Aufgaben" → Import):
+2. Die erhaltene `.txt`-Datei in der Lehrer:innen-Ansicht einbringen (Box „Aufgaben" → Import):
    - die Datei aufs Fenster **ziehen** (Drag & Drop), oder
    - auf die Ablage-Fläche **klicken** und die Datei auswählen.
 
