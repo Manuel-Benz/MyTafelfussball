@@ -27,4 +27,5 @@
 - ✅ Erster Umbau: Einstellungen zuoberst (einklappbar); Hinzufügen/Aufgaben/Import zu einer einklappbaren Box „Aufgaben" gebündelt; Help-Box und Einfüge-Textfeld entfernt.
 - ✅ Zweiter Umbau: Spielzug + Aktuelle Frage zu einer Box „Spiel" vereint (Spiel starten zuoberst, Buttons „Punkt Team 1/2", drei Reset-Buttons einheitlich zuunterst); „Ball in die Mitte" entfernt; Reihenfolge-Schalter in die Einstellungen.
 - Die Seitenleiste besteht damit aus drei Boxen: Einstellungen, Aufgaben (beide einklappbar), Spiel. Eine Tab-Aufteilung ist damit wohl nicht mehr nötig.
+- ✅ Einstieg vereinfacht: Box „Aufgaben" öffnet sich beim Start automatisch, solange keine Aufgaben erfasst sind; der Fragen-Zähler verweist auf die Erfassungswege.
 - Die geplante Sammlung (siehe oben) bekommt ihren Platz in der Box „Aufgaben".

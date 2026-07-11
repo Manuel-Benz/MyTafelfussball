@@ -500,7 +500,7 @@
       </div>
     </details>
 
-    <details class="panel collapsible">
+    <details class="panel collapsible" id="tasksBox">
       <summary><span data-i18n="tasks">Aufgaben</span> (<span id="taskCount">0</span>)</summary>
       <div id="taskList"></div>
       <div class="row" style="margin-top:8px">
@@ -605,7 +605,7 @@
       resetTasks: 'Fragen zurücksetzen',
       resetTasksTitle: 'Zurück zum Start — Aufgaben bleiben erhalten',
       order: 'Reihenfolge', orderSeq: 'Der Reihe nach', orderRnd: 'Zufällig',
-      counterNone: 'Keine Aufgaben erfasst.',
+      counterNone: 'Keine Aufgaben erfasst — oben unter „Aufgaben" hinzufügen oder eine .txt-Datei ins Fenster ziehen.',
       counterDone: n => `🏁 Runde beendet — alle ${n} Fragen gespielt`,
       counterPos: (x, y) => `Frage ${x} von ${y}`,
       counterReady: n => `${n} Aufgaben bereit`,
@@ -655,7 +655,7 @@
       resetTasks: 'Reset questions',
       resetTasksTitle: 'Back to the start — tasks are kept',
       order: 'Order', orderSeq: 'In order', orderRnd: 'Random',
-      counterNone: 'No tasks yet.',
+      counterNone: 'No tasks yet — add them under “Tasks” above or drag a .txt file into the window.',
       counterDone: n => `🏁 Round finished — all ${n} questions played`,
       counterPos: (x, y) => `Question ${x} of ${y}`,
       counterReady: n => `${n} tasks ready`,
@@ -1467,6 +1467,8 @@
 
   // ---------- Init ----------
   render();
+  // Ohne Aufgaben startet die Box "Aufgaben" offen — der erste Schritt ist dann das Erfassen.
+  if (isTeacher && state.tasks.length === 0) document.getElementById("tasksBox").open = true;
   window.addEventListener("load", () => requestAnimationFrame(positionBall));
 })();
 </script>
