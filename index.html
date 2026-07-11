@@ -20,6 +20,8 @@
     --muted: #94a3b8;
     --border: #334155;
     --input-bg: #0f172a;
+    --ok: #4ade80;           /* Erfolgs-Feedback (Import) */
+    --answer-label: #e08a84; /* "Lösung"-Label über der Antwort */
   }
   /* Hell: warmes, helles Sandweiss.
      Auto (kein data-theme): folgt dem System. Manuell: data-theme="light"/"dark" gewinnt. */
@@ -32,6 +34,8 @@
       --muted: #857f6f;
       --border: #ded5c1;
       --input-bg: #ffffff;
+      --ok: #15803d;
+      --answer-label: #a13030;
     }
   }
   :root[data-theme="light"] {
@@ -42,6 +46,8 @@
     --muted: #857f6f;
     --border: #ded5c1;
     --input-bg: #ffffff;
+    --ok: #15803d;
+    --answer-label: #a13030;
   }
   * { box-sizing: border-box; }
   html, body { height: 100%; margin: 0; }
@@ -125,7 +131,6 @@
     gap: 2vmin;
   }
   body.view-beamer .field { height: 38vh; } /* konstant, unabhängig von Frage-/Antwortlänge */
-  body.view-beamer .question-area { overflow-y: auto; min-height: 0; }
   body.view-lehrer #app {
     grid-template-columns: 1fr 380px;
     grid-template-rows: auto auto 1fr; /* Frage rückt direkt unters kompakte Feld */
@@ -255,7 +260,7 @@
   body.view-lehrer .ball { width: 44px; height: 44px; }
 
   /* ---------- Question ---------- */
-  .question-area { grid-area: question; text-align: center; }
+  .question-area { grid-area: question; text-align: center; overflow-y: auto; min-height: 0; } /* lange Fragen scrollen statt abgeschnitten zu werden */
   .q-label { color: var(--muted); font-weight: 700; letter-spacing: .08em; text-transform: uppercase; font-size: 13px; }
   .question {
     font-weight: 800;
@@ -282,7 +287,7 @@
     line-height: 1.3;
   }
   body.view-lehrer .answer { display: block; }
-  .answer .a-label { color: #e08a84; font-size: 12px; letter-spacing: .08em; text-transform: uppercase; display: block; margin-bottom: 4px; }
+  .answer .a-label { color: var(--answer-label); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; display: block; margin-bottom: 4px; }
   .empty-hint { color: var(--muted); font-style: italic; }
 
   /* ---------- Controls (Lehrer) ---------- */
@@ -329,13 +334,15 @@
   button.t2 { background: var(--team2); color: #fff; }
   button.ghost { background: transparent; border: 1px solid var(--border); }
   button.danger { background: #7f1d1d; color: #fff; }
+  /* ghost + danger = dezente Umriss-Variante statt vollrot */
+  button.ghost.danger { background: transparent; color: #dc2626; border-color: rgba(220,38,38,.55); }
   button.icon { padding: 6px 10px; }
   /* Sprechblase über "Spiel starten", wenn noch keine Aufgaben da sind */
   .hint-anchor { position: relative; }
   .hint-anchor button:disabled { pointer-events: none; } /* Hover/Klick landen auf dem Wrapper */
   .hint-bubble {
     position: absolute;
-    bottom: calc(100% + 8px);
+    top: calc(100% + 8px); /* unterhalb: oberhalb würde sie am Scrollrand der Seitenleiste abgeschnitten */
     left: 0; right: 0;
     background: var(--panel-2);
     border: 1px solid var(--border);
@@ -355,15 +362,15 @@
   .hint-bubble::after {
     content: "";
     position: absolute;
-    top: 100%;
+    bottom: 100%;
     left: 24px;
     border: 6px solid transparent;
-    border-top-color: var(--panel-2);
+    border-bottom-color: var(--panel-2);
   }
   button.start-mode { background: #16a34a; color: #fff; } /* gleiche Grösse wie "Nächste Frage", nur grün */
   button:disabled { opacity: .45; cursor: not-allowed; filter: none; }
 
-  input, textarea, select {
+  input {
     font: inherit;
     background: var(--input-bg);
     color: var(--text);
@@ -372,7 +379,6 @@
     padding: 8px 10px;
     width: 100%;
   }
-  textarea { resize: vertical; min-height: 90px; }
   label.field-label { font-size: 12px; color: var(--muted); display: block; margin: 8px 0 4px; }
   .stepper { display: flex; align-items: center; gap: 6px; }
   .stepper input { width: 60px; text-align: center; }
@@ -415,7 +421,8 @@
     position: fixed; inset: 0; z-index: 90; pointer-events: none;
     display: flex; align-items: center; justify-content: center;
     font-size: clamp(60px, 14vw, 200px); font-weight: 900; color: #fff;
-    text-shadow: 0 6px 30px rgba(0,0,0,.6);
+    /* doppelter Schatten trägt das Weiss auch auf hellem Grund */
+    text-shadow: 0 2px 6px rgba(0,0,0,.55), 0 6px 30px rgba(0,0,0,.5);
     opacity: 0; transition: opacity .2s;
   }
   .goal-flash.show { opacity: 1; animation: pop .8s ease; }
@@ -435,7 +442,7 @@
   }
   .dropzone:hover { border-color: #60a5fa; color: var(--text); background: rgba(96,165,250,.06); }
   .dropzone small { color: var(--muted); }
-  .drop-status { font-size: 12px; min-height: 1em; margin-top: 6px; color: #4ade80; }
+  .drop-status { font-size: 12px; min-height: 1em; margin-top: 6px; color: var(--ok); }
 
   .file-overlay {
     position: fixed; inset: 0; z-index: 120;
@@ -552,7 +559,7 @@
         <div class="format-example" data-i18n="formatExample"></div>
       </details>
       <div class="row" style="margin:8px 0">
-        <button class="ghost" id="copyPrompt" data-i18n="copyKiPrompt">📋 KI-Prompt kopieren</button>
+        <button class="ghost" id="copyPrompt" data-i18n="copyKiPrompt">KI-Prompt kopieren</button>
       </div>
       <div class="dropzone" id="dropzone">
         <span data-i18n-html="dropHere">📥 <b>Datei hierher ziehen</b><br>
@@ -650,7 +657,7 @@
       add: 'Hinzufügen',
       tasks: 'Aufgaben', deleteAll: 'Alle löschen',
       importTitle: 'Import',
-      copyKiPrompt: '📋 KI-Prompt kopieren',
+      copyKiPrompt: 'KI-Prompt kopieren',
       dropHere: '📥 <b>Datei hierher ziehen</b><br><small>oder klicken zum Auswählen (.txt im F:/A:/---‑Format)</small>',
       confirmScore: 'Punktestand beider Teams auf 0 setzen?',
       confirmAll: 'Alles zurücksetzen? Punkte, Ball und Fragerunde starten neu — die Aufgaben bleiben erhalten.',
@@ -701,7 +708,7 @@
       add: 'Add',
       tasks: 'Tasks', deleteAll: 'Delete all',
       importTitle: 'Import',
-      copyKiPrompt: '📋 Copy AI prompt',
+      copyKiPrompt: 'Copy AI prompt',
       dropHere: '📥 <b>Drag a file here</b><br><small>or click to choose (.txt in Q:/A:/--- format)</small>',
       confirmScore: 'Reset both team scores to 0?',
       confirmAll: 'Reset everything? Score, ball and round start fresh — tasks are kept.',
@@ -805,7 +812,10 @@
       s.stationsPerSide = Math.max(1, Math.min(6, parseInt(s.stationsPerSide, 10) || 3));
       if (!Number.isInteger(s.ball) || Math.abs(s.ball) > s.stationsPerSide) s.ball = 0;
       if (!Array.isArray(s.tasks)) s.tasks = [];
-      s.tasks = s.tasks.filter(t => t && typeof t.q === "string");
+      s.tasks = s.tasks.filter(t => t && typeof t.q === "string")
+        .map(t => (typeof t.a === "string" ? t : { ...t, a: "" }));
+      if (!Array.isArray(s.teams)) s.teams = ["Team 1", "Team 2"];
+      s.teams = [String(s.teams[0] || "Team 1"), String(s.teams[1] || "Team 2")];
       s.scores = Array.isArray(s.scores)
         ? [Math.max(0, s.scores[0] | 0), Math.max(0, s.scores[1] | 0)] : [0, 0];
       if (s.order !== "random") s.order = "sequential";
@@ -823,17 +833,26 @@
   let channel = null;
   try { channel = new BroadcastChannel("tafelfussball"); } catch {}
 
+  // Fenster-Kennung: erlaubt es, eigene Nachrichten zu erkennen und bei gleichem
+  // rev (gleichzeitige Änderung in beiden Fenstern) deterministisch aufzulösen.
+  const WIN_ID = Math.random().toString(36).slice(2);
+
   function persistAndSync() {
     state.rev++;
+    state.sender = WIN_ID;
     try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch {}
     if (channel) channel.postMessage(state);
     render();
   }
 
   function applyRemote(newState) {
-    // rev-Vergleich: verhindert doppeltes Rendern, weil jede Änderung
-    // sowohl per BroadcastChannel als auch per storage-Event ankommt.
-    if (!newState || newState.rev === state.rev) return;
+    if (!newState || newState.sender === WIN_ID) return; // eigene Nachricht (BC- oder storage-Echo)
+    // Nur neuere Zustände übernehmen; bei rev-Gleichstand entscheidet die Fenster-Kennung.
+    // Das dedupliziert die Doppelzustellung (BroadcastChannel + storage-Event) und lässt
+    // beide Fenster bei gleichzeitigen Änderungen auf demselben Stand landen.
+    const newer = newState.rev > state.rev
+      || (newState.rev === state.rev && String(newState.sender) > String(state.sender));
+    if (!newer) return;
     state = Object.assign(defaultState(), newState);
     render();
   }
@@ -937,6 +956,7 @@
   let lastScores = state.scores.slice(); // zur Tor-Erkennung (feiert in Lehrer- UND Beamer-Fenster)
   let lastRenderedQ = null, lastRenderedA = null; // KaTeX nur bei Textänderung neu rendern
   let lastTaskListSig = null; // Aufgabenliste nur bei Änderung neu bauen
+  let ballWatchdog = null; // holt den Ball aus dem Tor, falls das auslösende Fenster weg ist
   let lastLang = null; // Sprachwechsel erkennen
   let lastTheme = null; // Theme-Wechsel erkennen
 
@@ -951,6 +971,7 @@
       currentLang = state.lang;
       applyTranslations();
       lastRenderedQ = lastRenderedA = null; // sprachabhängige Texte neu rendern
+      lastTaskListSig = null; // Aufgabenliste neu bauen (Button-Tooltips sind sprachabhängig)
       lastLang = state.lang;
     }
     // Scoreboard
@@ -979,12 +1000,15 @@
       lastRenderedQ = qKey;
     }
     const aEl = document.getElementById("answerText");
-    const aKey = task ? task.id + "" + task.a : "";
+    // Beamer: Lösung erst nach dem Aufdecken überhaupt ins DOM schreiben
+    // (vorher nur via CSS versteckt hiesse: per DevTools/Quelltext sichtbar).
+    const showAnswer = !!task && (isTeacher || state.revealed);
+    const aKey = showAnswer ? task.id + "" + task.a : "";
     if (aKey !== lastRenderedA) {
-      aEl.textContent = task ? task.a : "—";
+      aEl.textContent = showAnswer ? task.a : "—";
       renderMath(aEl);
       // Inline-Variante hinter der Frage: "= Antwort" (kein doppeltes "=", falls schon vorhanden)
-      const raw = task ? task.a.trim() : "";
+      const raw = showAnswer ? task.a.trim() : "";
       const aiEl = document.getElementById("answerInline");
       aiEl.textContent = raw ? (raw.startsWith("=") ? raw : "= " + raw) : "";
       renderMath(aiEl);
@@ -993,6 +1017,19 @@
     document.getElementById("answerInline").classList.toggle("show", state.revealed && !!task);
     if (isTeacher) renderControls();
     celebrateIfGoal();
+
+    // Steht der Ball im Tor (goal()), holt ihn jedes Fenster nach der Feier zurück
+    // — so klemmt er auch dann nicht, wenn das auslösende Fenster geschlossen wird.
+    // Feuern mehrere Fenster gleichzeitig, löst der rev/sender-Vergleich das auf.
+    if (Math.abs(state.ball) > maxIndex()) {
+      if (!ballWatchdog) ballWatchdog = setTimeout(() => {
+        ballWatchdog = null;
+        if (Math.abs(state.ball) > maxIndex()) { state.ball = 0; persistAndSync(); }
+      }, 1000);
+    } else if (ballWatchdog) {
+      clearTimeout(ballWatchdog);
+      ballWatchdog = null;
+    }
   }
 
   // Feiert, sobald ein Punktestand seit dem letzten Render gestiegen ist.
@@ -1072,7 +1109,9 @@
     } else if (state.finished) {
       counter.textContent = tr("counterDone", state.tasks.length);
     } else if (state.currentTaskId !== null) {
-      counter.textContent = tr("counterPos", state.asked.length, state.tasks.length);
+      // Position der ANGEZEIGTEN Frage (nach ⌘← kann das eine frühere sein)
+      const pos = state.asked.indexOf(state.currentTaskId);
+      counter.textContent = tr("counterPos", pos >= 0 ? pos + 1 : state.asked.length, state.tasks.length);
     } else {
       counter.textContent = tr("counterReady", state.tasks.length);
     }
@@ -1123,10 +1162,10 @@
 
   function goal(team) {
     state.scores[team]++;
-    // Ball sichtbar ins Tor gleiten lassen, dann zurück auf die Mitte.
+    // Ball sichtbar ins Tor gleiten lassen; zurück zur Mitte holt ihn der
+    // Watchdog in render() — in jedem Fenster, auch wenn dieses hier zugeht.
     state.ball = team === 0 ? maxIndex() + 1 : -(maxIndex() + 1);
     persistAndSync(); // Konfetti/„TOR!" laufen via render() -> celebrateIfGoal (auch im Beamer)
-    setTimeout(() => { state.ball = 0; persistAndSync(); }, 1000);
   }
 
   function nextTask() {
@@ -1339,6 +1378,7 @@
       const a = document.getElementById("newA").value.trim();
       if (!q) return;
       state.tasks.push({ id: uid(), q, a });
+      state.finished = false; // neue Frage -> Runde kann weitergehen
       document.getElementById("newQ").value = "";
       document.getElementById("newA").value = "";
       persistAndSync();
@@ -1349,7 +1389,9 @@
 
     document.getElementById("clearTasks").onclick = () => {
       if (state.tasks.length && confirm(tr("confirmClear"))) {
-        state.tasks = []; state.currentTaskId = null; state.seqPointer = -1; persistAndSync();
+        state.tasks = []; state.currentTaskId = null; state.seqPointer = -1;
+        state.asked = []; state.history = []; state.finished = false; state.revealed = false;
+        persistAndSync();
       }
     };
 
@@ -1455,7 +1497,7 @@
     }
     function setDropStatus(msg) {
       dropStatus.textContent = msg;
-      dropStatus.style.color = msg.startsWith("✓") ? "#4ade80" : "#fca5a5";
+      dropStatus.style.color = msg.startsWith("✓") ? "var(--ok)" : "var(--answer)"; /* themed: lesbar in hell + dunkel */
       setTimeout(() => { if (dropStatus.textContent === msg) dropStatus.textContent = ""; }, 5000);
     }
 
@@ -1500,6 +1542,7 @@
         });
         if (q !== null) pushTask(q, a);
       });
+      if (count > 0) state.finished = false; // neue Fragen -> Runde kann weitergehen
       return count;
     }
 
