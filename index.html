@@ -329,7 +329,7 @@
   button.t2 { background: var(--team2); color: #fff; }
   button.ghost { background: transparent; border: 1px solid var(--border); }
   button.danger { background: #7f1d1d; color: #fff; }
-  button.big { padding: 16px; font-size: 18px; }
+  button.big { padding: 16px 8px; font-size: 16px; }
   button.icon { padding: 6px 10px; }
   button.start-mode { background: #16a34a; color: #fff; } /* gleiche Grösse wie "Nächste Frage", nur grün */
   button:disabled { opacity: .45; cursor: not-allowed; filter: none; }
@@ -478,6 +478,11 @@
         <input type="number" id="stations" min="1" max="6" value="3">
         <button class="icon" id="stPlus">+</button>
       </div>
+      <label class="field-label" data-i18n="order">Reihenfolge</label>
+      <div class="toggle-group" id="orderToggle">
+        <button data-order="sequential" class="active" data-i18n="orderSeq">Der Reihe nach</button>
+        <button data-order="random" data-i18n="orderRnd">Zufällig</button>
+      </div>
       <label class="field-label" data-i18n="name1">Name Team 1</label>
       <input type="text" id="name1" value="Team 1">
       <label class="field-label" data-i18n="name2">Name Team 2</label>
@@ -529,37 +534,25 @@
     </details>
 
     <div class="panel">
-      <h3 data-i18n="move">Spielzug</h3>
-      <div class="row grow">
-        <button class="t1 big" id="moveT1">Team 1</button>
-        <button class="t2 big" id="moveT2">Team 2</button>
-      </div>
-      <div class="row grow" style="margin-top:8px">
-        <button class="ghost" id="resetBall" data-i18n="ballCenter">Ball in die Mitte</button>
-      </div>
-      <div class="row grow" style="margin-top:8px">
-        <button class="ghost danger" id="resetScore" data-i18n="resetScore">Punkte zurücksetzen</button>
-      </div>
-      <div class="row grow" style="margin-top:8px">
-        <button class="ghost danger" id="resetAll" data-i18n="resetAll" data-i18n-title="resetAllTitle" title="Punkte, Ball und Fragerunde zurücksetzen — Aufgaben bleiben erhalten">Alles zurücksetzen</button>
-      </div>
-      <div class="counter" style="margin-top:8px" data-i18n="kbHint">Tastatur: ←/→ Ball · ⌘→ weiter (Frage/Antwort) · ⌘← Frage zurück · L Lösung</div>
-    </div>
-
-    <div class="panel">
-      <h3 data-i18n="currentQuestion">Aktuelle Frage</h3>
+      <h3 data-i18n="game">Spiel</h3>
       <div class="row grow">
         <button class="primary start-mode" id="nextTask">▶ Spiel starten</button>
       </div>
       <div class="row grow" style="margin-top:8px">
-        <button class="ghost" id="resetTasksBtn" data-i18n="resetTasks" data-i18n-title="resetTasksTitle" title="Zurück zum Start — Aufgaben bleiben erhalten">↺ Fragen zurücksetzen</button>
-      </div>
-      <label class="field-label" data-i18n="order">Reihenfolge</label>
-      <div class="toggle-group" id="orderToggle">
-        <button data-order="sequential" class="active" data-i18n="orderSeq">Der Reihe nach</button>
-        <button data-order="random" data-i18n="orderRnd">Zufällig</button>
+        <button class="t1 big" id="moveT1">Punkt Team 1</button>
+        <button class="t2 big" id="moveT2">Punkt Team 2</button>
       </div>
       <div class="counter" id="taskCounter" style="margin-top:8px"></div>
+      <div class="counter" style="margin-top:8px" data-i18n="kbHint">Tastatur: ←/→ Ball · ⌘→ weiter (Frage/Antwort) · ⌘← Frage zurück · L Lösung</div>
+      <div class="row grow" style="margin-top:8px">
+        <button class="ghost" id="resetScore" data-i18n="resetScore">Punkte zurücksetzen</button>
+      </div>
+      <div class="row grow" style="margin-top:8px">
+        <button class="ghost" id="resetTasksBtn" data-i18n="resetTasks" data-i18n-title="resetTasksTitle" title="Zurück zum Start — Aufgaben bleiben erhalten">Fragen zurücksetzen</button>
+      </div>
+      <div class="row grow" style="margin-top:8px">
+        <button class="ghost" id="resetAll" data-i18n="resetAll" data-i18n-title="resetAllTitle" title="Punkte, Ball und Fragerunde zurücksetzen — Aufgaben bleiben erhalten">Alles zurücksetzen</button>
+      </div>
     </div>
   </aside>
 </div>
@@ -602,15 +595,14 @@
       roundDone: '🏁 Runde beendet!',
       goal: 'TOR!',
       fileOverlay: '📥 Datei loslassen, um Fragen zu importieren',
-      move: 'Spielzug',
-      ballCenter: 'Ball in die Mitte',
+      game: 'Spiel',
+      pointFor: name => `Punkt ${name}`,
       resetScore: 'Punkte zurücksetzen',
       resetAll: 'Alles zurücksetzen',
       resetAllTitle: 'Punkte, Ball und Fragerunde zurücksetzen — Aufgaben bleiben erhalten',
       kbHint: 'Tastatur: ←/→ Ball · ⌘→ weiter (Frage/Antwort) · ⌘← Frage zurück · L Lösung',
-      currentQuestion: 'Aktuelle Frage',
       btnStart: '▶ Spiel starten', btnReveal: '👁 Antwort aufdecken', btnNext: 'Nächste Frage ▶', btnDone: '🏁 Runde beendet',
-      resetTasks: '↺ Fragen zurücksetzen',
+      resetTasks: 'Fragen zurücksetzen',
       resetTasksTitle: 'Zurück zum Start — Aufgaben bleiben erhalten',
       order: 'Reihenfolge', orderSeq: 'Der Reihe nach', orderRnd: 'Zufällig',
       counterNone: 'Keine Aufgaben erfasst.',
@@ -653,15 +645,14 @@
       roundDone: '🏁 Round finished!',
       goal: 'GOAL!',
       fileOverlay: '📥 Drop the file to import questions',
-      move: 'Move',
-      ballCenter: 'Ball to the middle',
+      game: 'Game',
+      pointFor: name => `Point ${name}`,
       resetScore: 'Reset score',
       resetAll: 'Reset everything',
       resetAllTitle: 'Resets score, ball and round — tasks are kept',
       kbHint: 'Keyboard: ←/→ ball · ⌘→ next (question/answer) · ⌘← previous question · L answer',
-      currentQuestion: 'Current question',
       btnStart: '▶ Start game', btnReveal: '👁 Reveal answer', btnNext: 'Next question ▶', btnDone: '🏁 Round finished',
-      resetTasks: '↺ Reset questions',
+      resetTasks: 'Reset questions',
       resetTasksTitle: 'Back to the start — tasks are kept',
       order: 'Order', orderSeq: 'In order', orderRnd: 'Random',
       counterNone: 'No tasks yet.',
@@ -986,9 +977,9 @@
     setIfNotFocused("name1", state.teams[0]);
     setIfNotFocused("name2", state.teams[1]);
 
-    // Team-Buttons zeigen die aktuellen Teamnamen
-    document.getElementById("moveT1").textContent = state.teams[0];
-    document.getElementById("moveT2").textContent = state.teams[1];
+    // Team-Buttons: "Punkt <Teamname>" (i18n-Key pointFor)
+    document.getElementById("moveT1").textContent = tr("pointFor", state.teams[0]);
+    document.getElementById("moveT2").textContent = tr("pointFor", state.teams[1]);
 
     // Order- und Sprach-Toggle
     document.querySelectorAll("#orderToggle button").forEach(b => {
@@ -1241,7 +1232,6 @@
   if (isTeacher) {
     document.getElementById("moveT1").onclick = () => moveBall(+1); // Team1 -> rechts
     document.getElementById("moveT2").onclick = () => moveBall(-1); // Team2 -> links
-    document.getElementById("resetBall").onclick = () => { state.ball = 0; persistAndSync(); };
     document.getElementById("resetScore").onclick = () => {
       if (confirm(tr("confirmScore"))) { state.scores = [0,0]; persistAndSync(); }
     };

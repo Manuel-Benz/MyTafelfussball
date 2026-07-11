@@ -20,13 +20,12 @@ Beide Fenster synchronisieren sich live über `BroadcastChannel`, mit `localStor
 ## Bedienung
 
 - **Ein Button führt durchs Spiel**: „▶ Spiel starten" → „👁 Antwort aufdecken" → „Nächste Frage ▶" → … Die aufgedeckte Antwort erscheint auch auf dem Beamer.
-- **Jede Frage kommt genau einmal pro Runde** — auch im Zufallsmodus. Sind alle durch, zeigt die App „🏁 Runde beendet"; „↺ Fragen zurücksetzen" startet eine neue Runde.
+- **Jede Frage kommt genau einmal pro Runde** — auch im Zufallsmodus (Reihenfolge einstellbar in den Einstellungen). Sind alle durch, zeigt die App „🏁 Runde beendet"; „Fragen zurücksetzen" startet eine neue Runde.
 - **⌘/Strg + →** — derselbe Schritt per Tastatur: Frage zeigen, Antwort aufdecken, nächste Frage, … So klickt man sich durchs ganze Spiel.
 - **⌘/Strg + ←** — Frage zurück (Verlauf, funktioniert auch im Zufallsmodus).
-- **◀ Team 1 / Team 2 ▶** oder **Pfeiltasten ← / →** — bewegen den Ball. Hinter der letzten Station fällt er ins Tor: Punkt, Jubel, zurück zur Mitte.
+- **Punkt Team 1 / Punkt Team 2** oder **Pfeiltasten ← / →** — bewegen den Ball Richtung gegnerisches Tor. Hinter der letzten Station fällt er ins Tor: Punkt, Jubel, zurück zur Mitte.
 - **L** — Lösung auf-/verdecken (Abkürzung).
-- **↺ Fragen zurücksetzen** — startet die Runde neu (Aufgaben bleiben erhalten); „Punkte zurücksetzen" und „Ball in die Mitte" wirken separat.
-- **Alles zurücksetzen** — Punkte, Ball und Fragerunde in einem Klick; die Aufgabenliste bleibt erhalten.
+- **Zurücksetzen** (unten in der Box „Spiel"): „Punkte zurücksetzen", „Fragen zurücksetzen" (neue Runde, Aufgaben bleiben) und „Alles zurücksetzen" (Punkte, Ball und Fragerunde in einem Klick; die Aufgabenliste bleibt erhalten).
 
 ## Sprache
 
