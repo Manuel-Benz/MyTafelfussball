@@ -338,6 +338,15 @@
   /* ghost + danger = dezente Umriss-Variante statt vollrot */
   button.ghost.danger { background: transparent; color: #dc2626; border-color: rgba(220,38,38,.55); }
   button.icon { padding: 6px 10px; }
+  /* Dezenter Fensterwechsel-Button oben rechts in der Beamer-Ansicht (Optik von ghost + icon) */
+  .view-switch {
+    position: fixed; top: 10px; right: 10px; z-index: 60;
+    display: none;
+    color: var(--muted); font-size: 12px;
+    opacity: .35;
+  }
+  .view-switch:hover { opacity: 1; color: var(--text); }
+  body.view-beamer .view-switch { display: block; }
   /* Sprechblase über "Spiel starten", wenn noch keine Aufgaben da sind */
   .hint-anchor { position: relative; }
   .hint-anchor button:disabled { pointer-events: none; } /* Hover/Klick landen auf dem Wrapper */
@@ -469,7 +478,7 @@
       <h2 data-i18n="beamerCardTitle">Beamer-Ansicht</h2>
       <p data-i18n="beamerCardText">Für die Klasse. Spielfeld, Punkte, Frage — ohne Lösung. Öffnet als eigenes Fenster.</p>
     </a>
-    <a class="launch-card" href="?view=lehrer" target="_blank" rel="noopener">
+    <a class="launch-card" id="cardLehrer" href="?view=lehrer" target="_blank" rel="noopener">
       <h2 data-i18n="teacherCardTitle">Lehrer:innen-Ansicht</h2>
       <p data-i18n="teacherCardText">Steuerung, Aufgabenverwaltung und die Lösung.</p>
     </a>
@@ -591,9 +600,14 @@
       <div class="row grow" style="margin-top:8px">
         <button class="ghost" id="resetAll" data-i18n="resetAll" data-i18n-title="resetAllTitle" title="Punkte, Ball und Fragerunde zurücksetzen — Aufgaben bleiben erhalten">Alles zurücksetzen</button>
       </div>
+      <div class="row grow" style="margin-top:8px">
+        <button class="ghost" id="gotoBeamer" data-i18n="toBeamer">🖥 Zur Beamer-Ansicht</button>
+      </div>
     </div>
   </aside>
 </div>
+
+<button class="ghost icon view-switch" id="gotoLehrer" data-i18n="toTeacher">Zur Lehrer:innen-Ansicht</button>
 
 <div class="goal-flash" id="goalFlash">TOR!</div>
 <canvas id="confetti"></canvas>
@@ -642,6 +656,8 @@
       btnStart: '▶ Spiel starten', btnReveal: '👁 Antwort aufdecken', btnNext: 'Nächste Frage ▶', btnDone: '🏁 Runde beendet',
       resetTasks: 'Fragen zurücksetzen',
       resetTasksTitle: 'Zurück zum Start — Aufgaben bleiben erhalten',
+      toBeamer: '🖥 Zur Beamer-Ansicht',
+      toTeacher: 'Zur Lehrer:innen-Ansicht',
       order: 'Reihenfolge', orderSeq: 'Der Reihe nach', orderRnd: 'Zufällig',
       counterNone: 'Keine Aufgaben erfasst.',
       startHint: 'Keine Aufgaben erfasst — oben unter „Aufgaben" hinzufügen oder eine .txt-Datei ins Fenster ziehen.',
@@ -693,6 +709,8 @@
       btnStart: '▶ Start game', btnReveal: '👁 Reveal answer', btnNext: 'Next question ▶', btnDone: '🏁 Round finished',
       resetTasks: 'Reset questions',
       resetTasksTitle: 'Back to the start — tasks are kept',
+      toBeamer: '🖥 To projector view',
+      toTeacher: 'To teacher view',
       order: 'Order', orderSeq: 'In order', orderRnd: 'Random',
       counterNone: 'No tasks yet.',
       startHint: 'No tasks yet — add them under “Tasks” above or drag a .txt file into the window.',
@@ -758,25 +776,40 @@
   favicon.href = "data:image/svg+xml;utf8," + encodeURIComponent(ballSvg());
   document.head.appendChild(favicon);
 
+  // ---------- Fensterwechsel (Launcher & Lehrer ↔ Beamer) ----------
+  // Eigenes Fenster benennen, damit die Gegenseite es per window.open(name) wiederfindet.
+  const WIN_NAMES = { beamer: "tafelfussball_beamer", lehrer: "tafelfussball_lehrer" };
+  if (view === "beamer" || view === "lehrer") window.name = WIN_NAMES[view];
+
+  function focusOrOpenView(target) {
+    const url = "?view=" + target;
+    let features = "";
+    if (target === "beamer") {
+      // Beamer als eigenes Fenster (statt Tab), mittig und möglichst gross
+      const w = Math.min(screen.availWidth || 1400, 1600);
+      const h = Math.min(screen.availHeight || 900, 1000);
+      const left = Math.max(0, ((screen.availWidth || w) - w) / 2 | 0);
+      const top = Math.max(0, ((screen.availHeight || h) - h) / 2 | 0);
+      features = `popup=yes,width=${w},height=${h},left=${left},top=${top}`;
+    }
+    // Leere URL: ein bereits offenes Fenster kommt ohne Neuladen zurück
+    const win = window.open("", WIN_NAMES[target], features);
+    if (!win) { window.open(url, "_blank"); return; } // Popup blockiert
+    if (win.location.href === "about:blank") win.location.href = url;
+    win.focus();
+  }
+
   if (view !== "beamer" && view !== "lehrer") {
     currentLang = storedLang();
     applyTranslations();
     applyTheme(storedTheme());
     document.getElementById("logoBall").innerHTML = ballSvg();
 
-    // Launcher: Beamer-Ansicht als eigenes Fenster öffnen (statt neuem Tab)
+    // Launcher: Ansichten öffnen bzw. bereits offene Fenster in den Vordergrund holen
     const beamerCard = document.getElementById("cardBeamer");
-    if (beamerCard) beamerCard.addEventListener("click", (e) => {
-      e.preventDefault();
-      const w = Math.min(screen.availWidth || 1400, 1600);
-      const h = Math.min(screen.availHeight || 900, 1000);
-      const left = Math.max(0, ((screen.availWidth || w) - w) / 2 | 0);
-      const top = Math.max(0, ((screen.availHeight || h) - h) / 2 | 0);
-      const win = window.open("?view=beamer", "tafelfussball_beamer",
-        `popup=yes,width=${w},height=${h},left=${left},top=${top}`);
-      if (win) win.focus();
-      else window.open("?view=beamer", "_blank"); // Fallback, falls Popup blockiert
-    });
+    if (beamerCard) beamerCard.addEventListener("click", (e) => { e.preventDefault(); focusOrOpenView("beamer"); });
+    const lehrerCard = document.getElementById("cardLehrer");
+    if (lehrerCard) lehrerCard.addEventListener("click", (e) => { e.preventDefault(); focusOrOpenView("lehrer"); });
 
     return; // keine Spiellogik nötig
   }
@@ -1300,8 +1333,12 @@
     else { animating = false; ctx.clearRect(0,0,canvas.width,canvas.height); }
   }
 
+  // ---------- Fensterwechsel-Buttons (Beamer ↔ Lehrer:innen) ----------
+  if (!isTeacher) document.getElementById("gotoLehrer").onclick = () => focusOrOpenView("lehrer");
+
   // ---------- Teacher controls wiring ----------
   if (isTeacher) {
+    document.getElementById("gotoBeamer").onclick = () => focusOrOpenView("beamer");
     document.getElementById("moveT1").onclick = () => moveBall(+1); // Team1 -> rechts
     document.getElementById("moveT2").onclick = () => moveBall(-1); // Team2 -> links
 

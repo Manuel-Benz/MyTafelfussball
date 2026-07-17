@@ -17,6 +17,8 @@ Die Lehrperson stellt Fragen. Die richtig antwortende Mannschaft bewegt den Ball
 
 Beide Fenster synchronisieren sich live über `BroadcastChannel`, mit `localStorage` als Fallback und Persistenz.
 
+Jede Ansicht hat einen Wechsel-Button zur anderen (Lehrer:innen: unten in der Box „Spiel"; Beamer: dezent oben rechts). Ist das Zielfenster schon offen, wird es nur in den Vordergrund geholt — sonst öffnet es sich neu.
+
 ## Bedienung
 
 - **Ein Button führt durchs Spiel**: „▶ Spiel starten" → „👁 Antwort aufdecken" → „Nächste Frage ▶" → … Die aufgedeckte Antwort erscheint auch auf dem Beamer.

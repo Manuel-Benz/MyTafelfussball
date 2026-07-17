@@ -11,6 +11,7 @@ Digitales Quizspiel „MyTafelfussball" für den Unterricht. Features und Bedien
 
 - Beamer-Ansicht (`?view=beamer`) und Lehrer:innen-Ansicht (`?view=lehrer`) synchronisieren über `BroadcastChannel`, mit `localStorage` als Fallback.
 - Neue Features müssen in beiden Fenstern konsistent funktionieren.
+- Die Fenster benennen sich per `window.name` (`tafelfussball_beamer`/`tafelfussball_lehrer`); `focusOrOpenView()` fokussiert ein offenes Fenster statt ein Duplikat zu öffnen — neue Öffnen-Wege sollen darüber laufen.
 - Die Beamer-Ansicht zeigt **nie** die Lösung — ausser sie wurde explizit aufgedeckt.
 
 ## i18n
