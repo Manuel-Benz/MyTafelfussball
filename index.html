@@ -170,12 +170,12 @@
   @media (prefers-color-scheme: dark) { :root:not([data-modus]) .stands .nacht { display: inline; } }
   /* Torjubel des Blocks (A: hüpfen, B: Arme hoch), Verzögerung pro Fan in --d */
   .stands .fan.cheer .bod { animation: fan-hop .9s var(--d) ease-out; }
-  .stands .fan.cheer .arm.l { animation: arm-l 1.3s var(--d) cubic-bezier(.3,1.5,.5,1); }
-  .stands .fan.cheer .arm.r { animation: arm-r 1.3s var(--d) cubic-bezier(.3,1.5,.5,1); }
+  .stands .fan.cheer .arm { animation: fan-arm 1.3s var(--d) cubic-bezier(.3,1.5,.5,1); }
   .stands .arm { transform-box: view-box; }
+  .stands .arm.l { --arm-w: 150deg; }
+  .stands .arm.r { --arm-w: -150deg; }
   @keyframes fan-hop { 0%,100% { transform: none; } 25% { transform: translateY(-5px); } 50% { transform: none; } 70% { transform: translateY(-3.5px); } }
-  @keyframes arm-l { 0%,100% { transform: none; } 20%,78% { transform: rotate(150deg); } }
-  @keyframes arm-r { 0%,100% { transform: none; } 20%,78% { transform: rotate(-150deg); } }
+  @keyframes fan-arm { 0%,100% { transform: none; } 20%,78% { transform: rotate(var(--arm-w)); } }
   @media (prefers-reduced-motion: reduce) { .stands .fan.cheer * { animation: none !important; } }
   body.view-lehrer #app {
     grid-template-columns: 1fr 380px;
@@ -556,7 +556,6 @@
   @keyframes reveal-in { from { opacity: 0; } to { opacity: 1; } }
   @media (prefers-reduced-motion: reduce) {
     .score-num.bump, .answer-inline.show, .goal-flash.show { animation: none; }
-    .screen-flash, #confetti { display: none; }
   }
 
   /* Datei-Import */
@@ -1222,6 +1221,7 @@
   let ballWatchdog = null; // holt den Ball aus dem Tor, falls das auslösende Fenster weg ist
   let lastLang = null; // Sprachwechsel erkennen
   let lastLook = null; // Wechsel von Darstellung/Schema/Ton erkennen
+  let lastStandsSchema = null; // Tribüne nur bei Schemawechsel neu zeichnen (Beamer)
   let renderCollHook = null; // Sammlung zeichnen (nur Lehrer:innen-Fenster, s. unten)
 
   // Einstellungen: Schema-Auswahl und Ton-Tupfer (Farben lesen sich live aus dem Schema)
@@ -1245,8 +1245,11 @@
     if (lastLook !== look) {
       applyLook(state);
       lastLook = look;
-      if (!isTeacher) buildStands(); // Trikotfarben hängen am Schema
       if (isTeacher) renderLookControls();
+      else if (lastStandsSchema !== state.schema) { // Trikotfarben hängen nur am Schema (Ton/Modus gehen live über Tokens)
+        buildStands();
+        lastStandsSchema = state.schema;
+      }
     }
     // Sprache anwenden (beim Start und bei Wechsel; synchronisiert auch den Beamer)
     if (lastLang !== state.lang) {
@@ -1564,10 +1567,9 @@
     flashScreen(teamColor(team));
     // Konfetti steigt aus dem Tor auf, in das der Ball ging (Team 1 schiesst nach rechts)
     const net = fieldEl.querySelector(team === 0 ? ".goal.right .net" : ".goal.left .net");
-    const r = net && net.getBoundingClientRect();
+    const r = net.getBoundingClientRect();
     burst(teamShades(team), {
-      x: r ? r.left + r.width / 2 : canvas.width / 2,
-      y: r ? r.top + r.height / 2 : canvas.height / 2,
+      x: r.left + r.width / 2, y: r.top + r.height / 2,
       count: 160, speed: 18, aim: team === 0 ? -1 : 1
     });
   }
@@ -1618,11 +1620,8 @@
 
   // Hex-Farbe Richtung Weiss mischen (Canvas versteht color-mix nicht überall)
   function mixWhite(hex, t) {
-    const m = /^#?([0-9a-f]{6})$/i.exec(hex);
-    if (!m) return hex;
-    const n = parseInt(m[1], 16);
-    const ch = k => Math.round(((n >> k) & 255) * (1 - t) + 255 * t);
-    return `rgb(${ch(16)},${ch(8)},${ch(0)})`;
+    const c = hexRgb(hex);
+    return c ? `rgb(${c.map(v => Math.round(v * (1 - t) + 255 * t)).join(",")})` : hex;
   }
 
   // Ein Canvas für alle Effekte (keine Abhängigkeit). Schnipsel = Rechtecke (Konfetti),
@@ -1661,7 +1660,7 @@
     particles.forEach(p => {
       p.vy += p.g; p.x += p.vx; p.y += p.vy; p.rot += p.vr; p.life--;
       if (p.dot) { p.vx *= .97; p.vy *= .97; }
-      ctx.globalAlpha = Math.min(1, p.life / (p.ttl * .35));
+      ctx.globalAlpha = Math.max(0, Math.min(1, p.life / (p.ttl * .35))); // negativ würde ignoriert (Vorgänger-Alpha)
       ctx.fillStyle = p.color;
       if (p.dot) {
         ctx.beginPath(); ctx.arc(p.x, p.y, p.size / 2, 0, 6.283); ctx.fill();
@@ -1700,7 +1699,7 @@
     const box = document.getElementById("stands");
     if (!box || isTeacher) return;
     const css = getComputedStyle(document.documentElement);
-    const teamRgb = [hexRgb(css.getPropertyValue("--team1")), hexRgb(css.getPropertyValue("--team2"))];
+    const teamRgb = [0, 1].map(t => hexRgb(teamColor(t)));
     const near = (a, b) => a && b && Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]) < 90;
     const seen = [];
     const extras = SHIRT_EXTRAS.filter(v => {
@@ -1775,8 +1774,7 @@
       out.push(`<text class="bn t${t}" x="${x}" y="142" text-anchor="middle" style="fill:var(--team${t + 1}-ink);font:900 11px var(--schrift);letter-spacing:.08em"></text>`);
     });
 
-    box.innerHTML = `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid slice">${out.join("")}</svg>`;
-    updateStandsBanners();
+    box.innerHTML = `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid slice">${out.join("")}</svg>`; // Teamnamen setzt render() danach
 
     // Ein Fan: Arme (heben sich beim Jubel um die Schulter), Rumpf, Kopf, Frisur, Extras
     function fan(x, y, s, t, ri) {
@@ -1835,19 +1833,22 @@
   // Teamnamen auf den Zaunfahnen (ändern sich ohne Neuzeichnen)
   function updateStandsBanners() {
     document.querySelectorAll("#stands .bn").forEach(el => {
-      const name = state.teams[el.classList.contains("t1") ? 1 : 0];
-      el.textContent = (name.length > 18 ? name.slice(0, 17) + "…" : name).toUpperCase();
+      const chars = Array.from(state.teams[el.classList.contains("t1") ? 1 : 0]); // Emoji nicht zerreissen
+      const txt = (chars.length > 18 ? chars.slice(0, 17).join("") + "…" : chars.join("")).toUpperCase();
+      if (el.textContent !== txt) el.textContent = txt; // läuft bei jedem render()
     });
   }
 
   // Torjubel im Block des Teams, das getroffen hat: hüpfen und Arme hoch, leicht versetzt
+  let cheerTimer = null;
   function cheerStands(team) {
     const fans = document.querySelectorAll(`#stands .fan.t${team}`);
     if (!fans.length) return;
     fans.forEach(el => { el.classList.remove("cheer"); el.style.setProperty("--d", Math.round(Math.random() * 260) + "ms"); });
     void document.getElementById("stands").offsetWidth;
     fans.forEach(el => el.classList.add("cheer"));
-    setTimeout(() => fans.forEach(el => el.classList.remove("cheer")), 1800);
+    clearTimeout(cheerTimer); // ein zweites Tor verlängert den Jubel, statt vom alten Timer gekappt zu werden
+    cheerTimer = setTimeout(() => document.querySelectorAll("#stands .fan.cheer").forEach(el => el.classList.remove("cheer")), 1800);
   }
 
   // ---------- Fensterwechsel-Buttons (Beamer ↔ Lehrer:innen) ----------
