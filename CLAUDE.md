@@ -29,6 +29,7 @@ Digitales Quizspiel „MyTafelfussball" für den Unterricht. Features und Bedien
 - Sammlung unter `tafelfussball_sammlung` (`{ sets, folders }`), **nicht** im Spiel-State — lebt nur im Lehrer:innen-Fenster, der Beamer braucht sie nie. Im State steht nur `setId` (geladenes Set, für „Speichern"/„geändert").
 - Set-Titel = Dateiname (darum `cleanName`); «dasselbe Set» = Ordner + Titel ohne Gross/Klein (`place`).
 - Ordner auf der Platte: Logik aus MyVoci/MyMemory (`readDir`/`fromDisk`/`mirrorDir`, Handle in IndexedDB `mytafelfussball`→`kv`→`dir`, `mirrored` = Stand, den der Ordner zuletzt sah, eine Promise-Kette `enqueue`, Nachlesen beim Fenster-Fokus). Begründungen in der CLAUDE.md von MyVoci.
+- Stolpersteine: Ein Set ohne Frage gibt es nicht (`readDir` lässt solche Dateien aus) — darum speichert `saveAs` nie eine leere Liste. Versteckte Dateien (`.DS_Store`) zählen weder beim Lesen noch in `removeEmptyDir`; sonst bliebe ein gelöschter/umbenannter Ordner stehen und käme als Geisterordner zurück.
 - Sichtprüfung headless: das OPFS-Wurzelverzeichnis (`navigator.storage.getDirectory()`) als Handle in IndexedDB legen — dann läuft der ganze Ordner-Weg ohne Dateiauswahl.
 
 ## Design (My-Designsystem)

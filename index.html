@@ -648,7 +648,7 @@
     <details class="panel collapsible" id="tasksBox">
       <summary><span data-i18n="tasks">Aufgaben</span> (<span id="taskCount">0</span>)</summary>
       <h3 data-i18n="collTitle">Sammlung</h3>
-      <div class="coll-tree" id="collTree"></div>
+      <div class="coll-tree" id="collTree" data-dir=""></div>
       <div class="row" style="margin-top:8px">
         <button class="ghost small" id="newFolder" data-i18n="newFolder">Neuer Ordner</button>
       </div>
@@ -1646,8 +1646,7 @@
     // Aufgaben als .txt im Import-Format sichern (Backup, Gerätewechsel, Weitergabe).
     // Ohne Aufgaben ist der Button disabled (renderControls), ein Leer-Guard ist unnötig.
     document.getElementById("exportTasks").onclick = () => {
-      const txt = state.tasks.map(t => `${tr("exportMarker")}: ${t.q}\nA: ${t.a}`).join("\n---\n") + "\n";
-      const url = URL.createObjectURL(new Blob([txt], { type: "text/plain;charset=utf-8" }));
+      const url = URL.createObjectURL(new Blob([toFile(state.tasks, tr("exportMarker"))], { type: "text/plain;charset=utf-8" }));
       const a = document.createElement("a");
       a.href = url;
       a.download = `tafelfussball-aufgaben-${new Date().toISOString().slice(0, 10)}.txt`;
@@ -1853,14 +1852,15 @@
     const cleanName = (s) => String(s || "").replace(/[\/\\:*?"<>|\u0000-\u001f]/g, "-").replace(/\s+/g, " ").trim().replace(/^\.+/, "");
     const cleanPath = (p) => String(p || "").split("/").map(cleanName).filter(Boolean).join("/");
     const place = (x) => (x.dir + "\u0000" + x.title).toLowerCase(); // Gross/Klein: macOS/Windows kennen keinen Unterschied
-    const byTitle = (a, b) => a.title.localeCompare(b.title, undefined, { numeric: true, sensitivity: "base" });
+    const collate = (a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: "base" });
+    const byTitle = (a, b) => collate(a.title, b.title);
     const parentOf = (p) => p.includes("/") ? p.slice(0, p.lastIndexOf("/")) : "";
     const leafOf = (p) => p.slice(p.lastIndexOf("/") + 1);
     const inDir = (d, root) => d === root || d.startsWith(root + "/");
     const newSetId = () => "s" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
     const plainTasks = (tasks) => tasks.map(t => ({ q: t.q, a: t.a }));
     const sameTasks = (a, b) => JSON.stringify(plainTasks(a)) === JSON.stringify(plainTasks(b));
-    const toFile = (tasks) => tasks.map(t => `F: ${t.q}\nA: ${t.a}`).join("\n---\n") + "\n";
+    const toFile = (tasks, marker = "F") => tasks.map(t => `${marker}: ${t.q}\nA: ${t.a}`).join("\n---\n") + "\n";
 
     // Alle Ordner: die gemerkten plus jeder Pfad (samt Eltern), in dem ein Set liegt
     function allFolders(c) {
@@ -1880,7 +1880,12 @@
       renderColl();
       mirrorSoon();
     }
-    const loadedSet = () => coll.sets.find(x => x.id === state.setId) || null;
+    const setById = (id) => coll.sets.find(x => x.id === id);
+    const loadedSet = () => setById(state.setId);
+    // Das Set mit diesem Titel in diesem Ordner (ausser `exceptId`)
+    const atPlace = (title, dir, exceptId) => coll.sets.find(x => x.id !== exceptId && place(x) === place({ title, dir }));
+    // Die Sets, mit einer Änderung an genau einem davon
+    const patched = (id, patch) => coll.sets.map(x => x.id === id ? { ...x, ...patch } : x);
     // Gibt es eine Liste, die beim Laden verloren ginge?
     function listIsUnsaved() {
       const cur = loadedSet();
@@ -1896,10 +1901,11 @@
     function renderColl() {
       const cur = loadedSet();
       // Status der aktuellen Liste: billig, darum bei jedem Rendern
+      const unchanged = !!cur && sameTasks(cur.tasks, state.tasks);
       setStatus.innerHTML = cur
-        ? tr("setLinked", escapeHtml(cur.title)) + (sameTasks(cur.tasks, state.tasks) ? "" : ` · <span class="changed">${tr("setChanged")}</span>`)
+        ? tr("setLinked", escapeHtml(cur.title)) + (unchanged ? "" : ` · <span class="changed">${tr("setChanged")}</span>`)
         : (state.tasks.length ? escapeHtml(tr("setUnsaved")) : "");
-      document.getElementById("saveSet").disabled = state.tasks.length === 0 || (cur && sameTasks(cur.tasks, state.tasks));
+      document.getElementById("saveSet").disabled = state.tasks.length === 0 || unchanged;
       document.getElementById("saveSetAs").disabled = state.tasks.length === 0;
 
       const sig = collVer + "|" + state.setId + "|" + currentLang + "|" + link.status + "|" + [...closed].join("/");
@@ -1910,7 +1916,7 @@
       const countIn = (d) => coll.sets.filter(x => inDir(x.dir, d)).length;
       const tree = (dir) => {
         let html = "";
-        folders.filter(f => parentOf(f) === dir).sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: "base" }))
+        folders.filter(f => parentOf(f) === dir).sort(collate)
           .forEach(f => {
             const open = !closed.has(f);
             html += `<div class="coll-row folder${open ? " open" : ""}" data-dir="${escapeHtml(f)}">
@@ -1935,16 +1941,17 @@
         });
         return html;
       };
-      collTree.dataset.dir = "";
       collTree.innerHTML = (coll.sets.length || folders.length) ? tree("") : `<div class="coll-empty">${tr("collEmpty")}</div>`;
 
       // Ordner auf dem Computer: Angebot, Freigabe, Fehler oder Verbunden
       const name = escapeHtml(link.handle ? link.handle.name : "");
+      const dirBtn = (act, label, cls = "ghost") => `<button class="${cls}" data-dir-act="${act}">${tr(label)}</button>`;
+      const dirRow = (first) => `<div class="row">${first}${dirBtn("disconnect", "dirDisconnect")}</div>`;
       dirLine.innerHTML =
-          link.status === "none" ? `<p>${tr("dirOffer")}</p><button class="ghost" data-dir-act="connect">${tr("dirChoose")}</button>`
-        : link.status === "prompt" ? `<p class="warn">${tr("dirPrompt", name)}</p><div class="row"><button class="primary" data-dir-act="reconnect">${tr("dirReconnect")}</button><button class="ghost" data-dir-act="disconnect">${tr("dirDisconnect")}</button></div>`
-        : link.status === "error" ? `<p class="err">${tr("dirError", name)}</p><div class="row"><button data-dir-act="refresh">${tr("dirReload")}</button><button class="ghost" data-dir-act="disconnect">${tr("dirDisconnect")}</button></div>`
-        : link.status === "ok" ? `<p>${tr("dirConnected", name, coll.sets.length)}</p><div class="row"><button class="ghost" data-dir-act="refresh">${tr("dirReload")}</button><button class="ghost" data-dir-act="disconnect">${tr("dirDisconnect")}</button></div>`
+          link.status === "none" ? `<p>${tr("dirOffer")}</p>${dirBtn("connect", "dirChoose")}`
+        : link.status === "prompt" ? `<p class="warn">${tr("dirPrompt", name)}</p>${dirRow(dirBtn("reconnect", "dirReconnect", "primary"))}`
+        : link.status === "error" ? `<p class="err">${tr("dirError", name)}</p>${dirRow(dirBtn("refresh", "dirReload", ""))}`
+        : link.status === "ok" ? `<p>${tr("dirConnected", name, coll.sets.length)}</p>${dirRow(dirBtn("refresh", "dirReload"))}`
         : ""; // Safari/iPad: kein Ordner möglich, dann steht hier nichts
     }
 
@@ -1954,13 +1961,12 @@
     function storeList(title, dir) {
       title = cleanName(title);
       if (!title) return;
-      const target = { title, dir };
-      const other = coll.sets.find(x => place(x) === place(target));
+      const other = atPlace(title, dir);
       if (other && other.id !== state.setId && !confirm(tr("nameTaken", other.title))) return;
       const tasks = plainTasks(state.tasks);
       let sets;
       if (other) {
-        sets = coll.sets.map(x => x.id === other.id ? { ...x, tasks } : x);
+        sets = patched(other.id, { tasks });
         state.setId = other.id;
       } else {
         const id = newSetId();
@@ -1971,6 +1977,7 @@
       persistAndSync();
     }
     function saveAs(dir) {
+      if (!state.tasks.length) return; // 💾 am Ordner ist nie gesperrt; ein leeres Set gäbe es im Ordner nicht
       const cur = loadedSet();
       const title = prompt(tr("askSetName"), cur && dir === undefined ? cur.title : "");
       if (title === null) return;
@@ -1979,13 +1986,13 @@
     document.getElementById("saveSet").onclick = () => {
       const cur = loadedSet();
       if (!cur) return saveAs();
-      commitColl({ ...coll, sets: coll.sets.map(x => x.id === cur.id ? { ...x, tasks: plainTasks(state.tasks) } : x) });
+      commitColl({ ...coll, sets: patched(cur.id, { tasks: plainTasks(state.tasks) }) });
       toastBtn("saveSet", tr("savedOk"));
     };
     document.getElementById("saveSetAs").onclick = () => saveAs();
 
     function loadSet(id) {
-      const x = coll.sets.find(s => s.id === id);
+      const x = setById(id);
       if (!x) return;
       if (x.id === state.setId && !listIsUnsaved()) return; // schon geladen, nichts geändert
       // Nochmals dasselbe Set = Änderungen verwerfen; ein anderes = aktuelle Liste ersetzen
@@ -2026,24 +2033,24 @@
       commitColl({ ...coll, folders: allFolders(coll).filter(f => !inDir(f, dir)) });
     }
     function renameSet(id) {
-      const x = coll.sets.find(s => s.id === id);
+      const x = setById(id);
       const title = cleanName(prompt(tr("askSetName"), x.title));
       if (!title || title === x.title) return;
-      if (coll.sets.some(y => y.id !== id && place(y) === place({ title, dir: x.dir }))) { alert(tr("nameTakenRename", title)); return; }
+      if (atPlace(title, x.dir, id)) { alert(tr("nameTakenRename", title)); return; }
       // ohne `file`: die Datei heisst danach wie der neue Titel
-      commitColl({ ...coll, sets: coll.sets.map(y => y.id === id ? { ...y, title, file: undefined } : y) });
+      commitColl({ ...coll, sets: patched(id, { title, file: undefined }) });
     }
     function deleteSet(id) {
-      const x = coll.sets.find(s => s.id === id);
+      const x = setById(id);
       if (!confirm(tr("confirmDeleteSet", x.title))) return;
       commitColl({ ...coll, sets: coll.sets.filter(y => y.id !== id) });
       if (state.setId === id) { state.setId = null; persistAndSync(); }
     }
     function moveSet(id, dir) {
-      const x = coll.sets.find(s => s.id === id);
+      const x = setById(id);
       if (!x || x.dir === dir) return;
-      if (coll.sets.some(y => y.id !== id && place(y) === place({ title: x.title, dir }))) { alert(tr("nameTakenRename", x.title)); return; }
-      commitColl({ ...coll, sets: coll.sets.map(y => y.id === id ? { ...y, dir } : y) });
+      if (atPlace(x.title, dir, id)) { alert(tr("nameTakenRename", x.title)); return; }
+      commitColl({ ...coll, sets: patched(id, { dir }) });
     }
 
     collTree.addEventListener("click", (e) => {
@@ -2153,20 +2160,23 @@
         }
       };
       await walk(root, "");
-      const sets = [];
-      for (const { name, dir, entry } of files) {
+      const keys = new Set(files.map(f => `${f.dir}/${f.name}`));
+      readCache.forEach((_, k) => { if (!keys.has(k)) readCache.delete(k); }); // gelöschte/umbenannte Dateien nicht ewig mitschleppen
+      // Die Dateien unabhängig voneinander lesen (Promise.all behält die Reihenfolge)
+      const read = await Promise.all(files.map(async ({ name, dir, entry }) => {
         const file = await entry.getFile();
         const key = `${dir}/${name}`, hit = readCache.get(key);
         let tasks;
         if (hit && hit.mod === file.lastModified && hit.size === file.size) tasks = hit.tasks;
         else { tasks = parseTasks(await file.text()); readCache.set(key, { mod: file.lastModified, size: file.size, tasks }); }
-        if (!tasks.length) continue;
+        if (!tasks.length) return null;
         const title = name.replace(/\.(txt|md)$/i, "");
         // `file` nur, wenn der echte Dateiname nicht «Titel.txt» ist (z. B. .md): dann schreibt die App dorthin zurück
         const x = { title, dir, tasks, disk: true };
         if (name !== `${title}.txt`) x.file = name;
-        sets.push(x);
-      }
+        return x;
+      }));
+      const sets = read.filter(Boolean);
       return { sets, folders };
     }
 
@@ -2186,8 +2196,10 @@
     }
     async function removeEmptyDir(root, path) {
       try {
-        for await (const _ of (await dirOf(root, path, false)).keys()) return; // nicht leer -> bleibt stehen
-        await (await dirOf(root, parentOf(path), false)).removeEntry(leafOf(path));
+        // Versteckte Dateien (.DS_Store …) zählen nicht — readDir überspringt sie ebenfalls;
+        // sonst bliebe der Ordner stehen und käme beim Nachlesen als Geisterordner zurück.
+        for await (const name of (await dirOf(root, path, false)).keys()) if (!name.startsWith(".")) return;
+        await (await dirOf(root, parentOf(path), false)).removeEntry(leafOf(path), { recursive: true });
       } catch {}
     }
 

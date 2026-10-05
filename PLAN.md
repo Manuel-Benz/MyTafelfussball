@@ -10,6 +10,10 @@
 - ✅ Umgesetzt: „Sammlung" oben in der Box „Aufgaben" — Sets in Ordnern (kompakte Liste), speichern, laden, umbenennen, löschen, per Ziehen verschieben.
 - ✅ Dazu wie MyVoci/MyMemory: optional als .txt-Dateien in einem Ordner auf dem Computer (Chrome/Edge).
 
+- Offen (bekannte Grenzen des Ordners):
+  - Nach «Ordner freigeben» (oder «Neu laden») gilt der Ordner: Änderungen an Sets, die im Browser gespeichert wurden, solange der Ordner noch nicht freigegeben war, gehen verloren. Lösung bräuchte einen Merker «noch nicht gespiegelt» pro Set.
+  - Das .txt-Format kennt kein Escaping: Zeilen in Frage/Antwort, die mit `A:`/`F:`/`Q:` beginnen oder `---` lauten (z. B. Multiple-Choice «A: …»), werden beim Zurücklesen falsch gedeutet.
+
 ### 2. Export/Backup als Datei (Sicherheitsnetz)
 - ✅ Für die aktuelle Aufgabenliste umgesetzt: Button „Exportieren (.txt)" im Aufgaben-Panel schreibt alle Aufgaben im Import-Format (`F:`/`A:`/`---`) — direkt wieder importierbar.
 - Offen für später: ganze Sammlung (mehrere Sets) als eine JSON-Datei exportieren und wieder importieren.
