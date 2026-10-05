@@ -12,7 +12,7 @@ Die Lehrperson stellt Fragen. Die richtig antwortende Mannschaft bewegt den Ball
 
 Öffne die App und wähle im Launcher eine Ansicht (jeweils in einem eigenen Fenster):
 
-- **📺 Beamer-Ansicht** (`?view=beamer`) — für die Klasse auf dem Projektor. Zeigt Spielfeld, Ball, Punkte und Frage. **Nie die Lösung.**
+- **📺 Beamer-Ansicht** (`?view=beamer`) — für die Klasse auf dem Projektor. Zeigt Spielfeld, Ball, Punkte und Frage, darüber eine Tribüne mit den Fans beider Teams (in den Farben des Schemas). **Nie die Lösung.**
 - **🎛️ Lehrer:innen-Ansicht** (`?view=lehrer`) — auf dem Laptop. Steuerung, Aufgabenverwaltung und die Lösung.
 
 Beide Fenster synchronisieren sich live über `BroadcastChannel`, mit `localStorage` als Fallback und Persistenz.
@@ -25,7 +25,7 @@ Jede Ansicht hat einen Wechsel-Button zur anderen (Lehrer:innen: oben rechts in 
 - **Jede Frage kommt genau einmal pro Runde** — auch im Zufallsmodus (Reihenfolge einstellbar in den Einstellungen). Sind alle durch, zeigt die App „🏁 Runde beendet"; „Fragen zurücksetzen" startet eine neue Runde.
 - **⌘/Strg + →** — derselbe Schritt per Tastatur: Frage zeigen, Antwort aufdecken, nächste Frage, … So klickt man sich durchs ganze Spiel.
 - **⌘/Strg + ←** — Frage zurück (Verlauf, funktioniert auch im Zufallsmodus).
-- **Punkt Team 1 / Punkt Team 2** oder **Pfeiltasten ← / →** — bewegen den Ball Richtung gegnerisches Tor. Hinter der letzten Station fällt er ins Tor: Punkt, Jubel, zurück zur Mitte.
+- **Punkt Team 1 / Punkt Team 2** oder **Pfeiltasten ← / →** — bewegen den Ball Richtung gegnerisches Tor. Hinter der letzten Station fällt er ins Tor: Punkt, Jubel (Konfetti, die Fans des Teams springen auf), zurück zur Mitte. Am Ende der Runde gibt es ein Feuerwerk für das führende Team.
 - **L** — Lösung auf-/verdecken (Abkürzung).
 - **Zurücksetzen** (unten in der Box „Spiel"): „Punkte zurücksetzen", „Fragen zurücksetzen" (neue Runde, Aufgaben bleiben) und „Alles zurücksetzen" (Punkte, Ball und Fragerunde in einem Klick; die Aufgabenliste bleibt erhalten).
 

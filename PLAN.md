@@ -34,3 +34,10 @@
 - Die Seitenleiste besteht damit aus drei Boxen: Einstellungen, Aufgaben (beide einklappbar), Spiel. Eine Tab-Aufteilung ist damit wohl nicht mehr nötig.
 - ✅ Einstieg vereinfacht: Box „Aufgaben" öffnet sich beim Start automatisch, solange keine Aufgaben erfasst sind; Hover/Klick auf „Spiel starten" zeigt dann eine Sprechblase mit den Erfassungswegen.
 - ✅ Die Sammlung (siehe oben) sitzt in der Box „Aufgaben".
+
+---
+
+## Beamer-Ansicht (angelehnt an MyKahoot/MyMemory)
+- ✅ Rückmeldungen: Funken beim Ballschritt (nur gespielte Schritte, Zähler `kicks`), Tor mit Konfetti aus dem Tor, Farbblitz und springender Punktzahl, Lösung blendet ein, Feuerwerk am Rundenende.
+- ✅ Tribüne oben: zwei Fanblöcke in Team- und Schemafarben, Dach mit Flutlicht, Bande mit Zaunfahnen (Teamnamen); beim Tor hüpft der Block und reisst die Arme hoch.
+- Offen (Ideen): Frage als grosse Karte, die beim Aufdecken kippt; Teamfarbe als Ring/Balken beim Team am Zug; Schlussbildschirm mit Podium.

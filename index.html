@@ -143,8 +143,9 @@
 
   body.view-beamer #app {
     grid-template-columns: 1fr;
-    grid-template-rows: auto auto 1fr; /* Feld fix, Frage/Antwort kriegen den Rest */
+    grid-template-rows: auto auto auto 1fr; /* Feld fix, Frage/Antwort kriegen den Rest */
     grid-template-areas:
+      "stands"
       "score"
       "field"
       "question";
@@ -152,6 +153,30 @@
     gap: 2vmin;
   }
   body.view-beamer .field { height: 38vh; } /* konstant, unabhängig von Frage-/Antwortlänge */
+
+  /* ---------- Tribüne (nur Beamer) ----------
+     Zwei Fanblöcke über dem Spielstand, links Team 1, rechts Team 2. Gezeichnet von
+     buildStands() als ein SVG; Farben über Tokens, damit Schema und Hell/Dunkel mitgehen.
+     Breite viewBox + slice: schmale Fenster schneiden seitlich ab, nie Dach oder Bande. */
+  .stands { display: none; }
+  body.view-beamer .stands {
+    display: block; grid-area: stands;
+    height: clamp(90px, 17vh, 190px);
+    margin: -2.5vmin -3vmin 0; /* randlos bis an den Fensterrand */
+  }
+  .stands svg { display: block; width: 100%; height: 100%; }
+  .stands .nacht { display: none; }
+  [data-modus="dunkel"] .stands .nacht { display: inline; }
+  @media (prefers-color-scheme: dark) { :root:not([data-modus]) .stands .nacht { display: inline; } }
+  /* Torjubel des Blocks (A: hüpfen, B: Arme hoch), Verzögerung pro Fan in --d */
+  .stands .fan.cheer .bod { animation: fan-hop .9s var(--d) ease-out; }
+  .stands .fan.cheer .arm.l { animation: arm-l 1.3s var(--d) cubic-bezier(.3,1.5,.5,1); }
+  .stands .fan.cheer .arm.r { animation: arm-r 1.3s var(--d) cubic-bezier(.3,1.5,.5,1); }
+  .stands .arm { transform-box: view-box; }
+  @keyframes fan-hop { 0%,100% { transform: none; } 25% { transform: translateY(-5px); } 50% { transform: none; } 70% { transform: translateY(-3.5px); } }
+  @keyframes arm-l { 0%,100% { transform: none; } 20%,78% { transform: rotate(150deg); } }
+  @keyframes arm-r { 0%,100% { transform: none; } 20%,78% { transform: rotate(-150deg); } }
+  @media (prefers-reduced-motion: reduce) { .stands .fan.cheer * { animation: none !important; } }
   body.view-lehrer #app {
     grid-template-columns: 1fr 380px;
     grid-template-rows: auto auto 1fr; /* Frage rückt direkt unters kompakte Feld */
@@ -522,6 +547,18 @@
   .goal-flash.show { opacity: 1; animation: pop .8s ease; }
   @keyframes pop { 0%{ transform: scale(.6);} 50%{ transform: scale(1.15);} 100%{ transform: scale(1);} }
 
+  /* Rückmeldungen (wie MyKahoot): Punktzahl springt, Farbblitz in Teamfarbe, Lösung blendet ein */
+  .score-num.bump { animation: score-bump .6s cubic-bezier(.34,1.6,.5,1); }
+  @keyframes score-bump { 0%{ transform: scale(1);} 35%{ transform: scale(1.45);} 100%{ transform: scale(1);} }
+  .screen-flash { position: fixed; inset: 0; z-index: 80; pointer-events: none; opacity: .35; transition: opacity .7s ease; }
+  .screen-flash.out { opacity: 0; }
+  .answer-inline.show { animation: reveal-in .5s ease; }
+  @keyframes reveal-in { from { opacity: 0; } to { opacity: 1; } }
+  @media (prefers-reduced-motion: reduce) {
+    .score-num.bump, .answer-inline.show, .goal-flash.show { animation: none; }
+    .screen-flash, #confetti { display: none; }
+  }
+
   /* Datei-Import */
   .dropzone {
     border: 2px dashed var(--linie);
@@ -584,6 +621,7 @@
 
 <!-- ============ App ============ -->
 <div id="app">
+  <div class="stands" id="stands" aria-hidden="true"></div>
   <header class="scoreboard">
     <div class="team-score t1">
       <span class="team-badge t1" id="badge1">Team 1</span>
@@ -1015,6 +1053,7 @@
     ton: DEFAULT_TON,        // Akzent-Ton 1–9 des Schemas, 0 = Akzent des Schemas
     setId: null,             // aus der Sammlung geladenes Set (für "Speichern" und "geändert")
     seqPointer: -1,
+    kicks: 0,                // zählt echte Ballschritte (Funken nur dann, nicht beim Zurücksetzen)
     rev: 0                   // Änderungszähler zur Konfliktvermeidung
   });
 
@@ -1175,6 +1214,9 @@
   let lastStations = null;
   let needsInstantPosition = true; // Ball beim ersten Mal / nach Stationswechsel ohne Animation setzen
   let lastScores = state.scores.slice(); // zur Tor-Erkennung (feiert in Lehrer- UND Beamer-Fenster)
+  let lastBall = state.ball;             // Ballschritt erkennen (Funken am Abstoss)
+  let lastKicks = state.kicks;           // ... aber nur, wenn ihn moveBall gespielt hat
+  let lastFinished = roundFinished();    // Rundenende erkennen (Feuerwerk) — nicht schon beim Laden
   let lastRenderedQ = null, lastRenderedA = null; // KaTeX nur bei Textänderung neu rendern
   let lastTaskListSig = null; // Aufgabenliste nur bei Änderung neu bauen
   let ballWatchdog = null; // holt den Ball aus dem Tor, falls das auslösende Fenster weg ist
@@ -1203,6 +1245,7 @@
     if (lastLook !== look) {
       applyLook(state);
       lastLook = look;
+      if (!isTeacher) buildStands(); // Trikotfarben hängen am Schema
       if (isTeacher) renderLookControls();
     }
     // Sprache anwenden (beim Start und bei Wechsel; synchronisiert auch den Beamer)
@@ -1219,6 +1262,7 @@
     document.getElementById("badge2").textContent = state.teams[1];
     document.getElementById("score1").textContent = state.scores[0];
     document.getElementById("score2").textContent = state.scores[1];
+    if (!isTeacher) updateStandsBanners();
 
     // Field (nur neu bauen, wenn sich Stationszahl geändert hat)
     if (lastStations !== state.stationsPerSide) {
@@ -1226,6 +1270,13 @@
       lastStations = state.stationsPerSide;
       needsInstantPosition = true; // neu gebautes Feld -> Ball direkt platzieren
     }
+    // Ein Schritt auf dem Feld: Funken dort, wo der Ball gerade noch liegt (positionBall
+    // zieht ihn erst im nächsten Frame weiter). Nur gespielte Schritte (kicks) zählen —
+    // Tor, Reset und Rundenstart setzen den Ball, ohne ihn zu spielen.
+    const step = state.ball - lastBall;
+    if (state.kicks !== lastKicks && Math.abs(step) === 1) kickSparks(step > 0 ? 0 : 1);
+    lastBall = state.ball;
+    lastKicks = state.kicks;
     requestAnimationFrame(positionBall);
 
     // Frage / Lösung (KaTeX ist teuer -> nur bei Textänderung neu rendern)
@@ -1257,6 +1308,9 @@
     document.getElementById("answerInline").classList.toggle("show", state.revealed && !!task);
     if (isTeacher) renderControls();
     celebrateIfGoal();
+    const finished = roundFinished();
+    if (finished && !lastFinished) celebrateRound();
+    lastFinished = finished;
 
     // Steht der Ball im Tor (goal()), holt ihn jedes Fenster nach der Feier zurück
     // — so klemmt er auch dann nicht, wenn das auslösende Fenster geschlossen wird.
@@ -1400,6 +1454,7 @@
       goal(1); // links ins Tor -> Team 2 punktet
     } else {
       state.ball = next;
+      state.kicks = (state.kicks | 0) + 1;
       persistAndSync();
     }
   }
@@ -1491,15 +1546,74 @@
   }
 
   // ---------- Celebration ----------
+  // Effekte wie in MyKahoot (Konfetti, Feuerwerk, Farbblitz, Springen), aber in den
+  // Teamfarben des Schemas. Laufen in jedem Fenster, das den neuen Zustand rendert.
+  const reducedMotion = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const teamColor = (team) => getComputedStyle(document.documentElement)
+    .getPropertyValue(team === 0 ? "--team1" : "--team2").trim();
+  const teamShades = (team) => { const c = teamColor(team); return [c, mixWhite(c, .45), mixWhite(c, .85)]; };
+
   function celebrate(team) {
     const flash = document.getElementById("goalFlash");
     flash.textContent = tr("goal") + " " + state.teams[team];
     flash.classList.remove("t1", "t2");
     flash.classList.add(team === 0 ? "t1" : "t2", "show");
     setTimeout(() => flash.classList.remove("show"), 1400);
-    // Konfetti in der Teamfarbe des Schemas: voll, aufgehellt, fast weiss
-    const c = getComputedStyle(document.documentElement).getPropertyValue(team === 0 ? "--team1" : "--team2").trim();
-    confettiBurst([c, mixWhite(c, .45), mixWhite(c, .85)]);
+    bump(document.getElementById(team === 0 ? "score1" : "score2"));
+    cheerStands(team);
+    flashScreen(teamColor(team));
+    // Konfetti steigt aus dem Tor auf, in das der Ball ging (Team 1 schiesst nach rechts)
+    const net = fieldEl.querySelector(team === 0 ? ".goal.right .net" : ".goal.left .net");
+    const r = net && net.getBoundingClientRect();
+    burst(teamShades(team), {
+      x: r ? r.left + r.width / 2 : canvas.width / 2,
+      y: r ? r.top + r.height / 2 : canvas.height / 2,
+      count: 160, speed: 18, aim: team === 0 ? -1 : 1
+    });
+  }
+
+  // Kleiner Funkenstoss in der Farbe des Teams, das den Ball weiterspielt
+  function kickSparks(team) {
+    const ballEl = document.getElementById("ballEl");
+    if (!ballEl) return;
+    const r = ballEl.getBoundingClientRect();
+    burst(teamShades(team), {
+      x: r.left + r.width / 2, y: r.top + r.height / 2,
+      count: 26, speed: 7, size: 7, gravity: .12, life: 40, aim: team === 0 ? -1 : 1
+    });
+  }
+
+  // Runde durch: Feuerwerk in der Farbe des führenden Teams (unentschieden: beide)
+  function celebrateRound() {
+    const [a, b] = state.scores;
+    if (a === 0 && b === 0) return;
+    const teams = a > b ? [0] : b > a ? [1] : [0, 1];
+    const colors = teams.flatMap(teamShades);
+    for (let i = 0; i < 6; i++) {
+      setTimeout(() => burst(colors, {
+        x: canvas.width * (.2 + Math.random() * .6), y: canvas.height * (.15 + Math.random() * .35),
+        count: 50, speed: 7, size: 4, gravity: .06, life: 70, dots: true
+      }), i * 380);
+    }
+  }
+
+  // CSS-Animation erneut auslösen (Klasse weg, Reflow, wieder dran)
+  function bump(el) {
+    if (!el) return;
+    el.classList.remove("bump");
+    void el.offsetWidth;
+    el.classList.add("bump");
+  }
+
+  // Kurzer Farbschleier über alles, der ausblendet
+  function flashScreen(color) {
+    if (reducedMotion()) return;
+    const d = document.createElement("div");
+    d.className = "screen-flash";
+    d.style.background = color;
+    document.body.appendChild(d);
+    requestAnimationFrame(() => requestAnimationFrame(() => d.classList.add("out")));
+    setTimeout(() => d.remove(), 800);
   }
 
   // Hex-Farbe Richtung Weiss mischen (Canvas versteht color-mix nicht überall)
@@ -1511,7 +1625,8 @@
     return `rgb(${ch(16)},${ch(8)},${ch(0)})`;
   }
 
-  // Simple canvas confetti (keine Abhängigkeit)
+  // Ein Canvas für alle Effekte (keine Abhängigkeit). Schnipsel = Rechtecke (Konfetti),
+  // Punkte = Funken (Feuerwerk); beide blenden zum Lebensende aus.
   const canvas = document.getElementById("confetti");
   const ctx = canvas.getContext("2d");
   let particles = [];
@@ -1519,18 +1634,23 @@
   resizeCanvas();
   window.addEventListener("resize", () => { resizeCanvas(); positionBall(); });
 
-  function confettiBurst(colors) {
-    for (let i = 0; i < 140; i++) {
+  // aim: -1 = eher nach links, 1 = eher nach rechts, 0 = rundum
+  function burst(colors, { x, y, count = 140, speed = 16, size = 10, gravity = .35, life = 110, aim = 0, dots = false }) {
+    if (reducedMotion()) return;
+    for (let i = 0; i < count; i++) {
+      const a = Math.random() * Math.PI * 2;
+      const sp = speed * (.35 + Math.random() * .65);
+      const ttl = life * (.75 + Math.random() * .5);
       particles.push({
-        x: canvas.width / 2, y: canvas.height / 2,
-        vx: (Math.random() - 0.5) * 16,
-        vy: (Math.random() - 0.9) * 16,
-        g: 0.35 + Math.random() * 0.2,
-        size: 6 + Math.random() * 8,
+        x, y,
+        vx: Math.cos(a) * sp * (aim ? .6 : 1) + aim * sp * .5,
+        vy: Math.sin(a) * sp - (dots ? 0 : sp * .45),
+        g: gravity * (.8 + Math.random() * .4),
+        size: size * (.6 + Math.random() * .8),
         color: colors[i % colors.length],
         rot: Math.random() * 6.28,
         vr: (Math.random() - 0.5) * 0.4,
-        life: 90 + Math.random() * 40
+        life: ttl, ttl, dot: dots
       });
     }
     if (!animating) { animating = true; requestAnimationFrame(animateConfetti); }
@@ -1540,15 +1660,194 @@
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     particles.forEach(p => {
       p.vy += p.g; p.x += p.vx; p.y += p.vy; p.rot += p.vr; p.life--;
-      ctx.save();
-      ctx.translate(p.x, p.y); ctx.rotate(p.rot);
+      if (p.dot) { p.vx *= .97; p.vy *= .97; }
+      ctx.globalAlpha = Math.min(1, p.life / (p.ttl * .35));
       ctx.fillStyle = p.color;
-      ctx.fillRect(-p.size/2, -p.size/2, p.size, p.size * 0.6);
-      ctx.restore();
+      if (p.dot) {
+        ctx.beginPath(); ctx.arc(p.x, p.y, p.size / 2, 0, 6.283); ctx.fill();
+      } else {
+        ctx.save();
+        ctx.translate(p.x, p.y); ctx.rotate(p.rot);
+        ctx.fillRect(-p.size/2, -p.size/2, p.size, p.size * 0.6);
+        ctx.restore();
+      }
     });
+    ctx.globalAlpha = 1;
     particles = particles.filter(p => p.life > 0 && p.y < canvas.height + 40);
     if (particles.length > 0) requestAnimationFrame(animateConfetti);
     else { animating = false; ctx.clearRect(0,0,canvas.width,canvas.height); }
+  }
+
+
+  // ---------- Tribüne (nur Beamer) ----------
+  // Zwei Fanblöcke: links Team 1, rechts Team 2. Ein SVG, per Zufall mit festem Startwert
+  // gezeichnet (sieht bei jedem Laden gleich aus). Trikots: halb Teamfarbe, ein Teil
+  // aufgehellt, der Rest in weiteren Farben des Schemas — ausser denen, die einer
+  // Teamfarbe zum Verwechseln ähnlich sind (darum beim Schemawechsel neu zeichnen).
+  // Haut- und Haarfarben sind fest: sie gehören zu den Menschen, nicht zum Schema.
+  const SKIN = ["#F6D7BE", "#F1C9A5", "#E0AC83", "#C68B59", "#8D5524", "#5C3A21"];
+  const HAIR = ["#2B1D14", "#4A3020", "#6B4226", "#A0522D", "#C9A15B", "#E8D08A", "#1A1A1A", "#9A9A9A"];
+  const SHIRT_EXTRAS = ["--spiel-2", "--spiel-3", "--rad-1", "--rad-2", "--rad-3", "--rad-4", "--rad-5", "--rad-6", "--rad-7", "--rad-8"];
+
+  function hexRgb(v) {
+    const m = /^#?([0-9a-f]{6})$/i.exec(String(v).trim());
+    if (!m) return null;
+    const n = parseInt(m[1], 16);
+    return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+  }
+
+  function buildStands() {
+    const box = document.getElementById("stands");
+    if (!box || isTeacher) return;
+    const css = getComputedStyle(document.documentElement);
+    const teamRgb = [hexRgb(css.getPropertyValue("--team1")), hexRgb(css.getPropertyValue("--team2"))];
+    const near = (a, b) => a && b && Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]) < 90;
+    const seen = [];
+    const extras = SHIRT_EXTRAS.filter(v => {
+      const c = hexRgb(css.getPropertyValue(v));
+      if (!c || teamRgb.some(t => near(c, t)) || seen.some(o => near(c, o))) return false;
+      seen.push(c);
+      return true;
+    }).map(v => `var(${v})`);
+
+    let seed = 20251005;
+    const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+    const pick = a => a[Math.floor(rnd() * a.length)];
+    const W = 1800, H = 150, MID = W / 2;
+    const team = t => `var(--team${t + 1})`;
+    const light = (t, k) => `color-mix(in srgb, var(--team${t + 1}) ${k}%, #FFFFFF)`;
+    const f = n => Math.round(n * 10) / 10;
+    const out = [];
+
+    // Rückwand und Gänge
+    out.push(`<rect x="0" y="12" width="${W}" height="${H - 12}" style="fill:color-mix(in srgb, var(--linie) 55%, var(--grund))"/>`);
+    const aisles = [[300, 18], [MID, 58], [1500, 18]];
+    const inAisle = x => aisles.some(([a, w]) => Math.abs(x - a) < w);
+
+    const rows = [[8, 30], [9.5, 52], [11, 76], [13, 103]]; // Grösse, Kopfmitte
+    rows.forEach(([s0, y0], ri) => {
+      // Stufe und Sitze dieser Reihe
+      out.push(`<rect x="0" y="${f(y0 + s0 * 1.05)}" width="${W}" height="${f(s0 * 1.1)}" style="fill:color-mix(in srgb, var(--linie) 80%, var(--text) 12%)"/>`);
+      for (let x = s0 * 0.8 + rnd() * s0; x < W; x += s0 * 1.55 + rnd() * s0 * 0.25) {
+        if (inAisle(x)) continue;
+        out.push(`<rect x="${f(x - s0 * 0.6)}" y="${f(y0 + s0 * 0.85)}" width="${f(s0 * 1.2)}" height="${f(s0 * 0.8)}" rx="${f(s0 * 0.2)}" style="fill:color-mix(in srgb, var(--akzent) 60%, var(--grund))"/>`);
+        if (rnd() < 0.07) continue; // leerer Platz
+        const t = x < MID ? 0 : 1;
+        const kid = ri >= 2 && rnd() < 0.09;
+        const s = kid ? s0 * 0.78 : s0, y = kid ? y0 + s0 * 0.4 : y0 + (rnd() - 0.5) * 1.5;
+        out.push(fan(x, y, s, t, ri));
+      }
+      // Gänge mit Treppenstufen
+      aisles.forEach(([a, w]) => {
+        out.push(`<rect x="${a - w + 4}" y="${f(y0 - s0 * 0.9)}" width="${2 * w - 8}" height="${f(s0 * 3)}" style="fill:color-mix(in srgb, var(--linie) 70%, var(--grund))"/>`);
+        for (let k = 0; k < 3; k++) out.push(`<rect x="${a - w + 4}" y="${f(y0 - s0 * 0.9 + k * s0)}" width="${2 * w - 8}" height="1.2" style="fill:var(--text-3);opacity:.35"/>`);
+      });
+      // hintere Reihen leicht im Dunst (Tiefe, in Hell wie Dunkel)
+      if (ri < rows.length - 1) out.push(`<rect width="${W}" height="${H}" style="fill:var(--grund);opacity:.15"/>`);
+    });
+
+    // Trenngitter zwischen den Blöcken
+    for (let k = -1; k <= 1; k += 2) out.push(`<rect x="${MID + k * 30 - 2}" y="16" width="4" height="112" style="fill:var(--text-3);opacity:.6"/>`);
+    for (let y = 22; y < 128; y += 9) out.push(`<path d="M${MID - 30} ${y}h60" style="stroke:var(--text-3);stroke-width:1;opacity:.35"/>`);
+
+    // Dach mit Fachwerk und Flutlicht
+    out.push(`<rect width="${W}" height="14" style="fill:var(--leiste)"/>`);
+    let truss = "";
+    for (let x = 0; x < W; x += 24) truss += `M${x} 13L${x + 12} 2L${x + 24} 13`;
+    out.push(`<path d="${truss}" style="fill:none;stroke:var(--text-3);stroke-width:1;opacity:.45"/>`);
+    [225, 675, 1125, 1575].forEach(x => {
+      out.push(`<polygon class="nacht" points="${x - 30},18 ${x + 30},18 ${x + 120},${H} ${x - 120},${H}" style="fill:var(--text);opacity:.07"/>`);
+      out.push(`<rect x="${x - 34}" y="11" width="68" height="10" rx="2" style="fill:var(--leiste)"/>`);
+      for (let k = 0; k < 6; k++) out.push(`<circle cx="${x - 26 + k * 10.4}" cy="16" r="3.2" style="fill:var(--linie)"/><circle class="nacht" cx="${x - 26 + k * 10.4}" cy="16" r="3.2" style="fill:var(--text)"/>`);
+    });
+
+    // Bande mit Werbetafeln, davor die Zaunfahnen der beiden Teams
+    out.push(`<rect y="128" width="${W}" height="${H - 128}" style="fill:var(--karte)"/><rect y="127" width="${W}" height="2" style="fill:var(--linie)"/>`);
+    for (let x = 4, i = 0; x < W; x += 164, i++) {
+      const [bg, ink] = i % 2 ? ["var(--spiel-3)", "var(--spiel-3-ink)"] : ["var(--akzent)", "var(--akzent-ink)"];
+      out.push(`<rect x="${x}" y="131" width="160" height="17" rx="2" style="fill:${bg}"/><text x="${x + 80}" y="143.5" text-anchor="middle" style="fill:${ink};font:800 10px var(--schrift);letter-spacing:.06em">MyTafelfussball</text>`);
+    }
+    // je zwei Fahnen genau über einer Werbetafel (Tafel i liegt bei x = 4 + 164·i)
+    [[1, 0], [3, 0], [7, 1], [9, 1]].forEach(([i, t]) => {
+      const x = 4 + 164 * i + 80;
+      out.push(`<path d="M${x - 82} 124h164v25q-41 -4 -82 0t-82 0z" style="fill:${team(t)}"/>`);
+      out.push(`<rect x="${x - 82}" y="128" width="164" height="3" style="fill:${light(t, 35)}"/>`);
+      out.push(`<text class="bn t${t}" x="${x}" y="142" text-anchor="middle" style="fill:var(--team${t + 1}-ink);font:900 11px var(--schrift);letter-spacing:.08em"></text>`);
+    });
+
+    box.innerHTML = `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid slice">${out.join("")}</svg>`;
+    updateStandsBanners();
+
+    // Ein Fan: Arme (heben sich beim Jubel um die Schulter), Rumpf, Kopf, Frisur, Extras
+    function fan(x, y, s, t, ri) {
+      const q = rnd();
+      const shirt = q < 0.5 ? team(t) : q < 0.68 ? light(t, 55) : (extras.length ? pick(extras) : team(t));
+      const skin = pick(SKIN), hair = pick(HAIR);
+      const p = [];
+      const arm = (side) => {
+        const sx = x + side * s * 0.5, sy = y + s * 0.8, hx = x + side * s * 0.82, hy = y + s * 1.65;
+        return `<g class="arm ${side < 0 ? "l" : "r"}" style="transform-origin:${f(sx)}px ${f(sy)}px">` +
+          `<path d="M${f(sx)} ${f(sy)}L${f(hx)} ${f(hy)}" style="stroke:${shirt};stroke-width:${f(s * 0.32)};stroke-linecap:round"/>` +
+          `<circle cx="${f(hx)}" cy="${f(hy)}" r="${f(s * 0.17)}" style="fill:${skin}"/></g>`;
+      };
+      p.push(arm(-1), arm(1));
+      const style = Math.floor(rnd() * 6);
+      if (style === 1) p.push(`<rect x="${f(x - s * 0.5)}" y="${f(y - s * 0.3)}" width="${f(s)}" height="${f(s * 0.95)}" rx="${f(s * 0.4)}" style="fill:${hair}"/>`);
+      p.push(`<path d="M${f(x - s * 0.78)} ${f(y + s * 1.75)}Q${f(x - s * 0.8)} ${f(y + s * 0.6)} ${f(x)} ${f(y + s * 0.58)}Q${f(x + s * 0.8)} ${f(y + s * 0.6)} ${f(x + s * 0.78)} ${f(y + s * 1.75)}Z" style="fill:${shirt}"/>`);
+      if (q < 0.5 && rnd() < 0.3) { // gestreiftes Trikot
+        for (const dx of [-0.32, 0, 0.32]) p.push(`<rect x="${f(x + (dx - 0.07) * s)}" y="${f(y + s * 0.75)}" width="${f(s * 0.14)}" height="${f(s)}" style="fill:${light(t, 20)}"/>`);
+      }
+      if (rnd() < 0.18) { // Schal in Teamfarbe
+        p.push(`<rect x="${f(x - s * 0.45)}" y="${f(y + s * 0.48)}" width="${f(s * 0.9)}" height="${f(s * 0.24)}" rx="${f(s * 0.1)}" style="fill:${team(t)}"/>` +
+          `<rect x="${f(x + s * 0.12)}" y="${f(y + s * 0.6)}" width="${f(s * 0.22)}" height="${f(s * 0.7)}" style="fill:${team(t)}"/>` +
+          `<rect x="${f(x + s * 0.12)}" y="${f(y + s * 0.9)}" width="${f(s * 0.22)}" height="${f(s * 0.12)}" style="fill:${light(t, 15)}"/>`);
+      }
+      p.push(`<circle cx="${f(x)}" cy="${f(y)}" r="${f(s * 0.45)}" style="fill:${skin}"/>`);
+      const top = `<path d="M${f(x - s * 0.47)} ${f(y - s * 0.02)}A${f(s * 0.47)} ${f(s * 0.47)} 0 0 1 ${f(x + s * 0.47)} ${f(y - s * 0.02)}Z" style="fill:${hair}"/>`;
+      if (style <= 2) p.push(top);
+      if (style === 2) p.push(`<circle cx="${f(x + s * 0.5)}" cy="${f(y + s * 0.08)}" r="${f(s * 0.18)}" style="fill:${hair}"/>`);
+      if (style === 3) { // Mütze in Teamfarbe mit Bommel
+        p.push(`<path d="M${f(x - s * 0.5)} ${f(y - s * 0.05)}A${f(s * 0.5)} ${f(s * 0.52)} 0 0 1 ${f(x + s * 0.5)} ${f(y - s * 0.05)}Z" style="fill:${team(t)}"/>` +
+          `<rect x="${f(x - s * 0.52)}" y="${f(y - s * 0.16)}" width="${f(s * 1.04)}" height="${f(s * 0.16)}" style="fill:${light(t, 40)}"/>` +
+          `<circle cx="${f(x)}" cy="${f(y - s * 0.55)}" r="${f(s * 0.15)}" style="fill:${light(t, 30)}"/>`);
+      }
+      if (style === 4) { // Kappe
+        const c = extras.length ? pick(extras) : team(t);
+        p.push(`<path d="M${f(x - s * 0.47)} ${f(y - s * 0.05)}A${f(s * 0.47)} ${f(s * 0.47)} 0 0 1 ${f(x + s * 0.47)} ${f(y - s * 0.05)}Z" style="fill:${c}"/>` +
+          `<rect x="${f(x)}" y="${f(y - s * 0.12)}" width="${f(s * 0.75)}" height="${f(s * 0.12)}" rx="${f(s * 0.06)}" style="fill:${c}"/>`);
+      }
+      if (rnd() < 0.1) { // Brille
+        for (const dx of [-0.18, 0.18]) p.push(`<circle cx="${f(x + dx * s)}" cy="${f(y + s * 0.06)}" r="${f(s * 0.12)}" style="fill:none;stroke:var(--leiste);stroke-width:${f(s * 0.06)}"/>`);
+      }
+      if (ri === 3 && rnd() < 0.07) { // Fahne an der Stange
+        const px = x + s * 0.82, py = y + s * 1.6, fy = y - s * 2.6, wav = s * 0.25;
+        p.push(`<path d="M${f(px)} ${f(py)}V${f(fy)}" style="stroke:var(--text-3);stroke-width:1.2"/>` +
+          `<path d="M${f(px)} ${f(fy)}q${f(s * 0.7)} ${f(wav)} ${f(s * 1.4)} 0t${f(s * 1.4)} 0v${f(s * 1.1)}q-${f(s * 0.7)} ${f(wav)} -${f(s * 1.4)} 0t-${f(s * 1.4)} 0z" style="fill:${team(t)}"/>` +
+          `<path d="M${f(px)} ${f(fy + s * 0.55)}q${f(s * 0.7)} ${f(wav)} ${f(s * 1.4)} 0t${f(s * 1.4)} 0" style="fill:none;stroke:${light(t, 30)};stroke-width:${f(s * 0.18)}"/>`);
+      }
+      if (rnd() < 0.06) { // Handylicht (nur in der Nacht sichtbar)
+        p.push(`<g class="nacht"><circle cx="${f(x + s * 0.3)}" cy="${f(y + s * 0.95)}" r="${f(s * 0.5)}" style="fill:var(--text);opacity:.18"/><circle cx="${f(x + s * 0.3)}" cy="${f(y + s * 0.95)}" r="${f(s * 0.16)}" style="fill:var(--text)"/></g>`);
+      }
+      return `<g class="fan t${t}"><g class="bod">${p.join("")}</g></g>`;
+    }
+  }
+
+  // Teamnamen auf den Zaunfahnen (ändern sich ohne Neuzeichnen)
+  function updateStandsBanners() {
+    document.querySelectorAll("#stands .bn").forEach(el => {
+      const name = state.teams[el.classList.contains("t1") ? 1 : 0];
+      el.textContent = (name.length > 18 ? name.slice(0, 17) + "…" : name).toUpperCase();
+    });
+  }
+
+  // Torjubel im Block des Teams, das getroffen hat: hüpfen und Arme hoch, leicht versetzt
+  function cheerStands(team) {
+    const fans = document.querySelectorAll(`#stands .fan.t${team}`);
+    if (!fans.length) return;
+    fans.forEach(el => { el.classList.remove("cheer"); el.style.setProperty("--d", Math.round(Math.random() * 260) + "ms"); });
+    void document.getElementById("stands").offsetWidth;
+    fans.forEach(el => el.classList.add("cheer"));
+    setTimeout(() => fans.forEach(el => el.classList.remove("cheer")), 1800);
   }
 
   // ---------- Fensterwechsel-Buttons (Beamer ↔ Lehrer:innen) ----------
