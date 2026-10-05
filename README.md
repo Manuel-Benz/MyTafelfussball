@@ -39,15 +39,12 @@ Ebenfalls in den Einstellungen: **Auto / Hell / Dunkel**. „Auto" folgt der Sys
 
 ## Aufgaben aus PDF importieren
 
-1. Diesen Prompt (in der App: Button „KI-Prompt kopieren") zusammen mit dem Aufgabenblatt (PDF) in ein KI-Tool (Claude/ChatGPT) einfügen:
+In der Box „Aufgaben" unter **„Aus Arbeitsblatt erstellen"**:
 
-   > Extrahiere alle Übungsaufgaben und deren Lösungen aus diesem PDF. Formatiere sie exakt so: Für jede Aufgabe eine Zeile 'F: &lt;Frage&gt;', eine Zeile 'A: &lt;Antwort&gt;', dann eine Zeile mit nur '---' als Trennzeichen. Mathematische Formeln als LaTeX in Dollarzeichen schreiben ($...$ für inline, $$...$$ für abgesetzt). Keine zusätzlichen Erklärungen oder Nummerierungen. Erstelle daraus direkt eine .txt-Datei zum Herunterladen; falls du Dateien direkt speichern kannst, lege sie in meinen Downloads oder auf dem Desktop ab.
+1. **„KI-Prompt kopieren"** und zusammen mit dem Aufgabenblatt (PDF) in ein KI-Tool (Claude/ChatGPT) einfügen. Der Prompt verlangt kurze, beamertaugliche Fragen, Teilaufgaben als eigene Aufgaben, nur Endergebnisse als Lösung und eine `.txt`-Datei, die nach dem Thema benannt ist (der Dateiname wird zum Set-Titel).
+2. Die erhaltene `.txt`-Datei aufs Fenster **ziehen** oder auf die Ablage-Fläche **klicken** und sie auswählen. Sie wird ein **Set in der Sammlung** (Titel = Dateiname) und gleich geladen. Gibt es den Namen schon, wird nach dem Ersetzen gefragt. Ist ein Ordner auf dem Computer verbunden, genügt es auch, die Datei dort hineinzulegen.
 
-2. Die erhaltene `.txt`-Datei in der Lehrer:innen-Ansicht einbringen (Box „Aufgaben" → Import):
-   - die Datei aufs Fenster **ziehen** (Drag & Drop), oder
-   - auf die Ablage-Fläche **klicken** und die Datei auswählen.
-
-   Die Aufgaben werden automatisch geparst und angehängt. Einzelne Aufgaben lassen sich auch von Hand unter „Aufgabe hinzufügen" erfassen.
+Einzelne Aufgaben lassen sich unter der aktuellen Liste von Hand erfassen (Frage, Lösung, „+" bzw. Enter).
 
 Format:
 
@@ -60,17 +57,17 @@ A: 56
 ---
 ```
 
-Umgekehrt sichert **„Exportieren (.txt)"** (Box „Aufgaben") alle erfassten Aufgaben als Datei in genau diesem Format — als Backup, für den Gerätewechsel oder zum Weitergeben an Kolleg:innen.
+Umgekehrt lädt **⤓** an einem Set dieses als Datei in genau diesem Format herunter — als Backup, für den Gerätewechsel oder zum Weitergeben an Kolleg:innen.
 
 ## Sammlung
 
-Oben in der Box „Aufgaben" liegt die **Sammlung**: beliebig viele benannte Sets, geordnet in Ordnern (Unterordner mit „/", z. B. `Mathe/Klasse 8`).
+In der Box „Aufgaben" liegt die **Sammlung** (solange sie leer ist, steht „Aus Arbeitsblatt erstellen" zuoberst): beliebig viele benannte Sets; der Name des geladenen Sets steht auch in der Kopfzeile der Box, geordnet in Ordnern (Unterordner mit „/", z. B. `Mathe/Klasse 8`).
 
 - **Speichern** legt die aktuelle Liste als Set ab (bzw. überschreibt das geladene Set), **Speichern unter …** als neues Set; 💾 an einem Ordner speichert direkt dort hinein.
 - Klick auf ein Set **lädt** es (ersetzt die aktuelle Liste, startet eine neue Runde; die Punkte bleiben). Ist die aktuelle Liste nicht gespeichert, wird vorher nachgefragt.
-- Sets per **Ziehen** in einen anderen Ordner verschieben; ✎/🗑 zum Umbenennen und Löschen. Ordner lassen sich nur löschen, wenn sie leer sind.
+- Sets per **Ziehen** in einen anderen Ordner verschieben; ⤓/✎/🗑 zum Herunterladen, Umbenennen und Löschen. Ordner lassen sich nur löschen, wenn sie leer sind.
 
-**Ordner auf dem Computer** (Chrome/Edge am Computer, wie in MyVoci und MyMemory): Mit „Ordner wählen" liegen die Sets als `.txt`-Dateien (F:/A:/---) in einem Ordner deiner Wahl, Unterordner = Ordner der Sammlung. Dateien, die im Finder hinzukommen, umbenannt oder gelöscht werden, erscheinen beim Zurückwechseln ins Fenster. Nach einem Neustart des Browsers braucht der Ordner einmal „Ordner freigeben". Ohne Ordner bleibt die Sammlung im Browser (`localStorage`).
+**Ordner auf dem Computer** (Chrome/Edge am Computer, wie in MyVoci und MyMemory): Mit „Mit Ordner auf dem Computer verbinden" liegen die Sets als `.txt`-Dateien (F:/A:/---) in einem Ordner deiner Wahl, Unterordner = Ordner der Sammlung. Dateien, die im Finder hinzukommen, umbenannt oder gelöscht werden, erscheinen beim Zurückwechseln ins Fenster. Nach einem Neustart des Browsers braucht der Ordner einmal „Ordner freigeben". Ohne Ordner bleibt die Sammlung im Browser (`localStorage`).
 
 ## Formeln (KaTeX)
 

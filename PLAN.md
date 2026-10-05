@@ -10,12 +10,15 @@
 - ✅ Umgesetzt: „Sammlung" oben in der Box „Aufgaben" — Sets in Ordnern (kompakte Liste), speichern, laden, umbenennen, löschen, per Ziehen verschieben.
 - ✅ Dazu wie MyVoci/MyMemory: optional als .txt-Dateien in einem Ordner auf dem Computer (Chrome/Edge).
 
+- ✅ Box «Aufgaben» vereinfacht: Import erzeugt direkt ein Set, Hinzufügen inline, Import in zwei Schritten, Export pro Set, Set-Name in der Kopfzeile, Leerzustand mit Import zuoberst.
+- Offen (Idee): geladene Sets automatisch speichern (statt «Speichern»/«ungespeicherte Änderungen») — bewusst noch nicht, weil dann ohne Rückfrage überschrieben wird.
+
 - Offen (bekannte Grenzen des Ordners):
   - Nach «Ordner freigeben» (oder «Neu laden») gilt der Ordner: Änderungen an Sets, die im Browser gespeichert wurden, solange der Ordner noch nicht freigegeben war, gehen verloren. Lösung bräuchte einen Merker «noch nicht gespiegelt» pro Set.
   - Das .txt-Format kennt kein Escaping: Zeilen in Frage/Antwort, die mit `A:`/`F:`/`Q:` beginnen oder `---` lauten (z. B. Multiple-Choice «A: …»), werden beim Zurücklesen falsch gedeutet.
 
 ### 2. Export/Backup als Datei (Sicherheitsnetz)
-- ✅ Für die aktuelle Aufgabenliste umgesetzt: Button „Exportieren (.txt)" im Aufgaben-Panel schreibt alle Aufgaben im Import-Format (`F:`/`A:`/`---`) — direkt wieder importierbar.
+- ✅ Pro Set umgesetzt: ⤓ an der Set-Zeile lädt das Set als .txt im Import-Format (`F:`/`A:`/`---`) herunter — direkt wieder importierbar.
 - Offen für später: ganze Sammlung (mehrere Sets) als eine JSON-Datei exportieren und wieder importieren.
 - Wichtig, weil `localStorage` an Browser + Gerät gebunden ist (weg beim Löschen der Website-Daten); deckt auch den Gerätewechsel ab.
 

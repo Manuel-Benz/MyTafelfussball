@@ -523,13 +523,22 @@
   .set-status { font-size: 13px; color: var(--text-2); margin-bottom: 8px; }
   .set-status b { color: var(--text); font-weight: 600; }
   .set-status .changed { color: var(--orange); font-weight: 600; }
-  .import-steps { margin-bottom: 8px; }
-  .import-steps summary { cursor: pointer; font-size: 13px; font-weight: 600; color: var(--text-2); padding: 2px 0; user-select: none; }
-  .import-steps summary:hover { color: var(--text); }
-  .import-steps ol { margin: 6px 0; padding-left: 18px; font-size: 13px; line-height: 1.55; color: var(--text-2); }
-  .import-steps li { margin-bottom: 4px; }
-  .import-steps code { background: var(--code-bg); border: 1px solid var(--linie); border-radius: var(--radius-s); padding: 0 4px; font-size: 11px; }
-  .import-steps .format-example { font-size: 12px; margin-top: 6px; }
+  /* Box «Aufgaben»: Sammlung, aktuelle Liste, Import. Ohne Sets (.fresh) steht der Import zuoberst. */
+  .tasks-flow { display: flex; flex-direction: column; gap: 18px; }
+  #tasksBox.fresh .import-sec { order: -1; }
+  .tasks-flow h3 { margin-top: 0; }
+  #tasksBox summary .set-name:not(:empty) { margin-left: .4em; }
+  #tasksBox summary .set-name { display: inline-block; max-width: 14em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: bottom; text-transform: none; letter-spacing: 0; }
+  .add-row { display: flex; gap: 6px; margin-top: 8px; }
+  .add-row #newQ { flex: 2; min-width: 0; }
+  .add-row #newA { flex: 1; min-width: 0; }
+  .add-row button { flex: 0 0 auto; padding: 0 14px; font-size: 18px; }
+  .import-two { margin: 0; padding-left: 20px; font-size: 13px; line-height: 1.45; color: var(--text-2); }
+  .import-two li { margin-bottom: 8px; }
+  .import-two li::marker { font-weight: 700; color: var(--text-3); }
+  .import-two .dropzone { margin-top: 2px; }
+  .dir-line .dir-offer { display: flex; align-items: center; gap: 6px; }
+  .dir-line .info { color: var(--text-3); cursor: help; font-size: 14px; }
 
   /* Confetti canvas */
   #confetti { position: fixed; inset: 0; pointer-events: none; z-index: 100; }
@@ -690,57 +699,55 @@
     </details>
 
     <details class="panel collapsible" id="tasksBox">
-      <summary><span data-i18n="tasks">Aufgaben</span> (<span id="taskCount">0</span>)</summary>
-      <h3 data-i18n="collTitle">Sammlung</h3>
-      <div class="coll-tree" id="collTree" data-dir=""></div>
-      <div class="row" style="margin-top:8px">
-        <button class="ghost small" id="newFolder" data-i18n="newFolder">Neuer Ordner</button>
-      </div>
-      <div class="dir-line" id="dirLine"></div>
+      <summary><span data-i18n="tasks">Aufgaben</span><span class="set-name" id="taskSetName"></span> (<span id="taskCount">0</span>)</summary>
+      <div class="tasks-flow">
+      <section class="coll-sec">
+        <h3 data-i18n="collTitle">Sammlung</h3>
+        <div class="coll-tree" id="collTree" data-dir=""></div>
+        <div class="row" style="margin-top:8px">
+          <button class="ghost small" id="newFolder" data-i18n="newFolder">Neuer Ordner</button>
+        </div>
+        <div class="dir-line" id="dirLine"></div>
+      </section>
 
-      <h3 style="margin-top:14px" data-i18n="currentList">Aktuelle Liste</h3>
-      <div class="set-status" id="setStatus"></div>
-      <div id="taskList"></div>
-      <div class="row grow" style="margin-top:8px">
-        <button id="saveSet" data-i18n="saveSet">Speichern</button>
-        <button id="saveSetAs" data-i18n="saveSetAs">Speichern unter&nbsp;…</button>
-      </div>
-      <div class="row" style="margin-top:8px">
-        <button class="ghost" id="exportTasks" data-i18n="exportTasks" data-i18n-title="exportTasksTitle" title="Alle Aufgaben als .txt-Datei sichern — wieder importierbar">Exportieren (.txt)</button>
-        <button class="ghost danger" id="clearTasks" data-i18n="deleteAll">Alle löschen</button>
-      </div>
+      <section class="list-sec">
+        <h3 data-i18n="currentList">Aktuelle Liste</h3>
+        <div class="set-status" id="setStatus"></div>
+        <div id="taskList"></div>
+        <div class="add-row">
+          <input type="text" id="newQ" data-i18n-ph="qPh" placeholder="Neue Frage">
+          <input type="text" id="newA" data-i18n-ph="aPh" placeholder="Lösung">
+          <button class="primary" id="addTask" data-i18n-title="add" title="Hinzufügen">+</button>
+        </div>
+        <div class="row grow" style="margin-top:10px">
+          <button id="saveSet" data-i18n="saveSet">Speichern</button>
+          <button id="saveSetAs" data-i18n="saveSetAs">Speichern unter&nbsp;…</button>
+        </div>
+        <div class="row" style="margin-top:8px">
+          <button class="ghost danger small" id="clearTasks" data-i18n="deleteAll">Alle löschen</button>
+        </div>
+      </section>
 
-      <h3 style="margin-top:14px" data-i18n="addTaskTitle">Aufgabe hinzufügen</h3>
-      <label class="field-label" data-i18n="qLabel">Frage</label>
-      <input type="text" id="newQ" data-i18n-ph="qPh" placeholder="z. B. Was ist 7 × 8?">
-      <label class="field-label" data-i18n="aLabel">Lösung</label>
-      <input type="text" id="newA" data-i18n-ph="aPh" placeholder="z. B. 56">
-      <div class="row" style="margin-top:8px">
-        <button class="primary" id="addTask" data-i18n="add">Hinzufügen</button>
+      <section class="import-sec">
+        <h3 data-i18n="importTitle">Aus Arbeitsblatt erstellen</h3>
+        <ol class="import-two">
+          <li><button class="ghost small" id="copyPrompt" data-i18n="copyKiPrompt">KI-Prompt kopieren</button>
+            <span data-i18n="importStep1">und mit dem PDF in Claude oder ChatGPT einfügen</span></li>
+          <li><div class="dropzone" id="dropzone">
+            <span data-i18n-html="dropHere">📥 <b>Erhaltene .txt-Datei hierher ziehen</b><br><small>oder klicken — sie wird ein Set in der Sammlung</small></span>
+            <input type="file" id="fileInput" accept=".txt,.md,.text,text/plain" multiple hidden>
+          </div></li>
+        </ol>
+        <div class="drop-status" id="dropStatus"></div>
+      </section>
       </div>
-
-      <h3 style="margin-top:14px" data-i18n="importTitle">Import</h3>
-      <details class="import-steps">
-        <summary data-i18n="importHow">So geht's</summary>
-        <ol data-i18n-html="steps"></ol>
-        <div class="format-example" data-i18n="formatExample"></div>
-      </details>
-      <div class="row" style="margin:8px 0">
-        <button class="ghost" id="copyPrompt" data-i18n="copyKiPrompt">KI-Prompt kopieren</button>
-      </div>
-      <div class="dropzone" id="dropzone">
-        <span data-i18n-html="dropHere">📥 <b>Datei hierher ziehen</b><br>
-        <small>oder klicken zum Auswählen (.txt im F:/A:/---‑Format)</small></span>
-        <input type="file" id="fileInput" accept=".txt,.md,.text,text/plain" multiple hidden>
-      </div>
-      <div class="drop-status" id="dropStatus"></div>
     </details>
 
     <div class="panel">
       <h3 data-i18n="game">Spiel</h3>
       <div class="row grow hint-anchor" id="startWrap">
         <button class="primary start-mode" id="nextTask">▶ Spiel starten</button>
-        <div class="hint-bubble" id="startHint" data-i18n="startHint">Keine Aufgaben erfasst — oben unter „Aufgaben" hinzufügen oder eine .txt-Datei ins Fenster ziehen.</div>
+        <div class="hint-bubble" id="startHint" data-i18n="startHint">Keine Aufgaben erfasst — oben unter „Aufgaben" ein Set laden, ein Arbeitsblatt importieren oder Fragen eintippen.</div>
       </div>
       <div class="row grow" style="margin-top:8px">
         <button class="t1" id="moveT1">Punkt Team 1</button>
@@ -795,15 +802,12 @@
       beamerCardText: 'Für die Klasse. Spielfeld, Punkte, Frage — ohne Lösung. Öffnet als eigenes Fenster.',
       teacherCardTitle: 'Lehrer:innen-Ansicht',
       teacherCardText: 'Steuerung, Aufgabenverwaltung und die Lösung.',
-      importHow: "So geht's",
-      steps: '<li>Kopiere den KI-Prompt (Button unten).</li><li>Füge ihn zusammen mit deinem Aufgabenblatt (PDF) in ein KI-Tool wie <b>Claude</b> oder <b>ChatGPT</b> ein.</li><li>Die KI erstellt dir eine .txt-Datei mit allen Aufgaben im Format <code>F:</code> / <code>A:</code> / <code>---</code>.</li><li>Ziehe die Datei unten in die Ablage-Fläche — oder klicke darauf und wähle sie aus. Ist ein Sammlungs-Ordner verbunden, genügt es auch, die Datei dort hineinzulegen.</li>',
       kiPrompt: "Extrahiere alle Übungsaufgaben und deren Lösungen aus diesem PDF. Formatiere sie exakt so: Für jede Aufgabe eine Zeile 'F: <Frage>', eine Zeile 'A: <Antwort>', dann eine Zeile mit nur '---' als Trennzeichen. Die Fragen werden im Unterricht am Beamer gezeigt: Formuliere sie kurz, mach aus Teilaufgaben (a, b, …) eigene Aufgaben und lass Aufgaben weg, die eine Abbildung brauchen. Als Antwort nur das Endergebnis bzw. eine kurze Lösung, keinen Lösungsweg; fehlt eine Lösung im PDF, rechne sie selbst aus. Mathematische Formeln als LaTeX in Dollarzeichen ($...$ für inline, $$...$$ für abgesetzt), nur Befehle, die KaTeX kennt. Keine zusätzlichen Erklärungen, Nummerierungen oder Markdown. Erstelle daraus direkt eine .txt-Datei (UTF-8) zum Herunterladen. Benenne sie nach dem Thema, z. B. „Bruchrechnen – Kürzen.txt“, ohne Zeichen wie / : ?, denn der Dateiname wird zum Set-Titel. Falls du Dateien direkt speichern kannst, lege sie in den Ordner „MyTafelfussball“ in meinen Dokumenten, sonst in die Downloads.",
-      formatExample: 'F: Was ist die Hauptstadt der Schweiz?\nA: Bern\n---\nF: Wie viel ist 7 × 8?\nA: 56\n---',
       qLabel: 'Frage', aLabel: 'Lösung',
       noQuestion: 'Noch keine Frage ausgewählt',
       roundDone: '🏁 Runde beendet!',
       goal: 'TOR!',
-      fileOverlay: '📥 Datei loslassen, um Fragen zu importieren',
+      fileOverlay: '📥 Datei loslassen — sie wird ein Set in der Sammlung',
       game: 'Spiel',
       pointFor: name => `Punkt ${name}`,
       resetScore: 'Punkte zurücksetzen',
@@ -819,7 +823,7 @@
       fullscreenExit: 'Vollbild beenden',
       order: 'Reihenfolge', orderSeq: 'Der Reihe nach', orderRnd: 'Zufällig',
       counterNone: 'Keine Aufgaben erfasst.',
-      startHint: 'Keine Aufgaben erfasst — oben unter „Aufgaben" hinzufügen oder eine .txt-Datei ins Fenster ziehen.',
+      startHint: 'Keine Aufgaben erfasst — oben unter „Aufgaben" ein Set laden, ein Arbeitsblatt importieren oder Fragen eintippen.',
       counterDone: n => `🏁 Runde beendet — alle ${n} Fragen gespielt`,
       counterPos: (x, y) => `Frage ${x} von ${y}`,
       counterReady: n => `${n} Aufgaben bereit`,
@@ -829,21 +833,18 @@
       theme: 'Darstellung', themeAuto: 'Auto', themeLight: 'Hell', themeDark: 'Dunkel',
       schema: 'Farbschema', ton: 'Akzentfarbe', tonSchema: 'Akzent des Schemas', tonN: n => `Ton ${n}`,
       name1: 'Name Team 1', name2: 'Name Team 2',
-      addTaskTitle: 'Aufgabe hinzufügen',
-      qPh: 'z. B. Was ist 7 × 8?', aPh: 'z. B. 56',
+      qPh: 'Neue Frage', aPh: 'Lösung',
       add: 'Hinzufügen',
       tasks: 'Aufgaben', deleteAll: 'Alle löschen',
-      exportTasks: 'Exportieren (.txt)',
-      exportTasksTitle: 'Alle Aufgaben als .txt-Datei sichern — wieder importierbar',
-      exportMarker: 'F',
-      importTitle: 'Import',
+      importTitle: 'Aus Arbeitsblatt erstellen',
       copyKiPrompt: 'KI-Prompt kopieren',
-      dropHere: '📥 <b>Datei hierher ziehen</b><br><small>oder klicken zum Auswählen (.txt im F:/A:/---‑Format)</small>',
+      importStep1: 'und mit dem PDF in Claude oder ChatGPT einfügen',
+      dropHere: '📥 <b>Erhaltene .txt-Datei hierher ziehen</b><br><small>oder klicken — sie wird ein Set in der Sammlung</small>',
       confirmScore: 'Punktestand beider Teams auf 0 setzen?',
       confirmAll: 'Alles zurücksetzen? Punkte, Ball und Fragerunde starten neu — die Aufgaben bleiben erhalten.',
       confirmClear: 'Wirklich ALLE Aufgaben löschen?',
       collTitle: 'Sammlung', currentList: 'Aktuelle Liste',
-      collEmpty: 'Noch keine Sets. Die aktuelle Liste unten mit «Speichern» als Set ablegen.',
+      collEmpty: 'Noch keine Sets. Importiere oben ein Arbeitsblatt oder speichere die aktuelle Liste.',
       nSets: n => `${n} ${n === 1 ? 'Set' : 'Sets'}`,
       nTasks: n => `${n} ${n === 1 ? 'Frage' : 'Fragen'}`,
       newFolder: 'Neuer Ordner',
@@ -864,7 +865,7 @@
       setLinked: t => `Set <b>«${t}»</b>`, setChanged: 'ungespeicherte Änderungen',
       setUnsaved: 'Nicht in der Sammlung gespeichert.',
       dirOffer: 'Die Sets können auch als .txt-Dateien in einem Ordner auf dem Computer liegen (wie in MyVoci und MyMemory) — dann bleiben sie, wenn der Browser aufräumt. Am besten einen Ordner «MyTafelfussball» in «Dokumente» anlegen.',
-      dirChoose: 'Ordner wählen',
+      dirChoose: '📁 Mit Ordner auf dem Computer verbinden',
       dirConnected: (name, n) => `📁 Verbunden mit «${name}» — ${n} ${n === 1 ? 'Set' : 'Sets'}`,
       dirReload: 'Neu laden', dirDisconnect: 'Trennen',
       dirPrompt: name => `Der Ordner «${name}» braucht deine Freigabe, bevor die Sets dort gespeichert werden.`,
@@ -872,7 +873,9 @@
       dirError: name => `Der Ordner «${name}» ist nicht erreichbar (verschoben, gelöscht oder Zugriff verweigert). Bis dahin wird nichts in den Ordner geschrieben; beim Neuladen gilt der Stand im Ordner.`,
       editQ: 'Frage:', editA: 'Lösung:',
       copied: '✓ Kopiert!', copyFallback: 'Prompt kopieren:',
-      importedN: n => `✓ ${n} Aufgabe${n === 1 ? '' : 'n'} importiert`,
+      importedSet: (t, n) => `✓ «${t}» mit ${n} ${n === 1 ? 'Frage' : 'Fragen'} in der Sammlung`,
+      importedSets: n => `✓ ${n} Sets in der Sammlung`,
+      exportSet: 'Als .txt-Datei herunterladen',
       importNone: 'In der/den Datei(en) nichts im F:/A:/---‑Format erkannt.',
       useTitle: 'Als aktuelle Frage', editTitle: 'Bearbeiten', delTitle: 'Löschen'
     },
@@ -882,15 +885,12 @@
       beamerCardText: 'For the class. Field, score, question — never the answer. Opens as its own window.',
       teacherCardTitle: 'Teacher view',
       teacherCardText: 'Controls, task management, and the answers.',
-      importHow: "Here's how",
-      steps: '<li>Copy the AI prompt (button below).</li><li>Paste it together with your worksheet (PDF) into an AI tool like <b>Claude</b> or <b>ChatGPT</b>.</li><li>The AI creates a .txt file with all tasks in the format <code>Q:</code> / <code>A:</code> / <code>---</code>.</li><li>Drag the file onto the drop area below — or click it and choose the file. If a collection folder is connected, you can also just put the file in there.</li>',
       kiPrompt: "Extract all exercises and their solutions from this PDF. Format them exactly like this: for each task one line 'Q: <question>', one line 'A: <answer>', then a line containing only '---' as separator. The questions are shown on a projector in class: keep them short, turn sub-tasks (a, b, …) into separate tasks and leave out tasks that need a figure. As the answer give only the final result or a short solution, no worked steps; if a solution is missing from the PDF, work it out yourself. Write mathematical formulas as LaTeX in dollar signs ($...$ inline, $$...$$ display), using only commands KaTeX supports. No additional explanations, numbering or Markdown. Create a .txt file (UTF-8) directly for me to download. Name it after the topic, e.g. “Fractions – Simplifying.txt”, without characters like / : ?, because the file name becomes the set title. If you can save files directly, put it in the “MyTafelfussball” folder in my Documents, otherwise in Downloads.",
-      formatExample: 'Q: What is the capital of Switzerland?\nA: Bern\n---\nQ: What is 7 × 8?\nA: 56\n---',
       qLabel: 'Question', aLabel: 'Answer',
       noQuestion: 'No question selected yet',
       roundDone: '🏁 Round finished!',
       goal: 'GOAL!',
-      fileOverlay: '📥 Drop the file to import questions',
+      fileOverlay: '📥 Drop the file — it becomes a set in the collection',
       game: 'Game',
       pointFor: name => `Point ${name}`,
       resetScore: 'Reset score',
@@ -906,7 +906,7 @@
       fullscreenExit: 'Exit fullscreen',
       order: 'Order', orderSeq: 'In order', orderRnd: 'Random',
       counterNone: 'No tasks yet.',
-      startHint: 'No tasks yet — add them under “Tasks” above or drag a .txt file into the window.',
+      startHint: 'No tasks yet — under “Tasks” above, load a set, import a worksheet or type in questions.',
       counterDone: n => `🏁 Round finished — all ${n} questions played`,
       counterPos: (x, y) => `Question ${x} of ${y}`,
       counterReady: n => `${n} tasks ready`,
@@ -916,21 +916,18 @@
       theme: 'Appearance', themeAuto: 'Auto', themeLight: 'Light', themeDark: 'Dark',
       schema: 'Colour scheme', ton: 'Accent colour', tonSchema: 'Scheme accent', tonN: n => `Tone ${n}`,
       name1: 'Team 1 name', name2: 'Team 2 name',
-      addTaskTitle: 'Add a task',
-      qPh: 'e.g. What is 7 × 8?', aPh: 'e.g. 56',
+      qPh: 'New question', aPh: 'Answer',
       add: 'Add',
       tasks: 'Tasks', deleteAll: 'Delete all',
-      exportTasks: 'Export (.txt)',
-      exportTasksTitle: 'Save all tasks as a .txt file — can be re-imported',
-      exportMarker: 'Q',
-      importTitle: 'Import',
+      importTitle: 'Create from a worksheet',
       copyKiPrompt: 'Copy AI prompt',
-      dropHere: '📥 <b>Drag a file here</b><br><small>or click to choose (.txt in Q:/A:/--- format)</small>',
+      importStep1: 'and paste it with the PDF into Claude or ChatGPT',
+      dropHere: '📥 <b>Drag the .txt file you got here</b><br><small>or click — it becomes a set in the collection</small>',
       confirmScore: 'Reset both team scores to 0?',
       confirmAll: 'Reset everything? Score, ball and round start fresh — tasks are kept.',
       confirmClear: 'Really delete ALL tasks?',
       collTitle: 'Collection', currentList: 'Current list',
-      collEmpty: 'No sets yet. Use “Save” below to store the current list as a set.',
+      collEmpty: 'No sets yet. Import a worksheet above or save the current list.',
       nSets: n => `${n} ${n === 1 ? 'set' : 'sets'}`,
       nTasks: n => `${n} ${n === 1 ? 'question' : 'questions'}`,
       newFolder: 'New folder',
@@ -951,7 +948,7 @@
       setLinked: t => `Set <b>“${t}”</b>`, setChanged: 'unsaved changes',
       setUnsaved: 'Not saved in the collection.',
       dirOffer: 'Your sets can also live as .txt files in a folder on this computer (like in MyVoci and MyMemory) — then they survive a browser clean-up. Ideally create a folder “MyTafelfussball” in “Documents”.',
-      dirChoose: 'Choose folder',
+      dirChoose: '📁 Connect a folder on this computer',
       dirConnected: (name, n) => `📁 Connected to “${name}” — ${n} ${n === 1 ? 'set' : 'sets'}`,
       dirReload: 'Reload', dirDisconnect: 'Disconnect',
       dirPrompt: name => `The folder “${name}” needs your permission before the sets are saved there.`,
@@ -959,7 +956,9 @@
       dirError: name => `The folder “${name}” is not reachable (moved, deleted or access denied). Until then nothing is written to the folder; on reload the folder's version wins.`,
       editQ: 'Question:', editA: 'Answer:',
       copied: '✓ Copied!', copyFallback: 'Copy prompt:',
-      importedN: n => `✓ ${n} task${n === 1 ? '' : 's'} imported`,
+      importedSet: (t, n) => `✓ “${t}” with ${n} question${n === 1 ? '' : 's'} in the collection`,
+      importedSets: n => `✓ ${n} sets in the collection`,
+      exportSet: 'Download as .txt file',
       importNone: 'No Q:/A:/--- format found in the file(s).',
       useTitle: 'Set as current question', editTitle: 'Edit', delTitle: 'Delete'
     }
@@ -1384,7 +1383,6 @@
     nextBtn.disabled = state.tasks.length === 0 || finished;
 
     document.getElementById("resetTasksBtn").disabled = !started && !finished;
-    document.getElementById("exportTasks").disabled = state.tasks.length === 0;
 
     // Task list — nur neu bauen, wenn sich Aufgaben/Auswahl geändert haben.
     // (Sonst wird bei jedem Ballzug die Liste zerstört, inkl. laufendem Drag&Drop.)
@@ -1967,17 +1965,7 @@
     }
     document.getElementById("addTask").onclick = addTask;
     document.getElementById("newA").addEventListener("keydown", e => { if (e.key === "Enter") addTask(); });
-
-    // Aufgaben als .txt im Import-Format sichern (Backup, Gerätewechsel, Weitergabe).
-    // Ohne Aufgaben ist der Button disabled (renderControls), ein Leer-Guard ist unnötig.
-    document.getElementById("exportTasks").onclick = () => {
-      const url = URL.createObjectURL(new Blob([toFile(state.tasks, tr("exportMarker"))], { type: "text/plain;charset=utf-8" }));
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `tafelfussball-aufgaben-${new Date().toISOString().slice(0, 10)}.txt`;
-      a.click();
-      URL.revokeObjectURL(url);
-    };
+    document.getElementById("newQ").addEventListener("keydown", e => { if (e.key === "Enter") document.getElementById("newA").focus(); });
 
     document.getElementById("clearTasks").onclick = () => {
       if (state.tasks.length && confirm(tr("confirmClear"))) {
@@ -2071,21 +2059,30 @@
     dropzone.onclick = () => fileInput.click();
     fileInput.onchange = () => { importFiles(fileInput.files); fileInput.value = ""; };
 
-    function importFiles(fileList) {
+    // Jede Datei wird ein Set im Hauptordner der Sammlung (Titel = Dateiname) und das
+    // letzte davon gleich geladen. Gleicher Name im Hauptordner: nach dem Ersetzen fragen.
+    async function importFiles(fileList) {
       const files = [...fileList];
       if (!files.length) return;
-      let added = 0, pending = files.length;
-      files.forEach(file => {
-        const reader = new FileReader();
-        reader.onload = () => { added += parseImport(String(reader.result)); done(); };
-        reader.onerror = done;
-        reader.readAsText(file);
-      });
-      function done() {
-        if (--pending > 0) return;
-        if (added > 0) persistAndSync();
-        setDropStatus(added > 0 ? tr("importedN", added) : tr("importNone"));
+      const read = await Promise.all(files.map(f => f.text().then(
+        text => ({ title: cleanName(f.name.replace(/\.(txt|md|text)$/i, "")) || tr("tasks"), tasks: parseTasks(text) }),
+        () => null)));
+      const got = read.filter(r => r && r.tasks.length);
+      if (!got.length) { setDropStatus(tr("importNone")); return; }
+      const askLoad = listIsUnsaved(); // vor dem Ändern der Sammlung, sonst zählt ein ersetztes Set als «geändert»
+      let sets = coll.sets, lastId = null;
+      const done = [];
+      for (const r of got) {
+        const other = sets.find(x => place(x) === place({ title: r.title, dir: "" }));
+        if (other && !sameTasks(other.tasks, r.tasks) && !confirm(tr("nameTaken", other.title))) continue;
+        if (other) { sets = sets.map(x => x.id === other.id ? { ...x, tasks: r.tasks } : x); lastId = other.id; }
+        else { lastId = newSetId(); sets = [...sets, { id: lastId, title: r.title, dir: "", tasks: r.tasks }]; }
+        done.push(r);
       }
+      if (!lastId) return;
+      commitColl({ ...coll, sets });
+      if (!askLoad || confirm(tr("confirmLoad"))) loadSet(lastId, true);
+      setDropStatus(done.length === 1 ? tr("importedSet", done[0].title, done[0].tasks.length) : tr("importedSets", done.length));
     }
     function setDropStatus(msg) {
       dropStatus.textContent = msg;
@@ -2112,11 +2109,6 @@
       importFiles(e.dataTransfer.files);
     });
 
-    function parseImport(text) {
-      const tasks = parseTasks(text);
-      tasks.forEach(t => state.tasks.push({ id: uid(), q: t.q, a: t.a }));
-      return tasks.length;
-    }
     // F:/A:/--- (bzw. Q:) -> [{q, a}]; auch für die Dateien im Sammlungs-Ordner
     function parseTasks(text) {
       const out = [];
@@ -2185,7 +2177,7 @@
     const newSetId = () => "s" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
     const plainTasks = (tasks) => tasks.map(t => ({ q: t.q, a: t.a }));
     const sameTasks = (a, b) => JSON.stringify(plainTasks(a)) === JSON.stringify(plainTasks(b));
-    const toFile = (tasks, marker = "F") => tasks.map(t => `${marker}: ${t.q}\nA: ${t.a}`).join("\n---\n") + "\n";
+    const toFile = (tasks) => tasks.map(t => `F: ${t.q}\nA: ${t.a}`).join("\n---\n") + "\n";
 
     // Alle Ordner: die gemerkten plus jeder Pfad (samt Eltern), in dem ein Set liegt
     function allFolders(c) {
@@ -2232,6 +2224,9 @@
         : (state.tasks.length ? escapeHtml(tr("setUnsaved")) : "");
       document.getElementById("saveSet").disabled = state.tasks.length === 0 || unchanged;
       document.getElementById("saveSetAs").disabled = state.tasks.length === 0;
+      document.getElementById("clearTasks").disabled = state.tasks.length === 0;
+      document.getElementById("taskSetName").textContent = cur ? "· " + cur.title : "";
+      document.getElementById("tasksBox").classList.toggle("fresh", !coll.sets.length);
 
       const sig = collVer + "|" + state.setId + "|" + currentLang + "|" + link.status + "|" + [...closed].join("/");
       if (sig === lastCollSig) return;
@@ -2260,6 +2255,7 @@
             <span class="coll-name">${escapeHtml(x.title)}</span>
             <span class="coll-count">${tr("nTasks", x.tasks.length)}</span>
             <span class="coll-tools">
+              <button data-act="export" title="${tr("exportSet")}">⤓</button>
               <button data-act="rename" title="${tr("renameSet")}">✎</button>
               <button data-act="del" title="${tr("deleteSet")}">🗑</button>
             </span></div>`;
@@ -2273,7 +2269,7 @@
       const dirBtn = (act, label, cls = "ghost") => `<button class="${cls}" data-dir-act="${act}">${tr(label)}</button>`;
       const dirRow = (first) => `<div class="row">${first}${dirBtn("disconnect", "dirDisconnect")}</div>`;
       dirLine.innerHTML =
-          link.status === "none" ? `<p>${tr("dirOffer")}</p>${dirBtn("connect", "dirChoose")}`
+          link.status === "none" ? `<div class="dir-offer">${dirBtn("connect", "dirChoose")}<span class="info" title="${escapeHtml(tr("dirOffer"))}">ⓘ</span></div>`
         : link.status === "prompt" ? `<p class="warn">${tr("dirPrompt", name)}</p>${dirRow(dirBtn("reconnect", "dirReconnect", "primary"))}`
         : link.status === "error" ? `<p class="err">${tr("dirError", name)}</p>${dirRow(dirBtn("refresh", "dirReload", ""))}`
         : link.status === "ok" ? `<p>${tr("dirConnected", name, coll.sets.length)}</p>${dirRow(dirBtn("refresh", "dirReload"))}`
@@ -2316,12 +2312,12 @@
     };
     document.getElementById("saveSetAs").onclick = () => saveAs();
 
-    function loadSet(id) {
+    function loadSet(id, asked) { // asked: Rückfrage schon gestellt (Import)
       const x = setById(id);
       if (!x) return;
       if (x.id === state.setId && !listIsUnsaved()) return; // schon geladen, nichts geändert
       // Nochmals dasselbe Set = Änderungen verwerfen; ein anderes = aktuelle Liste ersetzen
-      if (listIsUnsaved() && !confirm(tr("confirmLoad"))) return;
+      if (!asked && listIsUnsaved() && !confirm(tr("confirmLoad"))) return;
       state.tasks = x.tasks.map(t => ({ id: uid(), q: t.q, a: t.a }));
       state.setId = x.id;
       // neue Fragen = neue Runde (Punkte bleiben)
@@ -2365,6 +2361,16 @@
       // ohne `file`: die Datei heisst danach wie der neue Titel
       commitColl({ ...coll, sets: patched(id, { title, file: undefined }) });
     }
+    // Ein Set als .txt herunterladen (Weitergabe, Backup ohne verbundenen Ordner)
+    function exportSet(id) {
+      const x = setById(id);
+      const url = URL.createObjectURL(new Blob([toFile(x.tasks)], { type: "text/plain;charset=utf-8" }));
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = fileName(x);
+      a.click();
+      URL.revokeObjectURL(url);
+    }
     function deleteSet(id) {
       const x = setById(id);
       if (!confirm(tr("confirmDeleteSet", x.title))) return;
@@ -2393,7 +2399,8 @@
         else if (act === "delDir") deleteDir(dir);
       } else {
         const id = row.dataset.id;
-        if (act === "rename") renameSet(id);
+        if (act === "export") exportSet(id);
+        else if (act === "rename") renameSet(id);
         else if (act === "del") deleteSet(id);
         else if (!act) loadSet(id);
       }
