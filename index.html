@@ -150,7 +150,7 @@
     padding: 2.5vmin 3vmin;
     gap: 2vmin;
   }
-  body.view-beamer .field { height: 38vh; } /* konstant, unabhängig von Frage-/Antwortlänge */
+  body.view-beamer .field { height: 28vh; } /* konstant, unabhängig von Frage-/Antwortlänge */
 
   /* ---------- Tribüne (nur Beamer) ----------
      Zwei Fanblöcke über dem Spielstand, links Team 1, rechts Team 2. Gezeichnet von
@@ -230,8 +230,8 @@
     position: relative;
     overflow: hidden;
   }
-  body.view-lehrer .field { height: 220px; } /* Lehrer: kompaktes Feld, mehr Platz für Frage/Lösung */
-  body.view-lehrer .field::after { width: 70px; height: 70px; }
+  body.view-lehrer .field { height: 170px; } /* Lehrer: kompaktes Feld, mehr Platz für Frage/Lösung */
+  body.view-lehrer .field::after { width: 56px; height: 56px; }
   /* Mittellinie */
   .field::before {
     content: "";
@@ -244,7 +244,7 @@
     content: "";
     position: absolute;
     left: 50%; top: 50%;
-    width: 11vmin; height: 11vmin;
+    width: 9vmin; height: 9vmin;
     transform: translate(-50%,-50%);
     border: 2px solid var(--line);
     border-radius: 50%;
@@ -387,12 +387,16 @@
      oben rechts würde er dem Scoreboard zu nahe kommen */
   .view-switch {
     position: fixed; bottom: 10px; right: 10px; z-index: 60;
-    display: none;
-    color: var(--text-2) !important; font-size: 14px;
-    opacity: .5;
+    display: none; gap: 6px;
   }
-  .view-switch:hover { opacity: 1; color: var(--text) !important; }
-  body.view-beamer .view-switch { display: block; }
+  .view-switch button { color: var(--text-2) !important; font-size: 14px; opacity: .5; }
+  .view-switch button:hover { opacity: 1; color: var(--text) !important; }
+  body.view-beamer .view-switch { display: flex; }
+  #fullscreenBtn { display: flex; align-items: center; padding: 6px 10px; }
+  #fullscreenBtn[hidden] { display: none; }
+  #fullscreenBtn svg { width: 18px; height: 18px; }
+  #fullscreenBtn .fs-exit, :fullscreen #fullscreenBtn .fs-enter { display: none; }
+  :fullscreen #fullscreenBtn .fs-exit { display: block; }
   /* Sprechblase über "Spiel starten", wenn noch keine Aufgaben da sind */
   .hint-anchor { position: relative; }
   .hint-anchor button:disabled { pointer-events: none; } /* Hover/Klick landen auf dem Wrapper */
@@ -757,7 +761,10 @@
   </aside>
 </div>
 
-<button class="ghost view-switch" id="gotoLehrer" data-i18n="toTeacher">Zur Lehrer:innen-Ansicht</button>
+<div class="view-switch">
+  <button class="ghost" id="gotoLehrer" data-i18n="toTeacher">Zur Lehrer:innen-Ansicht</button>
+  <button class="ghost" id="fullscreenBtn" data-i18n-title="fullscreen" title="Vollbild"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path class="fs-enter" d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5"/><path class="fs-exit" d="M9 4v5H4M20 9h-5V4M15 20v-5h5M4 15h5v5"/></svg></button>
+</div>
 
 <div class="goal-flash" id="goalFlash">TOR!</div>
 <canvas id="confetti"></canvas>
@@ -789,8 +796,8 @@
       teacherCardTitle: 'Lehrer:innen-Ansicht',
       teacherCardText: 'Steuerung, Aufgabenverwaltung und die Lösung.',
       importHow: "So geht's",
-      steps: '<li>Kopiere den KI-Prompt (Button unten).</li><li>Füge ihn zusammen mit deinem Aufgabenblatt (PDF) in ein KI-Tool wie <b>Claude</b> oder <b>ChatGPT</b> ein.</li><li>Die KI erstellt dir eine .txt-Datei mit allen Aufgaben im Format <code>F:</code> / <code>A:</code> / <code>---</code>.</li><li>Ziehe die Datei unten in die Ablage-Fläche — oder klicke darauf und wähle sie aus.</li>',
-      kiPrompt: "Extrahiere alle Übungsaufgaben und deren Lösungen aus diesem PDF. Formatiere sie exakt so: Für jede Aufgabe eine Zeile 'F: <Frage>', eine Zeile 'A: <Antwort>', dann eine Zeile mit nur '---' als Trennzeichen. Mathematische Formeln als LaTeX in Dollarzeichen schreiben ($...$ für inline, $$...$$ für abgesetzt). Keine zusätzlichen Erklärungen oder Nummerierungen. Erstelle daraus direkt eine .txt-Datei zum Herunterladen; falls du Dateien direkt speichern kannst, lege sie in meinen Downloads oder auf dem Desktop ab.",
+      steps: '<li>Kopiere den KI-Prompt (Button unten).</li><li>Füge ihn zusammen mit deinem Aufgabenblatt (PDF) in ein KI-Tool wie <b>Claude</b> oder <b>ChatGPT</b> ein.</li><li>Die KI erstellt dir eine .txt-Datei mit allen Aufgaben im Format <code>F:</code> / <code>A:</code> / <code>---</code>.</li><li>Ziehe die Datei unten in die Ablage-Fläche — oder klicke darauf und wähle sie aus. Ist ein Sammlungs-Ordner verbunden, genügt es auch, die Datei dort hineinzulegen.</li>',
+      kiPrompt: "Extrahiere alle Übungsaufgaben und deren Lösungen aus diesem PDF. Formatiere sie exakt so: Für jede Aufgabe eine Zeile 'F: <Frage>', eine Zeile 'A: <Antwort>', dann eine Zeile mit nur '---' als Trennzeichen. Die Fragen werden im Unterricht am Beamer gezeigt: Formuliere sie kurz, mach aus Teilaufgaben (a, b, …) eigene Aufgaben und lass Aufgaben weg, die eine Abbildung brauchen. Als Antwort nur das Endergebnis bzw. eine kurze Lösung, keinen Lösungsweg; fehlt eine Lösung im PDF, rechne sie selbst aus. Mathematische Formeln als LaTeX in Dollarzeichen ($...$ für inline, $$...$$ für abgesetzt), nur Befehle, die KaTeX kennt. Keine zusätzlichen Erklärungen, Nummerierungen oder Markdown. Erstelle daraus direkt eine .txt-Datei (UTF-8) zum Herunterladen. Benenne sie nach dem Thema, z. B. „Bruchrechnen – Kürzen.txt“, ohne Zeichen wie / : ?, denn der Dateiname wird zum Set-Titel. Falls du Dateien direkt speichern kannst, lege sie in den Ordner „MyTafelfussball“ in meinen Dokumenten, sonst in die Downloads.",
       formatExample: 'F: Was ist die Hauptstadt der Schweiz?\nA: Bern\n---\nF: Wie viel ist 7 × 8?\nA: 56\n---',
       qLabel: 'Frage', aLabel: 'Lösung',
       noQuestion: 'Noch keine Frage ausgewählt',
@@ -808,6 +815,8 @@
       resetTasksTitle: 'Zurück zum Start — Aufgaben bleiben erhalten',
       toBeamer: 'Zur Beamer-Ansicht',
       toTeacher: 'Zur Lehrer:innen-Ansicht',
+      fullscreen: 'Vollbild',
+      fullscreenExit: 'Vollbild beenden',
       order: 'Reihenfolge', orderSeq: 'Der Reihe nach', orderRnd: 'Zufällig',
       counterNone: 'Keine Aufgaben erfasst.',
       startHint: 'Keine Aufgaben erfasst — oben unter „Aufgaben" hinzufügen oder eine .txt-Datei ins Fenster ziehen.',
@@ -874,8 +883,8 @@
       teacherCardTitle: 'Teacher view',
       teacherCardText: 'Controls, task management, and the answers.',
       importHow: "Here's how",
-      steps: '<li>Copy the AI prompt (button below).</li><li>Paste it together with your worksheet (PDF) into an AI tool like <b>Claude</b> or <b>ChatGPT</b>.</li><li>The AI creates a .txt file with all tasks in the format <code>Q:</code> / <code>A:</code> / <code>---</code>.</li><li>Drag the file onto the drop area below — or click it and choose the file.</li>',
-      kiPrompt: "Extract all exercises and their solutions from this PDF. Format them exactly like this: for each task one line 'Q: <question>', one line 'A: <answer>', then a line containing only '---' as separator. Write mathematical formulas as LaTeX in dollar signs ($...$ inline, $$...$$ display). No additional explanations or numbering. Create a .txt file directly for me to download; if you can save files directly, put it in my Downloads folder or on my Desktop.",
+      steps: '<li>Copy the AI prompt (button below).</li><li>Paste it together with your worksheet (PDF) into an AI tool like <b>Claude</b> or <b>ChatGPT</b>.</li><li>The AI creates a .txt file with all tasks in the format <code>Q:</code> / <code>A:</code> / <code>---</code>.</li><li>Drag the file onto the drop area below — or click it and choose the file. If a collection folder is connected, you can also just put the file in there.</li>',
+      kiPrompt: "Extract all exercises and their solutions from this PDF. Format them exactly like this: for each task one line 'Q: <question>', one line 'A: <answer>', then a line containing only '---' as separator. The questions are shown on a projector in class: keep them short, turn sub-tasks (a, b, …) into separate tasks and leave out tasks that need a figure. As the answer give only the final result or a short solution, no worked steps; if a solution is missing from the PDF, work it out yourself. Write mathematical formulas as LaTeX in dollar signs ($...$ inline, $$...$$ display), using only commands KaTeX supports. No additional explanations, numbering or Markdown. Create a .txt file (UTF-8) directly for me to download. Name it after the topic, e.g. “Fractions – Simplifying.txt”, without characters like / : ?, because the file name becomes the set title. If you can save files directly, put it in the “MyTafelfussball” folder in my Documents, otherwise in Downloads.",
       formatExample: 'Q: What is the capital of Switzerland?\nA: Bern\n---\nQ: What is 7 × 8?\nA: 56\n---',
       qLabel: 'Question', aLabel: 'Answer',
       noQuestion: 'No question selected yet',
@@ -893,6 +902,8 @@
       resetTasksTitle: 'Back to the start — tasks are kept',
       toBeamer: 'To projector view',
       toTeacher: 'To teacher view',
+      fullscreen: 'Fullscreen',
+      fullscreenExit: 'Exit fullscreen',
       order: 'Order', orderSeq: 'In order', orderRnd: 'Random',
       counterNone: 'No tasks yet.',
       startHint: 'No tasks yet — add them under “Tasks” above or drag a .txt file into the window.',
@@ -1752,11 +1763,13 @@
     for (let k = -1; k <= 1; k += 2) out.push(`<rect x="${MID + k * 30 - 2}" y="16" width="4" height="112" style="fill:var(--text-3);opacity:.6"/>`);
     for (let y = 22; y < 128; y += 9) out.push(`<path d="M${MID - 30} ${y}h60" style="stroke:var(--text-3);stroke-width:1;opacity:.35"/>`);
 
-    // Dach mit Fachwerk und Flutlicht
-    out.push(`<rect width="${W}" height="14" style="fill:var(--leiste)"/>`);
-    let truss = "";
-    for (let x = 0; x < W; x += 24) truss += `M${x} 13L${x + 12} 2L${x + 24} 13`;
-    out.push(`<path d="${truss}" style="fill:none;stroke:var(--text-3);stroke-width:1;opacity:.45"/>`);
+    // Dach mit Stützen in den Gängen (verdecken keine Fans) und Flutlicht
+    out.push(`<rect y="14" width="${W}" height="4" style="fill:var(--grund);opacity:.35"/>`); // Schatten unter der Dachkante
+    aisles.forEach(([a]) => {
+      out.push(`<path d="M${a - 18} 14L${a - 3} 30V128H${a + 3}V30L${a + 18} 14Z" style="fill:color-mix(in srgb, var(--text-3) 45%, var(--leiste))"/>`);
+      out.push(`<rect x="${a - 3}" y="30" width="1.5" height="98" style="fill:var(--text-3);opacity:.4"/>`);
+    });
+    out.push(`<rect width="${W}" height="14" style="fill:var(--leiste)"/><rect y="12.5" width="${W}" height="1.5" style="fill:var(--text-3);opacity:.45"/>`);
     [225, 675, 1125, 1575].forEach(x => {
       out.push(`<polygon class="nacht" points="${x - 30},18 ${x + 30},18 ${x + 120},${H} ${x - 120},${H}" style="fill:var(--text);opacity:.07"/>`);
       out.push(`<rect x="${x - 34}" y="11" width="68" height="10" rx="2" style="fill:var(--leiste)"/>`);
@@ -1856,6 +1869,15 @@
 
   // ---------- Fensterwechsel-Buttons (Beamer ↔ Lehrer:innen) ----------
   if (!isTeacher) document.getElementById("gotoLehrer").onclick = () => focusOrOpenView("lehrer");
+  if (!isTeacher) {
+    const fsBtn = document.getElementById("fullscreenBtn");
+    if (!document.fullscreenEnabled) fsBtn.hidden = true;
+    fsBtn.onclick = () => document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen().catch(() => {});
+    document.addEventListener("fullscreenchange", () => {
+      fsBtn.dataset.i18nTitle = document.fullscreenElement ? "fullscreenExit" : "fullscreen";
+      fsBtn.title = tr(fsBtn.dataset.i18nTitle);
+    });
+  }
 
   // ---------- Teacher controls wiring ----------
   if (isTeacher) {

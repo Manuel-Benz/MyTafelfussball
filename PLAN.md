@@ -40,4 +40,5 @@
 ## Beamer-Ansicht (angelehnt an MyKahoot/MyMemory)
 - ✅ Rückmeldungen: Funken beim Ballschritt (nur gespielte Schritte, Zähler `kicks`), Tor mit Konfetti aus dem Tor, Farbblitz und springender Punktzahl, Lösung blendet ein, Feuerwerk am Rundenende.
 - ✅ Tribüne oben: zwei Fanblöcke in Team- und Schemafarben, Dach mit Flutlicht, Bande mit Zaunfahnen (Teamnamen); beim Tor hüpft der Block und reisst die Arme hoch.
+- ✅ Feld flacher (Beamer 28vh, Lehrer:innen 170px), damit Fragen mehr Platz haben; Tribünendach mit Stützen statt Zickzack-Fachwerk; Vollbild-Knopf unten rechts.
 - Offen (Ideen): Frage als grosse Karte, die beim Aufdecken kippt; Teamfarbe als Ring/Balken beim Team am Zug; Schlussbildschirm mit Podium.

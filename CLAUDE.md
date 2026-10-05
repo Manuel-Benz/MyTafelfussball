@@ -30,6 +30,7 @@ Digitales Quizspiel „MyTafelfussball" für den Unterricht. Features und Bedien
 - Set-Titel = Dateiname (darum `cleanName`); «dasselbe Set» = Ordner + Titel ohne Gross/Klein (`place`).
 - Ordner auf der Platte: Logik aus MyVoci/MyMemory (`readDir`/`fromDisk`/`mirrorDir`, Handle in IndexedDB `mytafelfussball`→`kv`→`dir`, `mirrored` = Stand, den der Ordner zuletzt sah, eine Promise-Kette `enqueue`, Nachlesen beim Fenster-Fokus). Begründungen in der CLAUDE.md von MyVoci.
 - Stolpersteine: Ein Set ohne Frage gibt es nicht (`readDir` lässt solche Dateien aus) — darum speichert `saveAs` nie eine leere Liste. Versteckte Dateien (`.DS_Store`) zählen weder beim Lesen noch in `removeEmptyDir`; sonst bliebe ein gelöschter/umbenannter Ordner stehen und käme als Geisterordner zurück.
+- Der KI-Prompt (`kiPrompt`, DE/EN) kennt die Sammlung: Dateiname nach Thema (wird Set-Titel), Ablage im Ordner «MyTafelfussball» in Dokumente. Bei Änderungen an Format oder Sammlung mitziehen.
 - Sichtprüfung headless: das OPFS-Wurzelverzeichnis (`navigator.storage.getDirectory()`) als Handle in IndexedDB legen — dann läuft der ganze Ordner-Weg ohne Dateiauswahl.
 
 ## Design (My-Designsystem)
@@ -41,10 +42,10 @@ Digitales Quizspiel „MyTafelfussball" für den Unterricht. Features und Bedien
 - Knöpfe: Standard = sekundär (`--akzent-weich`), `.primary` = Akzent, `.ghost` = neutral.
 
 ### Abweichungen
-- **Kopfleiste** nur auf Startseite und Lehrer:innen-Ansicht; der Beamer bleibt ohne. In der Leiste der Wechsel zur Beamer-Ansicht (`#gotoBeamer`).
+- **Kopfleiste** nur auf Startseite und Lehrer:innen-Ansicht; der Beamer bleibt ohne. In der Leiste der Wechsel zur Beamer-Ansicht (`#gotoBeamer`). Im Beamer stattdessen dezent unten rechts (`.view-switch`): Wechsel zur Lehrer:innen-Ansicht und Vollbild-Knopf (Symbol wechselt per `:fullscreen`, ohne Fullscreen-API ausgeblendet).
 - **Teamfarben** aus den Spielfarben: Team 1 = `--spiel-4`, Team 2 = `--spiel-1`; Fox/Zissou Team 1 = `--spiel-2`, Isle Team 1 = `--rad-8` (Spielfarben dort zu ähnlich).
 - **Rasen** bleibt grün, unabhängig vom Schema.
-- **Tribüne** (nur Beamer, `buildStands()`): zwei Fanblöcke über dem Spielstand, links Team 1, rechts Team 2; ein SVG mit festem Zufalls-Startwert. Trikots aus Teamfarbe und weiteren Schemafarben (`--rad-N`, `--spiel-2/3`), ohne die, die einer Teamfarbe zu ähnlich sind — darum Neuzeichnen beim Schemawechsel. Haut- und Haarfarben sind fest (weitere Ausnahme von «nur Tokens»). Beim Tor hüpft der Block und reisst die Arme hoch (`cheerStands`). Nachtdetails (Flutlicht, Handylichter) nur im Dunkelmodus (`.nacht`).
+- **Tribüne** (nur Beamer, `buildStands()`): zwei Fanblöcke über dem Spielstand, links Team 1, rechts Team 2; ein SVG mit festem Zufalls-Startwert. Trikots aus Teamfarbe und weiteren Schemafarben (`--rad-N`, `--spiel-2/3`), ohne die, die einer Teamfarbe zu ähnlich sind — darum Neuzeichnen beim Schemawechsel. Haut- und Haarfarben sind fest (weitere Ausnahme von «nur Tokens»). Beim Tor hüpft der Block und reisst die Arme hoch (`cheerStands`). Nachtdetails (Flutlicht, Handylichter) nur im Dunkelmodus (`.nacht`). Dach schlicht mit Stahlstützen nur in den Gängen (`aisles`), damit sie keine Fans verdecken.
 - **Effekte** (wie MyKahoot, ein Canvas `#confetti`, `burst()`): laufen in jedem Fenster, das den neuen Zustand rendert, ausgelöst über Zustandswechsel in `render()` (Punkte, `kicks`, Rundenende). Funken nur bei gespielten Ballschritten — darum zählt `moveBall` `kicks` hoch; Reset/Rundenstart/Tor setzen den Ball ohne. `prefers-reduced-motion` schaltet alles ab (`burst()`/`flashScreen()` prüfen es selbst, CSS nimmt nur die Animationen).
 - Stolpersteine Effekte: `ctx.globalAlpha` ignoriert Werte ausserhalb 0–1 (darum klemmen, sonst blitzt der Partikel mit dem Alpha des Vorgängers auf). `cheerStands` hält einen gemeinsamen Timer — ein zweites Tor verlängert den Jubel. Die Tribüne wird nur bei Schemawechsel neu gezeichnet (`lastStandsSchema`); Ton und Hell/Dunkel laufen live über Tokens.
 - Gewählter Ton: `--akzent-ink` wird per OKLCH aus der Helligkeit des Tons abgeleitet (die Schemen kennen die Schrift nur für ihren eigenen Akzent).
