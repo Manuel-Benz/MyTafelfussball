@@ -701,7 +701,7 @@
     <details class="panel collapsible" id="tasksBox">
       <summary><span data-i18n="tasks">Aufgaben</span><span class="set-name" id="taskSetName"></span> (<span id="taskCount">0</span>)</summary>
       <div class="tasks-flow">
-      <section class="coll-sec">
+      <section>
         <h3 data-i18n="collTitle">Sammlung</h3>
         <div class="coll-tree" id="collTree" data-dir=""></div>
         <div class="row" style="margin-top:8px">
@@ -710,13 +710,13 @@
         <div class="dir-line" id="dirLine"></div>
       </section>
 
-      <section class="list-sec">
+      <section>
         <h3 data-i18n="currentList">Aktuelle Liste</h3>
         <div class="set-status" id="setStatus"></div>
         <div id="taskList"></div>
         <div class="add-row">
-          <input type="text" id="newQ" data-i18n-ph="qPh" placeholder="Neue Frage">
-          <input type="text" id="newA" data-i18n-ph="aPh" placeholder="Lösung">
+          <input type="text" id="newQ" data-i18n-ph="qPh" placeholder="Neue Frage" data-i18n-title="qLabel" title="Frage">
+          <input type="text" id="newA" data-i18n-ph="aPh" placeholder="Lösung" data-i18n-title="aLabel" title="Lösung">
           <button class="primary" id="addTask" data-i18n-title="add" title="Hinzufügen">+</button>
         </div>
         <div class="row grow" style="margin-top:10px">
@@ -1383,6 +1383,7 @@
     nextBtn.disabled = state.tasks.length === 0 || finished;
 
     document.getElementById("resetTasksBtn").disabled = !started && !finished;
+    document.getElementById("clearTasks").disabled = state.tasks.length === 0;
 
     // Task list — nur neu bauen, wenn sich Aufgaben/Auswahl geändert haben.
     // (Sonst wird bei jedem Ballzug die Liste zerstört, inkl. laufendem Drag&Drop.)
@@ -2070,17 +2071,13 @@
       const got = read.filter(r => r && r.tasks.length);
       if (!got.length) { setDropStatus(tr("importNone")); return; }
       const askLoad = listIsUnsaved(); // vor dem Ändern der Sammlung, sonst zählt ein ersetztes Set als «geändert»
-      let sets = coll.sets, lastId = null;
+      let lastId = null;
       const done = [];
       for (const r of got) {
-        const other = sets.find(x => place(x) === place({ title: r.title, dir: "" }));
-        if (other && !sameTasks(other.tasks, r.tasks) && !confirm(tr("nameTaken", other.title))) continue;
-        if (other) { sets = sets.map(x => x.id === other.id ? { ...x, tasks: r.tasks } : x); lastId = other.id; }
-        else { lastId = newSetId(); sets = [...sets, { id: lastId, title: r.title, dir: "", tasks: r.tasks }]; }
-        done.push(r);
+        const id = putSet(r.title, "", r.tasks);
+        if (id) { lastId = id; done.push(r); }
       }
       if (!lastId) return;
-      commitColl({ ...coll, sets });
       if (!askLoad || confirm(tr("confirmLoad"))) loadSet(lastId, true);
       setDropStatus(done.length === 1 ? tr("importedSet", done[0].title, done[0].tasks.length) : tr("importedSets", done.length));
     }
@@ -2224,13 +2221,12 @@
         : (state.tasks.length ? escapeHtml(tr("setUnsaved")) : "");
       document.getElementById("saveSet").disabled = state.tasks.length === 0 || unchanged;
       document.getElementById("saveSetAs").disabled = state.tasks.length === 0;
-      document.getElementById("clearTasks").disabled = state.tasks.length === 0;
-      document.getElementById("taskSetName").textContent = cur ? "· " + cur.title : "";
-      document.getElementById("tasksBox").classList.toggle("fresh", !coll.sets.length);
 
       const sig = collVer + "|" + state.setId + "|" + currentLang + "|" + link.status + "|" + [...closed].join("/");
       if (sig === lastCollSig) return;
       lastCollSig = sig;
+      document.getElementById("taskSetName").textContent = cur ? "· " + cur.title : "";
+      document.getElementById("tasksBox").classList.toggle("fresh", !coll.sets.length);
 
       const folders = allFolders(coll);
       const countIn = (d) => coll.sets.filter(x => inDir(x.dir, d)).length;
@@ -2277,24 +2273,23 @@
     }
 
     // ----- Speichern / Laden -----
-    // Legt die aktuelle Liste unter `title` in `dir` ab. Liegt dort schon ein Set mit
-    // dem Namen (und ist es nicht das geladene), wird nach dem Ersetzen gefragt.
+    // Legt `tasks` unter `title` in `dir` ab und gibt die id zurück (null bei Abbruch). Liegt dort
+    // schon ein Set mit dem Namen und anderem Inhalt, wird nach dem Ersetzen gefragt — ausser es
+    // ist `keepId`, das geladene Set.
+    function putSet(title, dir, tasks, keepId) {
+      const other = atPlace(title, dir);
+      if (other && other.id !== keepId && !sameTasks(other.tasks, tasks) && !confirm(tr("nameTaken", other.title))) return null;
+      tasks = plainTasks(tasks);
+      const id = other ? other.id : newSetId();
+      commitColl({ ...coll, sets: other ? patched(id, { tasks }) : [...coll.sets, { id, title, dir, tasks }] });
+      return id;
+    }
     function storeList(title, dir) {
       title = cleanName(title);
       if (!title) return;
-      const other = atPlace(title, dir);
-      if (other && other.id !== state.setId && !confirm(tr("nameTaken", other.title))) return;
-      const tasks = plainTasks(state.tasks);
-      let sets;
-      if (other) {
-        sets = patched(other.id, { tasks });
-        state.setId = other.id;
-      } else {
-        const id = newSetId();
-        sets = [...coll.sets, { id, title, dir, tasks }];
-        state.setId = id;
-      }
-      commitColl({ ...coll, sets });
+      const id = putSet(title, dir, state.tasks, state.setId);
+      if (!id) return;
+      state.setId = id;
       persistAndSync();
     }
     function saveAs(dir) {
@@ -2369,7 +2364,7 @@
       a.href = url;
       a.download = fileName(x);
       a.click();
-      URL.revokeObjectURL(url);
+      setTimeout(() => URL.revokeObjectURL(url), 1000); // sofortiges Widerrufen bricht den Download in manchen Browsern ab
     }
     function deleteSet(id) {
       const x = setById(id);
