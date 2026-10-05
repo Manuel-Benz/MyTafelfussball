@@ -35,7 +35,7 @@ In den Einstellungen der Lehrer:innen-Ansicht lässt sich die Oberfläche zwisch
 
 ## Darstellung
 
-Ebenfalls in den Einstellungen: **Auto / Hell / Dunkel**. „Auto" folgt der Systemeinstellung (dunkles Blau bzw. warmes Sandweiss), Hell/Dunkel erzwingen das jeweilige Schema — synchron in beiden Fenstern.
+Ebenfalls in den Einstellungen: **Auto / Hell / Dunkel**. „Auto" folgt der Systemeinstellung, Hell/Dunkel erzwingen den Modus. Dazu **Farbschema** (fünf Schemen des My-Designsystems) und **Akzentfarbe** (Standard: Moonrise Kingdom, Tanne). Die Teamfarben kommen aus dem Schema, der Rasen bleibt grün. Alles synchron in beiden Fenstern.
 
 ## Aufgaben aus PDF importieren
 

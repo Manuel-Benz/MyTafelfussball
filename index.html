@@ -1,74 +1,93 @@
 <!doctype html>
-<html lang="de">
+<html lang="de" data-schema="moonrise" data-ton="4">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>MyTafelfussball</title>
+<link rel="icon" type="image/svg+xml" href="design/icons/tafel.svg">
+<link rel="apple-touch-icon" href="design/icons/tafel.svg">
+<script>
+  // Schema, Ton und Hell/Dunkel vor dem ersten Zeichnen setzen (sonst blitzt der Standard auf).
+  // Dieselbe Logik wie applyLook() im Hauptskript.
+  try {
+    const s = JSON.parse(localStorage.getItem("tafelfussball_state_v1")) || {};
+    const h = document.documentElement;
+    if (["fox","budapest","moonrise","zissou","isle"].includes(s.schema)) h.dataset.schema = s.schema;
+    if (Number.isInteger(s.ton) && s.ton >= 0 && s.ton <= 9) { if (s.ton) h.dataset.ton = s.ton; else h.removeAttribute("data-ton"); }
+    if (s.theme === "light" || s.theme === "dark") h.dataset.modus = s.theme === "dark" ? "dunkel" : "hell";
+  } catch {}
+</script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<link rel="stylesheet" href="design/css/my-tokens.css">
+<link rel="stylesheet" href="design/css/my-schemen.css">
 <style>
+  /* Farben kommen aus dem My-Designsystem (design/, Kopie aus ~/MySuite — dort ändern).
+     Eigene Variablen heissen nie wie Tokens, sonst überschreiben sie das Schema still. */
   :root {
-    --team1: #2563eb;
-    --team2: #dc2626;
-    --answer: #cf3c3c; /* aufgehelltes Firebrick, lesbar auf dunklem Grund */
-    --field: #4ade80;
-    --field-dark: #22c55e;
+    /* Teams = zwei gut unterscheidbare Spielfarben des Schemas (blau-/rotseitig) */
+    --team1: var(--spiel-4); --team1-ink: var(--spiel-4-ink);
+    --team2: var(--spiel-1); --team2-ink: var(--spiel-1-ink);
+    --answer: var(--rot);
+    /* Rasen bleibt grün, unabhängig vom Schema (an Moonrise-Gras angelehnt) */
+    --field: #4DAC3A;
+    --field-dark: #439C33;
     --line: rgba(255,255,255,.75);
-    --bg: #0a101e;        /* dunkles Blau (Dark Mode) */
-    --panel: #1e293b;
-    --panel-2: #273449;
-    --text: #e2e8f0;
-    --muted: #94a3b8;
-    --border: #334155;
-    --input-bg: #0f172a;
-    --ok: #4ade80;           /* Erfolgs-Feedback (Import) */
-    --err: #cf3c3c;          /* Fehler-Feedback (Import); funktioniert auf hell + dunkel */
-    --answer-label: #e08a84; /* "Lösung"-Label über der Antwort */
+    --code-bg: var(--grund);
+    /* Aktiver Eintrag der Kopfleiste: Akzent (dunkle Variante) bei 28 % */
+    --leiste-aktiv: color-mix(in srgb, var(--akzent) 45%, transparent);
   }
-  /* Hell: warmes, helles Sandweiss.
-     Auto (kein data-theme): folgt dem System. Manuell: data-theme="light"/"dark" gewinnt. */
-  @media (prefers-color-scheme: light) {
-    :root:not([data-theme="dark"]) {
-      --bg: #f6f1e7;
-      --panel: #fdfaf3;
-      --panel-2: #efe8d8;
-      --text: #33302a;
-      --muted: #857f6f;
-      --border: #ded5c1;
-      --input-bg: #ffffff;
-      --ok: #15803d;
-      --answer-label: #a13030;
-    }
+  @supports (color: oklch(from red l c h)) {
+    :root { --leiste-aktiv: oklch(from var(--akzent) max(l, 0.62) c h / .28); }
+    /* Gewählter Ton: Schrift darauf hell oder dunkel je nach Helligkeit des Tons
+       (die Schemen kennen --akzent-ink nur für ihren eigenen Akzent) */
+    :root[data-ton] { --akzent-ink: oklch(from var(--akzent) clamp(0, (0.62 - l) * 1000, 1) 0 0); }
   }
-  :root[data-theme="light"] {
-    --bg: #f6f1e7;
-    --panel: #fdfaf3;
-    --panel-2: #efe8d8;
-    --text: #33302a;
-    --muted: #857f6f;
-    --border: #ded5c1;
-    --input-bg: #ffffff;
-    --ok: #15803d;
-    --answer-label: #a13030;
-  }
+  [data-schema="fox"]  { --team1: var(--spiel-2); --team1-ink: var(--spiel-2-ink); }
+  [data-schema="zissou"] { --team1: var(--spiel-2); --team1-ink: var(--spiel-2-ink); }
+  /* Isle of Dogs: Spielfarben liegen nah beieinander -> Schiefer gegen Sand */
+  [data-schema="isle"] { --team1: var(--rad-8); --team1-ink: #FFFFFF; }
+
   * { box-sizing: border-box; }
   html, body { height: 100%; margin: 0; }
   body {
-    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-    background: var(--bg);
+    font-family: var(--schrift);
+    background: var(--grund);
     color: var(--text);
     overflow: hidden;
+    display: flex;
+    flex-direction: column;
   }
+  h1, h2 { letter-spacing: -0.02em; font-weight: 700; }
+
+  /* ---------- Kopfleiste (Startseite + Lehrer:innen, nie auf dem Beamer) ---------- */
+  .leiste {
+    flex: 0 0 auto;
+    display: flex; align-items: center; gap: 10px;
+    height: 46px; padding: 0 16px;
+    background: var(--leiste); color: #FFFFFF;
+    font-weight: 600; font-size: 15px;
+  }
+  body.view-beamer .leiste { display: none; }
+  .leiste img { width: 24px; height: 24px; border-radius: var(--radius-s); display: block; }
+  .leiste nav { margin-left: auto; display: flex; gap: 4px; }
+  .leiste nav button, .leiste nav span {
+    font: inherit; font-size: 13px; font-weight: 600;
+    padding: 4px 10px; border-radius: var(--radius-s);
+    background: transparent; border: none; color: #D8D8DC;
+  }
+  .leiste nav button:hover { background: rgba(255,255,255,.08); color: #FFFFFF; filter: none; }
+  .leiste nav .aktiv { background: var(--leiste-aktiv); color: #FFFFFF; }
+  body.view-launcher .leiste nav { display: none; }
 
   /* ---------- Launcher ---------- */
   #launcher {
     display: none;
-    height: 100%;
+    flex: 1; min-height: 0;
     overflow-y: auto;  /* eigener Scroll-Kontext */
   }
   body.view-launcher #launcher { display: block; }
   .launcher-inner {
     min-height: 100%;         /* füllt den Screen -> zentriert bei wenig Inhalt */
-    box-sizing: border-box;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -77,6 +96,7 @@
     padding: 40px 24px;
     text-align: center;
   }
+  .launcher-tier { width: clamp(96px, 14vw, 150px); height: auto; border-radius: 22%; display: block; }
   #launcher h1 {
     font-size: clamp(32px, 6vw, 64px);
     margin: 0;
@@ -86,38 +106,38 @@
   }
   .logo-ball { display: inline-block; width: .95em; height: .95em; }
   .logo-ball svg { display: block; width: 100%; height: 100%; }
-  #launcher p { color: var(--muted); max-width: 640px; margin: 0; line-height: 1.5; }
+  #launcher p { color: var(--text-2); max-width: 640px; margin: 0; font-size: 17px; line-height: 1.55; }
   .launch-cards { display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; }
   .launch-card {
-    background: var(--panel);
-    border: 1px solid var(--border);
-    border-radius: 16px;
-    padding: 28px 32px;
-    width: 260px;
+    background: var(--karte);
+    border: 1px solid var(--linie);
+    border-radius: var(--radius-l);
+    padding: 28px 28px;
+    width: 290px;
     cursor: pointer;
     text-decoration: none;
     color: var(--text);
-    transition: transform .12s, border-color .12s;
+    transition: transform .12s, border-color .12s, box-shadow .12s;
   }
-  .launch-card:hover { transform: translateY(-3px); border-color: #60a5fa; }
-  .launch-card h2 { margin: 0 0 8px; font-size: 24px; }
-  .launch-card p { font-size: 14px; }
+  .launch-card:hover { transform: translateY(-3px); border-color: var(--akzent); box-shadow: var(--schatten); }
+  .launch-card h2 { margin: 0 0 8px; font-size: 22px; color: var(--akzent-text); }
+  .launch-card p { font-size: 15px !important; }
 
   .format-example {
-    background: var(--input-bg);
-    border: 1px dashed var(--border);
-    border-radius: 10px;
+    background: var(--code-bg);
+    border: 1px dashed var(--linie);
+    border-radius: var(--radius);
     padding: 12px 16px;
     font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     font-size: 13px;
-    color: var(--muted);
+    color: var(--text-2);
     white-space: pre;
     margin-top: 10px;
     overflow-x: auto;
   }
 
   /* ---------- App shell ---------- */
-  #app { display: none; height: 100%; }
+  #app { display: none; flex: 1; min-height: 0; }
   body.view-beamer #app,
   body.view-lehrer #app { display: grid; }
 
@@ -171,7 +191,7 @@
   }
   body.view-beamer .score-num { font-size: clamp(32px, 6vw, 90px); }
   body.view-lehrer .score-num { font-size: 40px; }
-  .vs { color: var(--muted); font-weight: 700; font-size: clamp(16px, 2vw, 28px); }
+  .vs { color: var(--text-3); font-weight: 700; font-size: clamp(16px, 2vw, 28px); }
 
   /* ---------- Field ---------- */
   .field-wrap { grid-area: field; display: flex; align-items: center; justify-content: center; min-height: 0; }
@@ -183,7 +203,7 @@
     align-items: stretch;
     background: repeating-linear-gradient(90deg, var(--field) 0 8%, var(--field-dark) 8% 16%);
     border: 2px solid var(--line);
-    border-radius: 12px;
+    border-radius: var(--radius-l);
     position: relative;
     overflow: hidden;
   }
@@ -262,16 +282,17 @@
 
   /* ---------- Question ---------- */
   .question-area { grid-area: question; text-align: center; overflow-y: auto; min-height: 0; } /* lange Fragen scrollen statt abgeschnitten zu werden */
-  .q-label { color: var(--muted); font-weight: 700; letter-spacing: .08em; text-transform: uppercase; font-size: 13px; }
+  .q-label { color: var(--text-3); font-weight: 650; letter-spacing: .08em; text-transform: uppercase; font-size: 13px; }
   .question {
     font-weight: 800;
     line-height: 1.25;
+    letter-spacing: -0.01em;
     margin-top: 6px;
   }
   body.view-beamer .question { font-size: clamp(28px, 4.5vw, 60px); }
   body.view-lehrer .question { font-size: 24px; }
   .question, #answerText { white-space: pre-line; } /* mehrzeilige Aufgaben sauber umbrechen */
-  /* Aufgedeckte Antwort: in Firebrick direkt hinter der Frage auf derselben Zeile */
+  /* Aufgedeckte Antwort: in Signal-Rot direkt hinter der Frage auf derselben Zeile */
   .answer-inline { display: none; color: var(--answer); margin-left: .45em; }
   .answer-inline.show { display: inline; }
   /* Lehrer-Box: Lösung immer sichtbar (vor dem Aufdecken) */
@@ -279,17 +300,17 @@
     display: none;
     margin-top: 14px;
     padding: 14px 20px;
-    background: rgba(207,60,60,.08);
-    border: 1px solid rgba(207,60,60,.5);
-    border-radius: 12px;
+    background: color-mix(in srgb, var(--answer) 9%, var(--karte));
+    border: 1px solid color-mix(in srgb, var(--answer) 45%, transparent);
+    border-radius: var(--radius-l);
     color: var(--answer);
     font-weight: 800;
     font-size: 28px;
     line-height: 1.3;
   }
   body.view-lehrer .answer { display: block; }
-  .answer .a-label { color: var(--answer-label); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; display: block; margin-bottom: 4px; }
-  .empty-hint { color: var(--muted); font-style: italic; }
+  .answer .a-label { color: var(--answer); font-size: 13px; font-weight: 650; letter-spacing: .08em; text-transform: uppercase; display: block; margin-bottom: 4px; }
+  .empty-hint { color: var(--text-3); font-style: italic; }
 
   /* ---------- Controls (Lehrer) ---------- */
   .controls {
@@ -301,52 +322,53 @@
     padding-right: 4px;
   }
   body.view-lehrer .controls { display: flex; }
-  .panel { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 14px; }
-  .panel h3 { margin: 0 0 10px; font-size: 13px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
-  .panel.collapsible summary {
-    cursor: pointer;
-    font-size: 13px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: .06em;
-    color: var(--muted);
-    user-select: none;
+  .panel { background: var(--karte); border: 1px solid var(--linie); border-radius: var(--radius-l); padding: 14px; }
+  .panel h3, .panel.collapsible summary {
+    margin: 0 0 10px;
+    font-size: 13px; font-weight: 650;
+    text-transform: uppercase; letter-spacing: .08em;
+    color: var(--text-2);
   }
+  .panel.collapsible summary { margin: 0; cursor: pointer; user-select: none; }
   .panel.collapsible summary:hover { color: var(--text); }
   .panel.collapsible[open] summary { margin-bottom: 10px; }
   .row { display: flex; gap: 8px; flex-wrap: wrap; }
   .row.grow > * { flex: 1; }
 
+  /* Knöpfe laut DESIGN.md: Standard = sekundär (weicher Akzent), .primary = Akzent-Fläche,
+     .ghost = neutral (transparent, Linie) */
   button {
     font: inherit;
-    font-weight: 700;
-    border: none;
-    border-radius: 10px;
-    padding: 10px 14px;
-    background: var(--panel-2);
-    color: var(--text);
+    font-weight: 600;
+    border: 1px solid transparent;
+    border-radius: var(--radius);
+    padding: 10px 16px;
+    background: var(--akzent-weich);
+    color: var(--akzent-text);
     cursor: pointer;
-    transition: filter .1s, transform .05s;
+    transition: filter .1s, transform .05s, background .1s;
   }
-  button:hover { filter: brightness(1.15); }
+  button:hover { filter: brightness(.96); }
   button:active { transform: translateY(1px); }
-  button.primary { background: #2563eb; color: #fff; }
-  button.t1 { background: var(--team1); color: #fff; }
-  button.t2 { background: var(--team2); color: #fff; }
-  button.ghost { background: transparent; border: 1px solid var(--border); }
-  button.danger { background: #7f1d1d; color: #fff; }
+  button.primary { background: var(--akzent); color: var(--akzent-ink); }
+  button.primary:hover { filter: brightness(1.08); }
+  button.t1 { background: var(--team1); color: var(--team1-ink); }
+  button.t2 { background: var(--team2); color: var(--team2-ink); }
+  button.t1:hover, button.t2:hover { filter: brightness(1.08); }
+  button.ghost { background: transparent; border-color: var(--linie); color: var(--text); }
+  button.ghost:hover { background: var(--hover); filter: none; }
   /* ghost + danger = dezente Umriss-Variante statt vollrot */
-  button.ghost.danger { background: transparent; color: #dc2626; border-color: rgba(220,38,38,.55); }
+  button.ghost.danger { color: var(--rot); border-color: color-mix(in srgb, var(--rot) 50%, transparent); }
   button.icon { padding: 6px 10px; }
   /* Dezenter Fensterwechsel-Button unten rechts in der Beamer-Ansicht (Optik von ghost);
      oben rechts würde er dem Scoreboard zu nahe kommen */
   .view-switch {
     position: fixed; bottom: 10px; right: 10px; z-index: 60;
     display: none;
-    color: var(--muted); font-size: 14px;
+    color: var(--text-2) !important; font-size: 14px;
     opacity: .5;
   }
-  .view-switch:hover { opacity: 1; color: var(--text); }
+  .view-switch:hover { opacity: 1; color: var(--text) !important; }
   body.view-beamer .view-switch { display: block; }
   /* Sprechblase über "Spiel starten", wenn noch keine Aufgaben da sind */
   .hint-anchor { position: relative; }
@@ -355,15 +377,15 @@
     position: absolute;
     top: calc(100% + 8px); /* unterhalb: oberhalb würde sie am Scrollrand der Seitenleiste abgeschnitten */
     left: 0; right: 0;
-    background: var(--panel-2);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 8px 10px;
-    font-size: 12px;
+    background: var(--karte);
+    border: 1px solid var(--linie);
+    border-radius: var(--radius);
+    padding: 9px 12px;
+    font-size: 13px;
     font-weight: 400;
-    line-height: 1.4;
+    line-height: 1.45;
     color: var(--text);
-    box-shadow: 0 4px 12px rgba(0,0,0,.25);
+    box-shadow: var(--schatten);
     opacity: 0;
     pointer-events: none;
     transition: opacity .15s;
@@ -376,52 +398,74 @@
     bottom: 100%;
     left: 24px;
     border: 6px solid transparent;
-    border-bottom-color: var(--panel-2);
+    border-bottom-color: var(--karte);
   }
-  button.start-mode { background: #16a34a; color: #fff; } /* gleiche Grösse wie "Nächste Frage", nur grün */
+  button.start-mode { background: var(--akzent); color: var(--akzent-ink); } /* "Spiel starten" = primär */
   button:disabled { opacity: .45; cursor: not-allowed; filter: none; }
 
-  input {
+  input, select {
     font: inherit;
-    background: var(--input-bg);
+    background: var(--karte);
     color: var(--text);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 8px 10px;
+    border: 1px solid var(--linie);
+    border-radius: var(--radius);
+    padding: 8px 12px;
     width: 100%;
   }
-  label.field-label { font-size: 12px; color: var(--muted); display: block; margin: 8px 0 4px; }
+  input:focus-visible, select:focus-visible, button:focus-visible {
+    outline: 2px solid var(--akzent); outline-offset: 1px;
+  }
+  label.field-label { font-size: 13px; color: var(--text-2); display: block; margin: 10px 0 4px; }
   .stepper { display: flex; align-items: center; gap: 6px; }
   .stepper input { width: 60px; text-align: center; }
-  .toggle-group { display: flex; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
-  .toggle-group button { flex: 1; border-radius: 0; background: transparent; }
-  .toggle-group button.active { background: #2563eb; color: #fff; }
+  /* Umschalter: Rahmen in --linie, aktiver Teil weich hinterlegt */
+  .toggle-group {
+    display: flex; gap: 2px; padding: 3px;
+    border: 1px solid var(--linie); border-radius: var(--radius);
+  }
+  .toggle-group button {
+    flex: 1; padding: 6px 10px; border-radius: 7px;
+    background: transparent; color: var(--text-2); font-weight: 500;
+  }
+  .toggle-group button:hover { background: var(--hover); filter: none; }
+  .toggle-group button.active { background: var(--akzent-weich); color: var(--akzent-text); font-weight: 600; }
+  /* Akzentfarbe: ein Farbtupfer pro Ton des Schemas */
+  .swatches { display: flex; flex-wrap: wrap; gap: 6px; }
+  .swatch {
+    width: 26px; height: 26px; padding: 0;
+    border-radius: 50%; border: 2px solid var(--karte);
+    box-shadow: 0 0 0 1px var(--linie);
+  }
+  .swatch:hover { filter: none; transform: scale(1.08); }
+  .swatch.active { box-shadow: 0 0 0 2px var(--text); }
 
-  /* Task list */
+  /* Task list: Kartenzeilen */
   #taskList { display: flex; flex-direction: column; gap: 6px; max-height: 260px; overflow-y: auto; }
   .task-item {
     display: flex; align-items: center; gap: 8px;
-    background: var(--panel-2);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 8px 10px;
+    background: var(--zeile);
+    border: 1px solid var(--zeile-linie);
+    border-radius: var(--radius);
+    padding: 9px 12px;
     cursor: grab;
   }
+  .task-item:hover { background: var(--hover); }
   .task-item.dragging { opacity: .4; }
-  .task-item.current { border-color: #60a5fa; box-shadow: 0 0 0 1px #60a5fa; }
-  .task-item .grip { color: var(--muted); cursor: grab; user-select: none; }
+  .task-item.current { border-color: var(--akzent); box-shadow: 0 0 0 1px var(--akzent); }
+  .task-item .grip { color: var(--text-3); cursor: grab; user-select: none; }
   .task-item .task-text { flex: 1; min-width: 0; }
-  .task-item .task-q { font-weight: 700; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .task-item .task-a { font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .task-item .task-actions { display: flex; gap: 4px; }
-  .task-item .task-actions button { padding: 4px 8px; font-size: 12px; background: transparent; }
-  .counter { font-size: 12px; color: var(--muted); }
+  .task-item .task-q { font-weight: 600; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .task-item .task-a { font-size: 12px; color: var(--text-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .task-item .task-actions { display: flex; gap: 2px; }
+  .task-item .task-actions button { padding: 4px 8px; font-size: 12px; background: transparent; color: var(--text-2); }
+  .task-item .task-actions button:hover { background: var(--hover); filter: none; }
+  .counter { font-size: 13px; color: var(--text-3); }
   .import-steps { margin-bottom: 8px; }
-  .import-steps summary { cursor: pointer; font-size: 13px; font-weight: 700; color: var(--muted); padding: 2px 0; user-select: none; }
+  .import-steps summary { cursor: pointer; font-size: 13px; font-weight: 600; color: var(--text-2); padding: 2px 0; user-select: none; }
   .import-steps summary:hover { color: var(--text); }
-  .import-steps ol { margin: 6px 0; padding-left: 18px; font-size: 12.5px; line-height: 1.55; color: var(--muted); }
+  .import-steps ol { margin: 6px 0; padding-left: 18px; font-size: 13px; line-height: 1.55; color: var(--text-2); }
   .import-steps li { margin-bottom: 4px; }
-  .import-steps code { background: var(--input-bg); border: 1px solid var(--border); border-radius: 4px; padding: 0 4px; font-size: 11px; }
+  .import-steps code { background: var(--code-bg); border: 1px solid var(--linie); border-radius: var(--radius-s); padding: 0 4px; font-size: 11px; }
   .import-steps .format-example { font-size: 12px; margin-top: 6px; }
 
   /* Confetti canvas */
@@ -431,36 +475,39 @@
   .goal-flash {
     position: fixed; inset: 0; z-index: 90; pointer-events: none;
     display: flex; align-items: center; justify-content: center;
-    font-size: clamp(60px, 14vw, 200px); font-weight: 900; color: #fff;
-    /* doppelter Schatten trägt das Weiss auch auf hellem Grund */
+    font-size: clamp(60px, 14vw, 200px); font-weight: 900; color: #FFFFFF;
+    letter-spacing: -0.02em;
+    /* doppelter Schatten trägt die helle Schrift auch auf hellem Grund */
     text-shadow: 0 2px 6px rgba(0,0,0,.55), 0 6px 30px rgba(0,0,0,.5);
     opacity: 0; transition: opacity .2s;
   }
+  .goal-flash.t1 { color: color-mix(in srgb, var(--team1) 45%, #FFFFFF); }
+  .goal-flash.t2 { color: color-mix(in srgb, var(--team2) 45%, #FFFFFF); }
   .goal-flash.show { opacity: 1; animation: pop .8s ease; }
   @keyframes pop { 0%{ transform: scale(.6);} 50%{ transform: scale(1.15);} 100%{ transform: scale(1);} }
 
   /* Datei-Import */
   .dropzone {
-    border: 2px dashed var(--border);
-    border-radius: 10px;
+    border: 2px dashed var(--linie);
+    border-radius: var(--radius);
     padding: 16px;
     text-align: center;
-    color: var(--muted);
+    color: var(--text-2);
     cursor: pointer;
     font-size: 13px;
-    line-height: 1.4;
+    line-height: 1.45;
     transition: border-color .12s, background .12s, color .12s;
   }
-  .dropzone:hover { border-color: #60a5fa; color: var(--text); background: rgba(96,165,250,.06); }
-  .dropzone small { color: var(--muted); }
-  .drop-status { font-size: 12px; min-height: 1em; margin-top: 6px; color: var(--ok); }
+  .dropzone:hover { border-color: var(--akzent); color: var(--text); background: var(--akzent-weich); }
+  .dropzone small { color: var(--text-3); }
+  .drop-status { font-size: 13px; min-height: 1em; margin-top: 6px; color: var(--gruen); }
 
   .file-overlay {
     position: fixed; inset: 0; z-index: 120;
     display: none; align-items: center; justify-content: center;
-    background: rgba(15,23,42,.88);
-    outline: 5px dashed #60a5fa; outline-offset: -22px;
-    color: #e2e8f0; font-size: clamp(22px, 3.4vw, 40px); font-weight: 800;
+    background: color-mix(in srgb, #121213 88%, transparent);
+    outline: 5px dashed var(--akzent-buehne); outline-offset: -22px;
+    color: #F2F2F4; font-size: clamp(22px, 3.4vw, 40px); font-weight: 800;
     text-align: center; padding: 24px;
     pointer-events: none;
   }
@@ -469,10 +516,21 @@
 </head>
 <body>
 
+<!-- ============ Kopfleiste (Startseite + Lehrer:innen) ============ -->
+<header class="leiste">
+  <img src="design/icons/tafel.svg" alt="">
+  <span>MyTafelfussball</span>
+  <nav>
+    <span class="aktiv" data-i18n="teacherCardTitle">Lehrer:innen-Ansicht</span>
+    <button id="gotoBeamer" data-i18n="beamerCardTitle">Beamer-Ansicht</button>
+  </nav>
+</header>
+
 <!-- ============ Launcher ============ -->
 <div id="launcher">
   <div class="launcher-inner">
-  <h1><span class="logo-ball" id="logoBall"></span> MyTafelfussball</h1>
+  <img class="launcher-tier" src="design/icons/creme/tafel.svg" alt="">
+  <h1>MyTafelfussball</h1>
   <p data-i18n-html="intro">Öffne die <b>Beamer-Ansicht</b> im Vollbild auf dem Projektor und die <b>Lehrer:innen-Ansicht</b> auf deinem Laptop. Beide Fenster synchronisieren sich automatisch.</p>
   <div class="launch-cards">
     <a class="launch-card" id="cardBeamer" href="?view=beamer" target="_blank" rel="noopener">
@@ -545,6 +603,10 @@
         <button data-theme-choice="light" data-i18n="themeLight">Hell</button>
         <button data-theme-choice="dark" data-i18n="themeDark">Dunkel</button>
       </div>
+      <label class="field-label" data-i18n="schema">Farbschema</label>
+      <select id="schemaSelect"></select>
+      <label class="field-label" data-i18n="ton">Akzentfarbe</label>
+      <div class="swatches" id="tonSwatches"></div>
     </details>
 
     <details class="panel collapsible" id="tasksBox">
@@ -601,9 +663,6 @@
       </div>
       <div class="row grow" style="margin-top:8px">
         <button class="ghost" id="resetAll" data-i18n="resetAll" data-i18n-title="resetAllTitle" title="Punkte, Ball und Fragerunde zurücksetzen — Aufgaben bleiben erhalten">Alles zurücksetzen</button>
-      </div>
-      <div class="row grow" style="margin-top:8px">
-        <button class="ghost" id="gotoBeamer" data-i18n="toBeamer">Zur Beamer-Ansicht</button>
       </div>
     </div>
   </aside>
@@ -670,6 +729,7 @@
       stations: 'Stationen pro Seite (1–6)',
       language: 'Sprache',
       theme: 'Darstellung', themeAuto: 'Auto', themeLight: 'Hell', themeDark: 'Dunkel',
+      schema: 'Farbschema', ton: 'Akzentfarbe', tonSchema: 'Akzent des Schemas', tonN: n => `Ton ${n}`,
       name1: 'Name Team 1', name2: 'Name Team 2',
       addTaskTitle: 'Aufgabe hinzufügen',
       qPh: 'z. B. Was ist 7 × 8?', aPh: 'z. B. 56',
@@ -726,6 +786,7 @@
       stations: 'Stations per side (1–6)',
       language: 'Language',
       theme: 'Appearance', themeAuto: 'Auto', themeLight: 'Light', themeDark: 'Dark',
+      schema: 'Colour scheme', ton: 'Accent colour', tonSchema: 'Scheme accent', tonN: n => `Tone ${n}`,
       name1: 'Team 1 name', name2: 'Team 2 name',
       addTaskTitle: 'Add a task',
       qPh: 'e.g. What is 7 × 8?', aPh: 'e.g. 56',
@@ -766,23 +827,31 @@
     catch { return "de"; }
   }
 
-  // ---------- Darstellung (auto/hell/dunkel) ----------
-  // "auto": kein data-theme -> CSS-Media-Query folgt dem System. Manuell gewinnt das Attribut.
-  function applyTheme(setting) {
-    if (setting === "light" || setting === "dark") document.documentElement.dataset.theme = setting;
-    else document.documentElement.removeAttribute("data-theme");
+  // ---------- Darstellung: Schema, Ton, Hell/Dunkel (My-Designsystem) ----------
+  // "auto": kein data-modus -> die Tokens folgen dem System. Manuell gewinnt das Attribut.
+  // Ton 0 = Akzent des Schemas (kein data-ton). Das Kopfskript im <head> macht dasselbe vor dem ersten Zeichnen.
+  const SCHEMES = [
+    ["fox", "Fantastic Mr. Fox"], ["budapest", "Grand Budapest Hotel"], ["moonrise", "Moonrise Kingdom"],
+    ["zissou", "The Life Aquatic"], ["isle", "Isle of Dogs"]
+  ];
+  const DEFAULT_SCHEMA = "moonrise", DEFAULT_TON = 4; // Tanne
+  function applyLook({ theme, schema, ton }) {
+    const h = document.documentElement;
+    if (theme === "light" || theme === "dark") h.dataset.modus = theme === "dark" ? "dunkel" : "hell";
+    else h.removeAttribute("data-modus");
+    h.dataset.schema = schema;
+    if (ton) h.dataset.ton = ton; else h.removeAttribute("data-ton");
   }
-  function storedTheme() {
-    try { const t = JSON.parse(localStorage.getItem(STORAGE_KEY))?.theme; return t === "light" || t === "dark" ? t : "auto"; }
-    catch { return "auto"; }
+  function cleanLook(s) {
+    if (s.theme !== "light" && s.theme !== "dark") s.theme = "auto";
+    if (!SCHEMES.some(([id]) => id === s.schema)) s.schema = DEFAULT_SCHEMA;
+    if (!Number.isInteger(s.ton) || s.ton < 0 || s.ton > 9) s.ton = DEFAULT_TON;
+    return s;
   }
-
-  // Favicon: derselbe flache Ball wie im Spiel (ballSvg ist gehoisted)
-  const favicon = document.createElement("link");
-  favicon.rel = "icon";
-  favicon.type = "image/svg+xml";
-  favicon.href = "data:image/svg+xml;utf8," + encodeURIComponent(ballSvg());
-  document.head.appendChild(favicon);
+  function storedLook() {
+    try { return cleanLook(JSON.parse(localStorage.getItem(STORAGE_KEY)) || {}); }
+    catch { return cleanLook({}); }
+  }
 
   // ---------- Fensterwechsel (Launcher & Lehrer ↔ Beamer) ----------
   // Eigenes Fenster benennen, damit die Gegenseite es per window.open(name) wiederfindet.
@@ -810,8 +879,7 @@
   if (view !== "beamer" && view !== "lehrer") {
     currentLang = storedLang();
     applyTranslations();
-    applyTheme(storedTheme());
-    document.getElementById("logoBall").innerHTML = ballSvg();
+    applyLook(storedLook());
 
     // Launcher: Ansichten öffnen bzw. bereits offene Fenster in den Vordergrund holen
     const beamerCard = document.getElementById("cardBeamer");
@@ -838,6 +906,8 @@
     order: "sequential",     // "sequential" | "random"
     lang: "de",              // UI-Sprache (de/en), synchronisiert beide Fenster
     theme: "auto",           // Darstellung: auto (System) / light / dark
+    schema: DEFAULT_SCHEMA,  // Farbschema des My-Designsystems
+    ton: DEFAULT_TON,        // Akzent-Ton 1–9 des Schemas, 0 = Akzent des Schemas
     seqPointer: -1,
     rev: 0                   // Änderungszähler zur Konfliktvermeidung
   });
@@ -861,7 +931,7 @@
         ? [Math.max(0, s.scores[0] | 0), Math.max(0, s.scores[1] | 0)] : [0, 0];
       if (s.order !== "random") s.order = "sequential";
       s.lang = s.lang === "en" ? "en" : "de";
-      if (s.theme !== "light" && s.theme !== "dark") s.theme = "auto";
+      cleanLook(s);
       s.revealed = s.revealed === true;
       if (!Array.isArray(s.history)) s.history = [];
       if (!Array.isArray(s.asked)) s.asked = [];
@@ -1002,13 +1072,30 @@
   let lastTaskListSig = null; // Aufgabenliste nur bei Änderung neu bauen
   let ballWatchdog = null; // holt den Ball aus dem Tor, falls das auslösende Fenster weg ist
   let lastLang = null; // Sprachwechsel erkennen
-  let lastTheme = null; // Theme-Wechsel erkennen
+  let lastLook = null; // Wechsel von Darstellung/Schema/Ton erkennen
+
+  // Einstellungen: Schema-Auswahl und Ton-Tupfer (Farben lesen sich live aus dem Schema)
+  function renderLookControls() {
+    document.getElementById("schemaSelect").value = state.schema;
+    const box = document.getElementById("tonSwatches");
+    // data-schema am Tupfer setzt dort --akzent auf den Schema-Akzent zurück (am <html> überschreibt ihn data-ton)
+    let html = `<button class="swatch" data-schema="${state.schema}" style="background:var(--akzent)" title="${tr("tonSchema")}"></button>`;
+    for (let n = 1; n <= 9; n++) html += `<button class="swatch" data-tonv="${n}" style="background:var(--ton-${n})" title="${tr("tonN", n)}"></button>`;
+    box.innerHTML = html;
+    box.querySelectorAll(".swatch").forEach(b => {
+      const n = b.dataset.tonv ? +b.dataset.tonv : 0;
+      b.classList.toggle("active", n === state.ton);
+      b.onclick = () => { state.ton = n; persistAndSync(); };
+    });
+  }
 
   function render() {
     // Darstellung anwenden (beim Start und bei Wechsel; synchronisiert auch den Beamer)
-    if (lastTheme !== state.theme) {
-      applyTheme(state.theme);
-      lastTheme = state.theme;
+    const look = state.theme + "|" + state.schema + "|" + state.ton;
+    if (lastLook !== look) {
+      applyLook(state);
+      lastLook = look;
+      if (isTeacher) renderLookControls();
     }
     // Sprache anwenden (beim Start und bei Wechsel; synchronisiert auch den Beamer)
     if (lastLang !== state.lang) {
@@ -1017,6 +1104,7 @@
       lastRenderedQ = lastRenderedA = null; // sprachabhängige Texte neu rendern
       lastTaskListSig = null; // Aufgabenliste neu bauen (Button-Tooltips sind sprachabhängig)
       lastLang = state.lang;
+      if (isTeacher) renderLookControls(); // Tooltips der Tupfer
     }
     // Scoreboard
     document.getElementById("badge1").textContent = state.teams[0];
@@ -1296,10 +1384,21 @@
   function celebrate(team) {
     const flash = document.getElementById("goalFlash");
     flash.textContent = tr("goal") + " " + state.teams[team];
-    flash.style.color = team === 0 ? "#93c5fd" : "#fca5a5";
-    flash.classList.add("show");
+    flash.classList.remove("t1", "t2");
+    flash.classList.add(team === 0 ? "t1" : "t2", "show");
     setTimeout(() => flash.classList.remove("show"), 1400);
-    confettiBurst(team === 0 ? ["#2563eb","#60a5fa","#dbeafe"] : ["#dc2626","#f87171","#fee2e2"]);
+    // Konfetti in der Teamfarbe des Schemas: voll, aufgehellt, fast weiss
+    const c = getComputedStyle(document.documentElement).getPropertyValue(team === 0 ? "--team1" : "--team2").trim();
+    confettiBurst([c, mixWhite(c, .45), mixWhite(c, .85)]);
+  }
+
+  // Hex-Farbe Richtung Weiss mischen (Canvas versteht color-mix nicht überall)
+  function mixWhite(hex, t) {
+    const m = /^#?([0-9a-f]{6})$/i.exec(hex);
+    if (!m) return hex;
+    const n = parseInt(m[1], 16);
+    const ch = k => Math.round(((n >> k) & 255) * (1 - t) + 255 * t);
+    return `rgb(${ch(16)},${ch(8)},${ch(0)})`;
   }
 
   // Simple canvas confetti (keine Abhängigkeit)
@@ -1398,6 +1497,9 @@
     document.querySelectorAll("#themeToggle button").forEach(b => {
       b.onclick = () => { state.theme = b.dataset.themeChoice; persistAndSync(); };
     });
+    const schemaSelect = document.getElementById("schemaSelect");
+    schemaSelect.innerHTML = SCHEMES.map(([id, name]) => `<option value="${id}">${name}</option>`).join("");
+    schemaSelect.onchange = () => { state.schema = schemaSelect.value; persistAndSync(); };
 
     // Stationen
     const stationsInput = document.getElementById("stations");
@@ -1552,7 +1654,7 @@
     }
     function setDropStatus(msg) {
       dropStatus.textContent = msg;
-      dropStatus.style.color = msg.startsWith("✓") ? "var(--ok)" : "var(--err)";
+      dropStatus.style.color = msg.startsWith("✓") ? "var(--gruen)" : "var(--rot)";
       setTimeout(() => { if (dropStatus.textContent === msg) dropStatus.textContent = ""; }, 5000);
     }
 
