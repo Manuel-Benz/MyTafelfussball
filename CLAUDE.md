@@ -35,7 +35,7 @@ Digitales Quizspiel „MyTafelfussball" für den Unterricht. Features und Bedien
 ## Design (My-Designsystem)
 
 - Quelle ist **`~/MySuite`**; `design/` ist eine Kopie (`design/HERKUNFT.txt`) und wird **nie** hier geändert — dort ändern, dann `~/MySuite/sync.sh tafel`.
-- Standard: Schema **Moonrise Kingdom**, Akzent **Ton 4 Tanne** (#17603F / #2D9C69), Listenform **Kartenzeilen** (Aufgaben), **kompakt** (Sammlung), Icon Zebra (`design/icons/tafel.svg` als Favicon, Creme-Variante auf der Startseite).
+- Standard: Schema **Moonrise Kingdom**, Akzent **Ton 4 Tanne** (#17603F / #2D9C69), Listenform **Kartenzeilen** (Aufgaben), **kompakt** (Sammlung), Icon Zebra (`design/icons/tafel.svg` als Favicon und in der Kopfleiste). Auf der Startseite steht das Zebra ohne Kachel rechts vom Titel (wie MyKahoot/MyMemory): `.logo` ist eine Maske in `currentColor` (weiss im Dunkel-Modus, dunkel auf hellem Grund), als Data-URI im Block `<style id="logo-zebra">`, erzeugt von `tools/make-logo.py` (nach jedem `sync.sh tafel` mit neuem Icon neu laufen lassen). Data-URI statt Datei, weil Chrome Masken aus Dateien unter `file://` nicht lädt.
 - Farben nur über Tokens (`--akzent`, `--karte`, `--linie`, `--rot` …). Eigene Variablen heissen **nie** wie Tokens. Einzige feste Farben: Rasen (`--field`), Ball, Dateiablage-Overlay.
 - Schema/Ton/Modus liegen im State (`schema`, `ton`, `theme`) und werden als `data-schema`/`data-ton`/`data-modus` am `<html>` gesetzt: ein Kopfskript vor dem ersten Zeichnen, danach `applyLook()`. Ton 0 = Akzent des Schemas (kein `data-ton`).
 - Knöpfe: Standard = sekundär (`--akzent-weich`), `.primary` = Akzent, `.ghost` = neutral.
