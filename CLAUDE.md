@@ -24,10 +24,17 @@ Digitales Quizspiel „MyTafelfussball" für den Unterricht. Features und Bedien
 - Commits, UI-Texte und README auf Deutsch, Schweizer Schreibweise (ss statt ß: „Fussball", „grösse").
 - Anrede mit Doppelpunkt: „Lehrer:innen".
 
+## Sammlung und Ordner
+
+- Sammlung unter `tafelfussball_sammlung` (`{ sets, folders }`), **nicht** im Spiel-State — lebt nur im Lehrer:innen-Fenster, der Beamer braucht sie nie. Im State steht nur `setId` (geladenes Set, für „Speichern"/„geändert").
+- Set-Titel = Dateiname (darum `cleanName`); «dasselbe Set» = Ordner + Titel ohne Gross/Klein (`place`).
+- Ordner auf der Platte: Logik aus MyVoci/MyMemory (`readDir`/`fromDisk`/`mirrorDir`, Handle in IndexedDB `mytafelfussball`→`kv`→`dir`, `mirrored` = Stand, den der Ordner zuletzt sah, eine Promise-Kette `enqueue`, Nachlesen beim Fenster-Fokus). Begründungen in der CLAUDE.md von MyVoci.
+- Sichtprüfung headless: das OPFS-Wurzelverzeichnis (`navigator.storage.getDirectory()`) als Handle in IndexedDB legen — dann läuft der ganze Ordner-Weg ohne Dateiauswahl.
+
 ## Design (My-Designsystem)
 
 - Quelle ist **`~/MySuite`**; `design/` ist eine Kopie (`design/HERKUNFT.txt`) und wird **nie** hier geändert — dort ändern, dann `~/MySuite/sync.sh tafel`.
-- Standard: Schema **Moonrise Kingdom**, Akzent **Ton 4 Tanne** (#17603F / #2D9C69), Listenform **Kartenzeilen**, Icon Zebra (`design/icons/tafel.svg` als Favicon, Creme-Variante auf der Startseite).
+- Standard: Schema **Moonrise Kingdom**, Akzent **Ton 4 Tanne** (#17603F / #2D9C69), Listenform **Kartenzeilen** (Aufgaben), **kompakt** (Sammlung), Icon Zebra (`design/icons/tafel.svg` als Favicon, Creme-Variante auf der Startseite).
 - Farben nur über Tokens (`--akzent`, `--karte`, `--linie`, `--rot` …). Eigene Variablen heissen **nie** wie Tokens. Einzige feste Farben: Rasen (`--field`), Ball, Dateiablage-Overlay.
 - Schema/Ton/Modus liegen im State (`schema`, `ton`, `theme`) und werden als `data-schema`/`data-ton`/`data-modus` am `<html>` gesetzt: ein Kopfskript vor dem ersten Zeichnen, danach `applyLook()`. Ton 0 = Akzent des Schemas (kein `data-ton`).
 - Knöpfe: Standard = sekundär (`--akzent-weich`), `.primary` = Akzent, `.ghost` = neutral.

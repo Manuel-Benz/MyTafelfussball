@@ -62,6 +62,16 @@ A: 56
 
 Umgekehrt sichert **„Exportieren (.txt)"** (Box „Aufgaben") alle erfassten Aufgaben als Datei in genau diesem Format — als Backup, für den Gerätewechsel oder zum Weitergeben an Kolleg:innen.
 
+## Sammlung
+
+Oben in der Box „Aufgaben" liegt die **Sammlung**: beliebig viele benannte Sets, geordnet in Ordnern (Unterordner mit „/", z. B. `Mathe/Klasse 8`).
+
+- **Speichern** legt die aktuelle Liste als Set ab (bzw. überschreibt das geladene Set), **Speichern unter …** als neues Set; 💾 an einem Ordner speichert direkt dort hinein.
+- Klick auf ein Set **lädt** es (ersetzt die aktuelle Liste, startet eine neue Runde; die Punkte bleiben). Ist die aktuelle Liste nicht gespeichert, wird vorher nachgefragt.
+- Sets per **Ziehen** in einen anderen Ordner verschieben; ✎/🗑 zum Umbenennen und Löschen. Ordner lassen sich nur löschen, wenn sie leer sind.
+
+**Ordner auf dem Computer** (Chrome/Edge am Computer, wie in MyVoci und MyMemory): Mit „Ordner wählen" liegen die Sets als `.txt`-Dateien (F:/A:/---) in einem Ordner deiner Wahl, Unterordner = Ordner der Sammlung. Dateien, die im Finder hinzukommen, umbenannt oder gelöscht werden, erscheinen beim Zurückwechseln ins Fenster. Nach einem Neustart des Browsers braucht der Ordner einmal „Ordner freigeben". Ohne Ordner bleibt die Sammlung im Browser (`localStorage`).
+
 ## Formeln (KaTeX)
 
 Fragen und Lösungen dürfen mathematische Formeln enthalten. Schreibe LaTeX zwischen `$…$` (inline) oder `$$…$$` (abgesetzt):

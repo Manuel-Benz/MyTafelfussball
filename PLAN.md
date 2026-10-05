@@ -7,8 +7,8 @@
 **Kein Backend, keine Accounts nötig:** Die App persistiert den Zustand bereits im `localStorage`; Sammlungen sind eine Erweiterung dieses Schemas.
 
 ### 1. Lokale Sammlungen im Browser (Hauptweg)
-- Mehrere benannte Aufgabensets im `localStorage`, mit Ordnung (z.B. Fach/Thema).
-- Panel „Meine Sammlungen" in der Lehrer:innen-Ansicht: speichern, laden, umbenennen, löschen.
+- ✅ Umgesetzt: „Sammlung" oben in der Box „Aufgaben" — Sets in Ordnern (kompakte Liste), speichern, laden, umbenennen, löschen, per Ziehen verschieben.
+- ✅ Dazu wie MyVoci/MyMemory: optional als .txt-Dateien in einem Ordner auf dem Computer (Chrome/Edge).
 
 ### 2. Export/Backup als Datei (Sicherheitsnetz)
 - ✅ Für die aktuelle Aufgabenliste umgesetzt: Button „Exportieren (.txt)" im Aufgaben-Panel schreibt alle Aufgaben im Import-Format (`F:`/`A:`/`---`) — direkt wieder importierbar.
@@ -29,4 +29,4 @@
 - ✅ Zweiter Umbau: Spielzug + Aktuelle Frage zu einer Box „Spiel" vereint (Spiel starten zuoberst, Buttons „Punkt Team 1/2", drei Reset-Buttons einheitlich zuunterst); „Ball in die Mitte" entfernt; Reihenfolge-Schalter in die Einstellungen.
 - Die Seitenleiste besteht damit aus drei Boxen: Einstellungen, Aufgaben (beide einklappbar), Spiel. Eine Tab-Aufteilung ist damit wohl nicht mehr nötig.
 - ✅ Einstieg vereinfacht: Box „Aufgaben" öffnet sich beim Start automatisch, solange keine Aufgaben erfasst sind; Hover/Klick auf „Spiel starten" zeigt dann eine Sprechblase mit den Erfassungswegen.
-- Die geplante Sammlung (siehe oben) bekommt ihren Platz in der Box „Aufgaben".
+- ✅ Die Sammlung (siehe oben) sitzt in der Box „Aufgaben".

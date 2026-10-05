@@ -460,6 +460,42 @@
   .task-item .task-actions button { padding: 4px 8px; font-size: 12px; background: transparent; color: var(--text-2); }
   .task-item .task-actions button:hover { background: var(--hover); filter: none; }
   .counter { font-size: 13px; color: var(--text-3); }
+
+  /* Sammlung: kompakte Liste (viele gleichartige Sets, in Ordnern) */
+  .coll-tree { display: flex; flex-direction: column; gap: 2px; max-height: 300px; overflow-y: auto; margin: 0 -4px; padding: 2px 4px; border-radius: var(--radius); }
+  .coll-tree.drop-target { background: var(--akzent-weich); }
+  .coll-row {
+    display: flex; align-items: center; gap: 6px;
+    padding: 5px 4px 5px 10px; border-radius: var(--radius);
+    font-size: 14px; min-height: 36px;
+  }
+  .coll-row:hover { background: var(--hover); }
+  .coll-row.drop-target { background: var(--akzent-weich); }
+  .coll-row.set { cursor: pointer; }
+  .coll-row.set.dragging { opacity: .4; }
+  .coll-row.loaded .coll-name { color: var(--akzent-text); }
+  .coll-row.loaded .coll-name::before { content: "● "; font-size: 10px; vertical-align: 2px; }
+  .coll-name { flex: 0 1 19rem; min-width: 0; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .coll-count { flex: 1 0 auto; color: var(--text-3); font-size: 13px; white-space: nowrap; }
+  .coll-tools { display: flex; gap: 0; flex: 0 0 auto; }
+  .coll-tools button, .coll-row .chev {
+    width: 30px; height: 30px; padding: 0; display: grid; place-items: center;
+    background: transparent; color: var(--text-2); font-size: 13px; font-weight: 400;
+  }
+  .coll-tools button:hover, .coll-row .chev:hover { background: var(--hover); filter: none; }
+  .coll-row .chev { width: 22px; margin-left: -6px; transition: transform .12s; }
+  .coll-row.open .chev { transform: rotate(90deg); }
+  .coll-sub { margin-left: 14px; padding-left: 10px; border-left: 2px solid var(--linie); display: flex; flex-direction: column; gap: 2px; }
+  .coll-empty { font-size: 13px; color: var(--text-3); padding: 4px 10px; line-height: 1.45; }
+  .dir-line { font-size: 13px; color: var(--text-2); line-height: 1.45; margin-top: 8px; }
+  .dir-line p { margin: 0 0 6px; }
+  .dir-line .warn { color: var(--orange); font-weight: 600; }
+  .dir-line .err { color: var(--rot); font-weight: 600; }
+  .dir-line button, button.small { padding: 6px 12px; font-size: 13px; }
+  .controls .row.grow > button { padding-left: 10px; padding-right: 10px; }
+  .set-status { font-size: 13px; color: var(--text-2); margin-bottom: 8px; }
+  .set-status b { color: var(--text); font-weight: 600; }
+  .set-status .changed { color: var(--orange); font-weight: 600; }
   .import-steps { margin-bottom: 8px; }
   .import-steps summary { cursor: pointer; font-size: 13px; font-weight: 600; color: var(--text-2); padding: 2px 0; user-select: none; }
   .import-steps summary:hover { color: var(--text); }
@@ -611,7 +647,20 @@
 
     <details class="panel collapsible" id="tasksBox">
       <summary><span data-i18n="tasks">Aufgaben</span> (<span id="taskCount">0</span>)</summary>
+      <h3 data-i18n="collTitle">Sammlung</h3>
+      <div class="coll-tree" id="collTree"></div>
+      <div class="row" style="margin-top:8px">
+        <button class="ghost small" id="newFolder" data-i18n="newFolder">Neuer Ordner</button>
+      </div>
+      <div class="dir-line" id="dirLine"></div>
+
+      <h3 style="margin-top:14px" data-i18n="currentList">Aktuelle Liste</h3>
+      <div class="set-status" id="setStatus"></div>
       <div id="taskList"></div>
+      <div class="row grow" style="margin-top:8px">
+        <button id="saveSet" data-i18n="saveSet">Speichern</button>
+        <button id="saveSetAs" data-i18n="saveSetAs">Speichern unter&nbsp;…</button>
+      </div>
       <div class="row" style="margin-top:8px">
         <button class="ghost" id="exportTasks" data-i18n="exportTasks" data-i18n-title="exportTasksTitle" title="Alle Aufgaben als .txt-Datei sichern — wieder importierbar">Exportieren (.txt)</button>
         <button class="ghost danger" id="clearTasks" data-i18n="deleteAll">Alle löschen</button>
@@ -744,6 +793,34 @@
       confirmScore: 'Punktestand beider Teams auf 0 setzen?',
       confirmAll: 'Alles zurücksetzen? Punkte, Ball und Fragerunde starten neu — die Aufgaben bleiben erhalten.',
       confirmClear: 'Wirklich ALLE Aufgaben löschen?',
+      collTitle: 'Sammlung', currentList: 'Aktuelle Liste',
+      collEmpty: 'Noch keine Sets. Die aktuelle Liste unten mit «Speichern» als Set ablegen.',
+      nSets: n => `${n} ${n === 1 ? 'Set' : 'Sets'}`,
+      nTasks: n => `${n} ${n === 1 ? 'Frage' : 'Fragen'}`,
+      newFolder: 'Neuer Ordner',
+      askFolder: 'Name des neuen Ordners (Unterordner mit «/», z. B. Mathe/Klasse 8):',
+      askRenameFolder: 'Neuer Name des Ordners (Unterordner mit «/»):',
+      saveHere: 'Aktuelle Liste in diesem Ordner speichern',
+      renameFolder: 'Ordner umbenennen', deleteFolder: 'Ordner löschen (nur wenn leer)',
+      folderNotEmpty: 'Der Ordner ist nicht leer — zuerst ausräumen.',
+      folderExists: name => `Den Ordner «${name}» gibt es schon.`,
+      confirmDeleteFolder: name => `Ordner «${name}» löschen?`,
+      loadSet: 'Laden — ersetzt die aktuelle Liste', renameSet: 'Umbenennen', deleteSet: 'Löschen',
+      confirmDeleteSet: t => `Set «${t}» löschen?`,
+      askSetName: 'Name des Sets:',
+      nameTaken: t => `«${t}» gibt es in diesem Ordner schon. Ersetzen?`,
+      nameTakenRename: t => `«${t}» gibt es in diesem Ordner schon.`,
+      confirmLoad: 'Die aktuelle Liste ist nicht gespeichert. Trotzdem laden und ersetzen?',
+      saveSet: 'Speichern', saveSetAs: 'Speichern unter\u00a0…', savedOk: 'Gespeichert ✓',
+      setLinked: t => `Set <b>«${t}»</b>`, setChanged: 'ungespeicherte Änderungen',
+      setUnsaved: 'Nicht in der Sammlung gespeichert.',
+      dirOffer: 'Die Sets können auch als .txt-Dateien in einem Ordner auf dem Computer liegen (wie in MyVoci und MyMemory) — dann bleiben sie, wenn der Browser aufräumt. Am besten einen Ordner «MyTafelfussball» in «Dokumente» anlegen.',
+      dirChoose: 'Ordner wählen',
+      dirConnected: (name, n) => `📁 Verbunden mit «${name}» — ${n} ${n === 1 ? 'Set' : 'Sets'}`,
+      dirReload: 'Neu laden', dirDisconnect: 'Trennen',
+      dirPrompt: name => `Der Ordner «${name}» braucht deine Freigabe, bevor die Sets dort gespeichert werden.`,
+      dirReconnect: 'Ordner freigeben',
+      dirError: name => `Der Ordner «${name}» ist nicht erreichbar (verschoben, gelöscht oder Zugriff verweigert). Bis dahin wird nichts in den Ordner geschrieben; beim Neuladen gilt der Stand im Ordner.`,
       editQ: 'Frage:', editA: 'Lösung:',
       copied: '✓ Kopiert!', copyFallback: 'Prompt kopieren:',
       importedN: n => `✓ ${n} Aufgabe${n === 1 ? '' : 'n'} importiert`,
@@ -801,6 +878,34 @@
       confirmScore: 'Reset both team scores to 0?',
       confirmAll: 'Reset everything? Score, ball and round start fresh — tasks are kept.',
       confirmClear: 'Really delete ALL tasks?',
+      collTitle: 'Collection', currentList: 'Current list',
+      collEmpty: 'No sets yet. Use “Save” below to store the current list as a set.',
+      nSets: n => `${n} ${n === 1 ? 'set' : 'sets'}`,
+      nTasks: n => `${n} ${n === 1 ? 'question' : 'questions'}`,
+      newFolder: 'New folder',
+      askFolder: 'Name of the new folder (subfolders with “/”, e.g. Maths/Year 8):',
+      askRenameFolder: 'New name of the folder (subfolders with “/”):',
+      saveHere: 'Save the current list in this folder',
+      renameFolder: 'Rename folder', deleteFolder: 'Delete folder (only if empty)',
+      folderNotEmpty: 'The folder is not empty — clear it out first.',
+      folderExists: name => `The folder “${name}” already exists.`,
+      confirmDeleteFolder: name => `Delete folder “${name}”?`,
+      loadSet: 'Load — replaces the current list', renameSet: 'Rename', deleteSet: 'Delete',
+      confirmDeleteSet: t => `Delete set “${t}”?`,
+      askSetName: 'Name of the set:',
+      nameTaken: t => `“${t}” already exists in this folder. Replace it?`,
+      nameTakenRename: t => `“${t}” already exists in this folder.`,
+      confirmLoad: 'The current list is not saved. Load and replace it anyway?',
+      saveSet: 'Save', saveSetAs: 'Save as\u00a0…', savedOk: 'Saved ✓',
+      setLinked: t => `Set <b>“${t}”</b>`, setChanged: 'unsaved changes',
+      setUnsaved: 'Not saved in the collection.',
+      dirOffer: 'Your sets can also live as .txt files in a folder on this computer (like in MyVoci and MyMemory) — then they survive a browser clean-up. Ideally create a folder “MyTafelfussball” in “Documents”.',
+      dirChoose: 'Choose folder',
+      dirConnected: (name, n) => `📁 Connected to “${name}” — ${n} ${n === 1 ? 'set' : 'sets'}`,
+      dirReload: 'Reload', dirDisconnect: 'Disconnect',
+      dirPrompt: name => `The folder “${name}” needs your permission before the sets are saved there.`,
+      dirReconnect: 'Grant access',
+      dirError: name => `The folder “${name}” is not reachable (moved, deleted or access denied). Until then nothing is written to the folder; on reload the folder's version wins.`,
       editQ: 'Question:', editA: 'Answer:',
       copied: '✓ Copied!', copyFallback: 'Copy prompt:',
       importedN: n => `✓ ${n} task${n === 1 ? '' : 's'} imported`,
@@ -908,6 +1013,7 @@
     theme: "auto",           // Darstellung: auto (System) / light / dark
     schema: DEFAULT_SCHEMA,  // Farbschema des My-Designsystems
     ton: DEFAULT_TON,        // Akzent-Ton 1–9 des Schemas, 0 = Akzent des Schemas
+    setId: null,             // aus der Sammlung geladenes Set (für "Speichern" und "geändert")
     seqPointer: -1,
     rev: 0                   // Änderungszähler zur Konfliktvermeidung
   });
@@ -932,6 +1038,7 @@
       if (s.order !== "random") s.order = "sequential";
       s.lang = s.lang === "en" ? "en" : "de";
       cleanLook(s);
+      if (typeof s.setId !== "string") s.setId = null;
       s.revealed = s.revealed === true;
       if (!Array.isArray(s.history)) s.history = [];
       if (!Array.isArray(s.asked)) s.asked = [];
@@ -1073,6 +1180,7 @@
   let ballWatchdog = null; // holt den Ball aus dem Tor, falls das auslösende Fenster weg ist
   let lastLang = null; // Sprachwechsel erkennen
   let lastLook = null; // Wechsel von Darstellung/Schema/Ton erkennen
+  let renderCollHook = null; // Sammlung zeichnen (nur Lehrer:innen-Fenster, s. unten)
 
   // Einstellungen: Schema-Auswahl und Ton-Tupfer (Farben lesen sich live aus dem Schema)
   function renderLookControls() {
@@ -1235,6 +1343,8 @@
       });
       document.getElementById("taskCount").textContent = state.tasks.length;
     }
+
+    if (renderCollHook) renderCollHook();
 
     // Counter
     const counter = document.getElementById("taskCounter");
@@ -1549,6 +1659,7 @@
       if (state.tasks.length && confirm(tr("confirmClear"))) {
         state.tasks = []; state.currentTaskId = null; state.seqPointer = -1;
         state.asked = []; state.history = []; state.revealed = false;
+        state.setId = null; // neue, leere Liste — das Set in der Sammlung bleibt
         persistAndSync();
       }
     };
@@ -1678,13 +1789,19 @@
     });
 
     function parseImport(text) {
-      if (!text || !text.trim()) return 0;
+      const tasks = parseTasks(text);
+      tasks.forEach(t => state.tasks.push({ id: uid(), q: t.q, a: t.a }));
+      return tasks.length;
+    }
+    // F:/A:/--- (bzw. Q:) -> [{q, a}]; auch für die Dateien im Sammlungs-Ordner
+    function parseTasks(text) {
+      const out = [];
+      if (!text || !text.trim()) return out;
       // In Blöcke an '---' trennen; sonst zeilenweise F:/A: paaren
       const blocks = text.split(/^\s*---\s*$/m);
-      let count = 0;
       const pushTask = (q, a) => {
         q = (q || "").trim(); a = (a || "").trim();
-        if (q) { state.tasks.push({ id: uid(), q, a }); count++; }
+        if (q) out.push({ q, a });
       };
       blocks.forEach(block => {
         const lines = block.split(/\r?\n/);
@@ -1699,7 +1816,7 @@
         });
         if (q !== null) pushTask(q, a);
       });
-      return count;
+      return out;
     }
 
     function toastBtn(id, msg) {
@@ -1708,6 +1825,478 @@
       el.textContent = msg;
       setTimeout(() => { el.textContent = old; }, 1400);
     }
+
+    // ---------- Sammlung: benannte Sets in Ordnern ----------
+    // Lebt nur im Lehrer:innen-Fenster und unter eigenem Schlüssel, nicht im Spiel-State:
+    // der Beamer braucht sie nie, und jeder Ballzug schickte sonst die ganze Sammlung mit.
+    // Ein Set: { id, title, dir, tasks: [{q, a}], disk?, file? }. Ein Ordner ist nur ein
+    // Pfad ("Mathe/Klasse 8", "" = Hauptordner); `folders` hält zusätzlich leere Ordner fest.
+    // Der Titel ist zugleich der Dateiname im Ordner auf der Platte — darum gehen Titel und
+    // Ordnernamen durch cleanName, und «dasselbe Set» heisst gleicher Ordner + gleicher Titel.
+    const COLL_KEY = "tafelfussball_sammlung";
+    const CLOSED_KEY = "tafelfussball_ordner_zu"; // zugeklappte Ordner, überlebt das Neuladen
+    const readLocal = (key, fallback) => { try { return JSON.parse(localStorage.getItem(key)) ?? fallback; } catch { return fallback; } };
+    const writeLocal = (key, val) => { try { localStorage.setItem(key, JSON.stringify(val)); } catch {} };
+
+    function cleanColl(c) {
+      const sets = (c && Array.isArray(c.sets) ? c.sets : [])
+        .filter(x => x && typeof x.id === "string" && typeof x.title === "string" && Array.isArray(x.tasks))
+        .map(x => ({ ...x, dir: typeof x.dir === "string" ? x.dir : "",
+          tasks: x.tasks.filter(t => t && typeof t.q === "string").map(t => ({ q: t.q, a: typeof t.a === "string" ? t.a : "" })) }));
+      const folders = (c && Array.isArray(c.folders) ? c.folders : []).filter(f => typeof f === "string" && f);
+      return { sets, folders };
+    }
+    let coll = cleanColl(readLocal(COLL_KEY, null));
+    let collVer = 0; // zählt Änderungen, damit der Baum nicht bei jedem Ballzug neu entsteht
+    let closed = new Set(readLocal(CLOSED_KEY, []));
+
+    const cleanName = (s) => String(s || "").replace(/[\/\\:*?"<>|\u0000-\u001f]/g, "-").replace(/\s+/g, " ").trim().replace(/^\.+/, "");
+    const cleanPath = (p) => String(p || "").split("/").map(cleanName).filter(Boolean).join("/");
+    const place = (x) => (x.dir + "\u0000" + x.title).toLowerCase(); // Gross/Klein: macOS/Windows kennen keinen Unterschied
+    const byTitle = (a, b) => a.title.localeCompare(b.title, undefined, { numeric: true, sensitivity: "base" });
+    const parentOf = (p) => p.includes("/") ? p.slice(0, p.lastIndexOf("/")) : "";
+    const leafOf = (p) => p.slice(p.lastIndexOf("/") + 1);
+    const inDir = (d, root) => d === root || d.startsWith(root + "/");
+    const newSetId = () => "s" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+    const plainTasks = (tasks) => tasks.map(t => ({ q: t.q, a: t.a }));
+    const sameTasks = (a, b) => JSON.stringify(plainTasks(a)) === JSON.stringify(plainTasks(b));
+    const toFile = (tasks) => tasks.map(t => `F: ${t.q}\nA: ${t.a}`).join("\n---\n") + "\n";
+
+    // Alle Ordner: die gemerkten plus jeder Pfad (samt Eltern), in dem ein Set liegt
+    function allFolders(c) {
+      const out = new Set();
+      const add = (p) => { while (p) { out.add(p); p = parentOf(p); } };
+      c.folders.forEach(add);
+      c.sets.forEach(x => add(x.dir));
+      return [...out];
+    }
+
+    // Der eine Weg, die Sammlung zu ändern: speichern, zeichnen, in den Ordner spiegeln
+    function commitColl(next) {
+      next.sets.sort(byTitle);
+      coll = next;
+      collVer++;
+      writeLocal(COLL_KEY, coll);
+      renderColl();
+      mirrorSoon();
+    }
+    const loadedSet = () => coll.sets.find(x => x.id === state.setId) || null;
+    // Gibt es eine Liste, die beim Laden verloren ginge?
+    function listIsUnsaved() {
+      const cur = loadedSet();
+      return cur ? !sameTasks(cur.tasks, state.tasks) : state.tasks.length > 0;
+    }
+
+    // ----- Zeichnen -----
+    const collTree = document.getElementById("collTree");
+    const dirLine = document.getElementById("dirLine");
+    const setStatus = document.getElementById("setStatus");
+    let lastCollSig = null;
+
+    function renderColl() {
+      const cur = loadedSet();
+      // Status der aktuellen Liste: billig, darum bei jedem Rendern
+      setStatus.innerHTML = cur
+        ? tr("setLinked", escapeHtml(cur.title)) + (sameTasks(cur.tasks, state.tasks) ? "" : ` · <span class="changed">${tr("setChanged")}</span>`)
+        : (state.tasks.length ? escapeHtml(tr("setUnsaved")) : "");
+      document.getElementById("saveSet").disabled = state.tasks.length === 0 || (cur && sameTasks(cur.tasks, state.tasks));
+      document.getElementById("saveSetAs").disabled = state.tasks.length === 0;
+
+      const sig = collVer + "|" + state.setId + "|" + currentLang + "|" + link.status + "|" + [...closed].join("/");
+      if (sig === lastCollSig) return;
+      lastCollSig = sig;
+
+      const folders = allFolders(coll);
+      const countIn = (d) => coll.sets.filter(x => inDir(x.dir, d)).length;
+      const tree = (dir) => {
+        let html = "";
+        folders.filter(f => parentOf(f) === dir).sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: "base" }))
+          .forEach(f => {
+            const open = !closed.has(f);
+            html += `<div class="coll-row folder${open ? " open" : ""}" data-dir="${escapeHtml(f)}">
+              <button class="chev" data-act="toggle" aria-label="${escapeHtml(leafOf(f))}">›</button>
+              <span class="coll-name" data-act="toggle">${escapeHtml(leafOf(f))}</span>
+              <span class="coll-count">${tr("nSets", countIn(f))}</span>
+              <span class="coll-tools">
+                <button data-act="saveHere" title="${tr("saveHere")}">💾</button>
+                <button data-act="renameDir" title="${tr("renameFolder")}">✎</button>
+                <button data-act="delDir" title="${tr("deleteFolder")}">🗑</button>
+              </span></div>`;
+            if (open) html += `<div class="coll-sub" data-dir="${escapeHtml(f)}">${tree(f)}</div>`;
+          });
+        coll.sets.filter(x => x.dir === dir).forEach(x => {
+          html += `<div class="coll-row set${x.id === state.setId ? " loaded" : ""}" draggable="true" data-id="${x.id}" title="${tr("loadSet")}">
+            <span class="coll-name">${escapeHtml(x.title)}</span>
+            <span class="coll-count">${tr("nTasks", x.tasks.length)}</span>
+            <span class="coll-tools">
+              <button data-act="rename" title="${tr("renameSet")}">✎</button>
+              <button data-act="del" title="${tr("deleteSet")}">🗑</button>
+            </span></div>`;
+        });
+        return html;
+      };
+      collTree.dataset.dir = "";
+      collTree.innerHTML = (coll.sets.length || folders.length) ? tree("") : `<div class="coll-empty">${tr("collEmpty")}</div>`;
+
+      // Ordner auf dem Computer: Angebot, Freigabe, Fehler oder Verbunden
+      const name = escapeHtml(link.handle ? link.handle.name : "");
+      dirLine.innerHTML =
+          link.status === "none" ? `<p>${tr("dirOffer")}</p><button class="ghost" data-dir-act="connect">${tr("dirChoose")}</button>`
+        : link.status === "prompt" ? `<p class="warn">${tr("dirPrompt", name)}</p><div class="row"><button class="primary" data-dir-act="reconnect">${tr("dirReconnect")}</button><button class="ghost" data-dir-act="disconnect">${tr("dirDisconnect")}</button></div>`
+        : link.status === "error" ? `<p class="err">${tr("dirError", name)}</p><div class="row"><button data-dir-act="refresh">${tr("dirReload")}</button><button class="ghost" data-dir-act="disconnect">${tr("dirDisconnect")}</button></div>`
+        : link.status === "ok" ? `<p>${tr("dirConnected", name, coll.sets.length)}</p><div class="row"><button class="ghost" data-dir-act="refresh">${tr("dirReload")}</button><button class="ghost" data-dir-act="disconnect">${tr("dirDisconnect")}</button></div>`
+        : ""; // Safari/iPad: kein Ordner möglich, dann steht hier nichts
+    }
+
+    // ----- Speichern / Laden -----
+    // Legt die aktuelle Liste unter `title` in `dir` ab. Liegt dort schon ein Set mit
+    // dem Namen (und ist es nicht das geladene), wird nach dem Ersetzen gefragt.
+    function storeList(title, dir) {
+      title = cleanName(title);
+      if (!title) return;
+      const target = { title, dir };
+      const other = coll.sets.find(x => place(x) === place(target));
+      if (other && other.id !== state.setId && !confirm(tr("nameTaken", other.title))) return;
+      const tasks = plainTasks(state.tasks);
+      let sets;
+      if (other) {
+        sets = coll.sets.map(x => x.id === other.id ? { ...x, tasks } : x);
+        state.setId = other.id;
+      } else {
+        const id = newSetId();
+        sets = [...coll.sets, { id, title, dir, tasks }];
+        state.setId = id;
+      }
+      commitColl({ ...coll, sets });
+      persistAndSync();
+    }
+    function saveAs(dir) {
+      const cur = loadedSet();
+      const title = prompt(tr("askSetName"), cur && dir === undefined ? cur.title : "");
+      if (title === null) return;
+      storeList(title, dir !== undefined ? dir : (cur ? cur.dir : ""));
+    }
+    document.getElementById("saveSet").onclick = () => {
+      const cur = loadedSet();
+      if (!cur) return saveAs();
+      commitColl({ ...coll, sets: coll.sets.map(x => x.id === cur.id ? { ...x, tasks: plainTasks(state.tasks) } : x) });
+      toastBtn("saveSet", tr("savedOk"));
+    };
+    document.getElementById("saveSetAs").onclick = () => saveAs();
+
+    function loadSet(id) {
+      const x = coll.sets.find(s => s.id === id);
+      if (!x) return;
+      if (x.id === state.setId && !listIsUnsaved()) return; // schon geladen, nichts geändert
+      // Nochmals dasselbe Set = Änderungen verwerfen; ein anderes = aktuelle Liste ersetzen
+      if (listIsUnsaved() && !confirm(tr("confirmLoad"))) return;
+      state.tasks = x.tasks.map(t => ({ id: uid(), q: t.q, a: t.a }));
+      state.setId = x.id;
+      // neue Fragen = neue Runde (Punkte bleiben)
+      state.currentTaskId = null; state.seqPointer = -1;
+      state.history = []; state.asked = []; state.revealed = false;
+      persistAndSync();
+    }
+
+    // ----- Ordner und Sets bearbeiten -----
+    document.getElementById("newFolder").onclick = () => {
+      const p = cleanPath(prompt(tr("askFolder"), ""));
+      if (!p) return;
+      if (allFolders(coll).some(f => f.toLowerCase() === p.toLowerCase())) { alert(tr("folderExists", p)); return; }
+      closed.delete(p);
+      commitColl({ ...coll, folders: [...coll.folders, p] });
+    };
+    // Ordner umbenennen oder verschieben: Pfad samt allem, was darin liegt, umschreiben
+    function renameDir(from) {
+      const to = cleanPath(prompt(tr("askRenameFolder"), from));
+      if (!to || to === from) return;
+      if (inDir(to, from)) return; // in sich selbst verschieben geht nicht
+      if (allFolders(coll).some(f => f.toLowerCase() === to.toLowerCase() && f.toLowerCase() !== from.toLowerCase())) { alert(tr("folderExists", to)); return; }
+      const move = (d) => inDir(d, from) ? to + d.slice(from.length) : d;
+      const sets = coll.sets.map(x => inDir(x.dir, from) ? { ...x, dir: move(x.dir) } : x);
+      const clash = sets.find((x, i) => sets.findIndex(y => place(y) === place(x)) !== i);
+      if (clash) { alert(tr("nameTakenRename", clash.title)); return; }
+      closed = new Set([...closed].map(move));
+      writeLocal(CLOSED_KEY, [...closed]);
+      commitColl({ sets, folders: [...new Set(allFolders(coll).map(move))] });
+    }
+    function deleteDir(dir) {
+      if (coll.sets.some(x => inDir(x.dir, dir))) { alert(tr("folderNotEmpty")); return; }
+      if (!confirm(tr("confirmDeleteFolder", dir))) return;
+      commitColl({ ...coll, folders: allFolders(coll).filter(f => !inDir(f, dir)) });
+    }
+    function renameSet(id) {
+      const x = coll.sets.find(s => s.id === id);
+      const title = cleanName(prompt(tr("askSetName"), x.title));
+      if (!title || title === x.title) return;
+      if (coll.sets.some(y => y.id !== id && place(y) === place({ title, dir: x.dir }))) { alert(tr("nameTakenRename", title)); return; }
+      // ohne `file`: die Datei heisst danach wie der neue Titel
+      commitColl({ ...coll, sets: coll.sets.map(y => y.id === id ? { ...y, title, file: undefined } : y) });
+    }
+    function deleteSet(id) {
+      const x = coll.sets.find(s => s.id === id);
+      if (!confirm(tr("confirmDeleteSet", x.title))) return;
+      commitColl({ ...coll, sets: coll.sets.filter(y => y.id !== id) });
+      if (state.setId === id) { state.setId = null; persistAndSync(); }
+    }
+    function moveSet(id, dir) {
+      const x = coll.sets.find(s => s.id === id);
+      if (!x || x.dir === dir) return;
+      if (coll.sets.some(y => y.id !== id && place(y) === place({ title: x.title, dir }))) { alert(tr("nameTakenRename", x.title)); return; }
+      commitColl({ ...coll, sets: coll.sets.map(y => y.id === id ? { ...y, dir } : y) });
+    }
+
+    collTree.addEventListener("click", (e) => {
+      const row = e.target.closest(".coll-row");
+      if (!row) return;
+      const act = e.target.closest("[data-act]")?.dataset.act;
+      if (row.classList.contains("folder")) {
+        const dir = row.dataset.dir;
+        if (act === "toggle") {
+          if (closed.has(dir)) closed.delete(dir); else closed.add(dir);
+          writeLocal(CLOSED_KEY, [...closed]);
+          renderColl();
+        } else if (act === "saveHere") saveAs(dir);
+        else if (act === "renameDir") renameDir(dir);
+        else if (act === "delDir") deleteDir(dir);
+      } else {
+        const id = row.dataset.id;
+        if (act === "rename") renameSet(id);
+        else if (act === "del") deleteSet(id);
+        else if (!act) loadSet(id);
+      }
+    });
+
+    // Sets per Ziehen umhängen: Ziel ist der Ordner unter dem Zeiger (auch ein Set darin),
+    // sonst der Hauptordner. Eigener Datentyp, damit das Datei-Overlay nicht anspringt.
+    const SET_MIME = "application/x-tafelfussball-set";
+    const isSetDrag = (e) => [...(e.dataTransfer?.types || [])].includes(SET_MIME);
+    const dropDirOf = (el) => {
+      const row = el.closest(".coll-row.folder");
+      if (row) return row.dataset.dir;
+      return el.closest(".coll-sub, .coll-tree")?.dataset.dir ?? "";
+    };
+    let dropEl = null;
+    const markDrop = (el) => { if (dropEl === el) return; dropEl?.classList.remove("drop-target"); dropEl = el; el?.classList.add("drop-target"); };
+    collTree.addEventListener("dragstart", (e) => {
+      const row = e.target.closest(".coll-row.set");
+      if (!row) return;
+      e.dataTransfer.setData(SET_MIME, row.dataset.id);
+      e.dataTransfer.effectAllowed = "move";
+      row.classList.add("dragging");
+    });
+    collTree.addEventListener("dragend", (e) => { e.target.closest(".coll-row")?.classList.remove("dragging"); markDrop(null); });
+    collTree.addEventListener("dragover", (e) => {
+      if (!isSetDrag(e)) return;
+      e.preventDefault();
+      const dir = dropDirOf(e.target);
+      markDrop(dir ? collTree.querySelector(`.coll-row.folder[data-dir="${CSS.escape(dir)}"]`) : collTree);
+    });
+    collTree.addEventListener("dragleave", (e) => { if (!collTree.contains(e.relatedTarget)) markDrop(null); });
+    collTree.addEventListener("drop", (e) => {
+      if (!isSetDrag(e)) return;
+      e.preventDefault();
+      markDrop(null);
+      moveSet(e.dataTransfer.getData(SET_MIME), dropDirOf(e.target));
+    });
+
+    // ---------- Ordner auf der Platte (wie MyVoci/MyMemory) ----------
+    // Chrome/Edge am Computer öffnen über die File System Access API einen Ordner; dann
+    // liegen die Sets dort als .txt (Unterordner = Ordner) und localStorage ist nur noch
+    // Zwischenspeicher. Der Ordner-Handle überlebt nur in IndexedDB, nicht in localStorage.
+    const dirSupported = typeof window.showDirectoryPicker === "function";
+    const openDb = () => new Promise((resolve, reject) => {
+      const req = indexedDB.open("mytafelfussball", 1);
+      req.onupgradeneeded = () => req.result.createObjectStore("kv");
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
+    });
+    const dbRun = async (mode, act) => {
+      const db = await openDb();
+      return new Promise((resolve, reject) => {
+        const req = act(db.transaction("kv", mode).objectStore("kv"));
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => reject(req.error);
+      });
+    };
+    const loadDirHandle = () => dbRun("readonly", kv => kv.get("dir")).catch(() => undefined);
+    const saveDirHandle = (h) => dbRun("readwrite", kv => (h ? kv.put(h, "dir") : kv.delete("dir"))).catch(() => {});
+
+    let link = { handle: null, status: dirSupported ? "none" : "unsupported" };
+    const setLink = (next) => { link = next; lastCollSig = null; renderColl(); };
+    let wanted = null;     // der Ordner, der gerade gelten soll (ein Auftrag nach dem Trennen ist überholt)
+    let mirrored = null;   // der Stand, den der Ordner zuletzt gesehen hat — gespiegelt wird nur die Differenz
+    const known = new Set(); // ids, die wir in den Ordner geschrieben haben (s. fromDisk)
+    const readCache = new Map(); // unveränderte Dateien nicht neu parsen
+    // Alle Ordner-Zugriffe hintereinander: ein Nachlesen darf nicht in ein halb geschriebenes Set lesen
+    let queue = Promise.resolve();
+    const enqueue = (job) => (queue = queue.then(job).catch((e) => {
+      console.error(e);
+      if (wanted) setLink({ handle: link.handle || wanted, status: "error" });
+    }));
+
+    const isSetFile = (name) => /\.(txt|md)$/i.test(name) && !name.startsWith(".");
+    const fileName = (x) => x.file || `${x.title}.txt`;
+    const setPath = (x) => (x.dir ? x.dir + "/" : "") + fileName(x);
+
+    // Liest den ganzen Ordner. Dateien ohne eine einzige Frage sind keine Sets und bleiben aussen vor.
+    async function readDir(root) {
+      const files = [], folders = [];
+      const walk = async (handle, dir) => {
+        for await (const [name, entry] of handle.entries()) {
+          if (name.startsWith(".")) continue;
+          if (entry.kind === "directory") {
+            const path = dir ? `${dir}/${name}` : name;
+            folders.push(path);
+            await walk(entry, path);
+          } else if (isSetFile(name)) files.push({ name, dir, entry });
+        }
+      };
+      await walk(root, "");
+      const sets = [];
+      for (const { name, dir, entry } of files) {
+        const file = await entry.getFile();
+        const key = `${dir}/${name}`, hit = readCache.get(key);
+        let tasks;
+        if (hit && hit.mod === file.lastModified && hit.size === file.size) tasks = hit.tasks;
+        else { tasks = parseTasks(await file.text()); readCache.set(key, { mod: file.lastModified, size: file.size, tasks }); }
+        if (!tasks.length) continue;
+        const title = name.replace(/\.(txt|md)$/i, "");
+        // `file` nur, wenn der echte Dateiname nicht «Titel.txt» ist (z. B. .md): dann schreibt die App dorthin zurück
+        const x = { title, dir, tasks, disk: true };
+        if (name !== `${title}.txt`) x.file = name;
+        sets.push(x);
+      }
+      return { sets, folders };
+    }
+
+    const dirOf = async (root, path, create) => {
+      let h = root;
+      for (const part of path.split("/").filter(Boolean)) h = await h.getDirectoryHandle(part, { create });
+      return h;
+    };
+    async function writeFile(root, path, text) {
+      const fh = await (await dirOf(root, parentOf(path), true)).getFileHandle(leafOf(path), { create: true });
+      const w = await fh.createWritable();
+      await w.write(text);
+      await w.close();
+    }
+    async function removeFile(root, path) {
+      try { await (await dirOf(root, parentOf(path), false)).removeEntry(leafOf(path)); } catch {}
+    }
+    async function removeEmptyDir(root, path) {
+      try {
+        for await (const _ of (await dirOf(root, path, false)).keys()) return; // nicht leer -> bleibt stehen
+        await (await dirOf(root, parentOf(path), false)).removeEntry(leafOf(path));
+      } catch {}
+    }
+
+    // Schreibt nur, was sich geändert hat (Diff über die id, verglichen werden Pfad und Inhalt).
+    // Gelöscht -> Datei weg; umbenannt/verschoben -> alte Datei weg, neue hin; leere Ordner mit.
+    async function mirrorDir(root, prev, next) {
+      const before = new Map(prev.sets.map(x => [x.id, x]));
+      const after = new Set(next.sets.map(x => x.id));
+      const prevFolders = allFolders(prev), nextFolders = allFolders(next);
+      for (const f of nextFolders) if (!prevFolders.includes(f)) await dirOf(root, f, true);
+      for (const x of next.sets) {
+        const old = before.get(x.id);
+        if (old === x) continue;
+        const path = setPath(x), text = toFile(x.tasks);
+        if (old && setPath(old) === path && toFile(old.tasks) === text) continue;
+        if (old && setPath(old) !== path) await removeFile(root, setPath(old));
+        await writeFile(root, path, text);
+      }
+      for (const x of prev.sets) if (!after.has(x.id)) await removeFile(root, setPath(x));
+      // Ordner erst danach und von innen nach aussen: leer ist er erst ohne seine Dateien
+      const gone = prevFolders.filter(f => !nextFolders.includes(f)).sort((a, b) => b.length - a.length);
+      for (const f of gone) await removeEmptyDir(root, f);
+    }
+
+    // Vom Ordner in die Sammlung. Die id bleibt am Set mit gleichem Ort (daran hängt das
+    // geladene Set). `keepAll` nur beim ausdrücklichen Verbinden: dann bleibt alles aus dem
+    // Browser und wandert in den Ordner. Sonst bleiben nur Sets, die nie im Ordner lagen —
+    // was dort fehlt und dort schon lag, wurde im Finder gelöscht.
+    function fromDisk(prev, disk, keepAll) {
+      const onPlatte = (x) => x.disk || known.has(x.id);
+      const byPlace = new Map(prev.sets.map(x => [place(x), x]));
+      const used = new Set();
+      const sets = disk.sets.map(d => {
+        const old = byPlace.get(place(d));
+        if (!old || used.has(old.id)) return { ...d, id: newSetId() };
+        used.add(old.id);
+        // beim Verbinden ergänzt der Browser, was in der Datei fehlt
+        const extra = keepAll ? old.tasks.filter(t => !d.tasks.some(u => u.q === t.q && u.a === t.a)) : [];
+        return { ...d, id: old.id, tasks: [...d.tasks, ...extra] };
+      });
+      // Bewusst der reine Ordnerinhalt: die ergänzten Fragen soll mirrorDir ja noch schreiben
+      const onDisk = { sets: disk.sets.map((d, i) => ({ ...d, id: sets[i].id })), folders: disk.folders };
+      const local = prev.sets.filter(x => !used.has(x.id) && (keepAll || !onPlatte(x)));
+      const next = { sets: [...sets, ...local].sort(byTitle), folders: [...new Set([...disk.folders, ...(keepAll ? prev.folders : [])])] };
+      return { next, onDisk };
+    }
+
+    function takeDisk(handle, keepAll) {
+      wanted = handle;
+      return enqueue(async () => {
+        const seen = coll;
+        const disk = await readDir(handle);
+        if (wanted !== handle) return;
+        // Hat sich die Sammlung während des Lesens geändert, ist der Plattenstand veraltet: neu lesen
+        if (coll !== seen) { takeDisk(handle, keepAll); return; }
+        const { next, onDisk } = fromDisk(coll, disk, keepAll);
+        // Was vom Ordner kommt, gilt als gespiegelt statt zurückgeschrieben — sonst bügelte
+        // die App jede von Hand geschriebene Datei in ihr eigenes Format.
+        mirrored = onDisk;
+        if (link.status !== "ok" || link.handle !== handle) link = { handle, status: "ok" };
+        if (JSON.stringify(next) !== JSON.stringify(coll)) commitColl(next);
+        else { lastCollSig = null; renderColl(); mirrorSoon(); }
+      });
+    }
+    function mirrorSoon() {
+      if (link.status !== "ok" || !mirrored || mirrored === coll) return;
+      const base = mirrored, target = coll, handle = link.handle;
+      mirrored = target;
+      enqueue(async () => {
+        if (wanted !== handle) return; // inzwischen gewechselt oder getrennt
+        // nicht geschrieben heisst nicht gespiegelt: sonst holt kein späterer Lauf es nach
+        try { await mirrorDir(handle, base, target); } catch (e) { mirrored = base; throw e; }
+        target.sets.forEach(x => known.add(x.id));
+      });
+    }
+
+    dirLine.addEventListener("click", async (e) => {
+      const act = e.target.closest("[data-dir-act]")?.dataset.dirAct;
+      if (act === "connect") {
+        let handle;
+        // Beim ersten Mal in «Dokumente» (wie MyVoci/MyMemory); danach merkt sich der Browser über `id` den Ort
+        try { handle = await window.showDirectoryPicker({ mode: "readwrite", id: "mytafelfussball", startIn: "documents" }); }
+        catch { return; } // abgebrochen
+        await saveDirHandle(handle);
+        takeDisk(handle, true);
+      } else if (act === "reconnect") {
+        // Kein keepAll: der Ordner ist die Wahrheit; Sets, die nur im Browser entstanden sind, bleiben trotzdem
+        try { if ((await link.handle.requestPermission({ mode: "readwrite" })) === "granted") takeDisk(link.handle, false); }
+        catch { setLink({ ...link, status: "error" }); }
+      } else if (act === "refresh") {
+        takeDisk(link.handle, false);
+      } else if (act === "disconnect") {
+        wanted = null; mirrored = null; known.clear(); readCache.clear();
+        saveDirHandle(null);
+        setLink({ handle: null, status: "none" });
+      }
+    });
+
+    if (dirSupported) {
+      loadDirHandle().then(async (handle) => {
+        if (!handle) return;
+        const perm = await handle.queryPermission({ mode: "readwrite" });
+        if (perm === "granted") takeDisk(handle, false); else setLink({ handle, status: "prompt" });
+      });
+      // Im Finder abgelegte oder gelöschte Dateien erscheinen beim Wechsel zurück ins Fenster
+      window.addEventListener("focus", () => { if (link.status === "ok") takeDisk(link.handle, false); });
+    }
+
+    renderCollHook = renderColl;
   }
 
   // ---------- Init ----------
