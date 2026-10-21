@@ -19,12 +19,16 @@
 
 ### 2. Export/Backup als Datei (Sicherheitsnetz)
 - ✅ Pro Set umgesetzt: ⤓ an der Set-Zeile lädt das Set als .txt im Import-Format (`F:`/`A:`/`---`) herunter — direkt wieder importierbar.
-- Offen für später: ganze Sammlung (mehrere Sets) als eine JSON-Datei exportieren und wieder importieren.
+- ✅ Ganze Sammlung (21.10.2026): «⤓ Alle als ZIP» (alle Sets samt Ordnern) und «Sicherung speichern/einlesen» (eine JSON-Datei; Einlesen ergänzt, was fehlt, und ersetzt nichts).
 - Wichtig, weil `localStorage` an Browser + Gerät gebunden ist (weg beim Löschen der Website-Daten); deckt auch den Gerätewechsel ab.
 
-### 3. Teilen per Link (optional, später)
-- Ein Set komprimiert ins URL-Fragment (`#…`) kodieren — Kolleg:innen erhalten einen Link statt einer Datei.
-- Grenze: URL-Länge bei sehr grossen Sets.
+### 3. Teilen per Link
+- ✅ Umgesetzt (21.10.2026): 🔗 an der Set-Zeile zeigt Link und QR-Code (`?view=lehrer#t=…`, komprimiert). Wer ihn öffnet, bekommt das Set in die eigene Sammlung.
+- Grenze: Bei sehr grossen Sets passt der Link nicht mehr in einen QR-Code; der Link selbst geht trotzdem.
+
+### 4. Gemeinsame Ablage mit den anderen My-Apps (21.10.2026)
+- ✅ Regeln aus MySuite `ABLAGE.md`, Code aus `design/js/my-ablage.js`: Datei mit `# Titel`, Dateinamen ohne Umlaute/Sonderzeichen (alte Dateien behalten ihren Namen), Ordner ziehen, Ordner-Pfade behalten bestehende Teile, «Set erstellen» mit Einfügefeld und Vorschau, KI-Prompt im gemeinsamen Aufbau. Headless-Test `tools/test-ordner.js`.
+- Offen: am iPad und mit einem echten Ordner am Mac von Hand ausprobieren.
 
 ### Bewusst nicht geplant
 - Backend/Accounts (Supabase o.ä.): würde Synchronisation zwischen Geräten bringen, macht aber aus der wartungsfreien statischen Seite ein System mit Datenbank, Datenschutzfragen (Schulkontext) und Betriebsverantwortung.

@@ -584,6 +584,23 @@
   .dropzone:hover { border-color: var(--akzent); color: var(--text); background: var(--akzent-weich); }
   .dropzone small { color: var(--text-3); }
   .drop-status { font-size: 13px; min-height: 1em; margin-top: 6px; color: var(--gruen); }
+  /* Set erstellen: Einfügefeld und Vorschau vor dem Speichern */
+  .paste-box { font: inherit; font-size: 13px; width: 100%; min-height: 84px; resize: vertical; margin-top: 4px;
+    background: var(--karte); color: var(--text); border: 1px solid var(--linie); border-radius: var(--radius); padding: 8px 12px; }
+  .paste-box:focus-visible { outline: 2px solid var(--akzent); outline-offset: 1px; }
+  .preview { border: 1px solid var(--linie); border-radius: var(--radius); padding: 4px 12px 12px; margin-top: 8px; background: var(--karte); }
+  .preview[hidden] { display: none; }
+  .preview-list { max-height: 220px; overflow: auto; margin: 6px 0 10px; padding-left: 20px; font-size: 13px; }
+  .preview-list li { margin-bottom: 4px; }
+  .preview-list .ans { color: var(--text-2); }
+  .create-hint { font-size: 12px; color: var(--text-3); margin: 8px 0 0; }
+  /* Teilen: Link und QR-Code */
+  .share-dialog { border: 1px solid var(--linie); border-radius: var(--radius-l); background: var(--karte); color: var(--text);
+    padding: 18px; width: min(360px, calc(100vw - 32px)); }
+  .share-dialog::backdrop { background: rgb(0 0 0 / .45); }
+  .share-dialog h3 { margin-top: 0; }
+  .share-dialog .qr { margin: 8px 0; }
+  .share-dialog .qr svg { display: block; width: 100%; height: auto; background: #fff; border-radius: var(--radius); }
 
   .file-overlay {
     position: fixed; inset: 0; z-index: 120;
@@ -706,6 +723,10 @@
         <div class="coll-tree" id="collTree" data-dir=""></div>
         <div class="row" style="margin-top:8px">
           <button class="ghost small" id="newFolder" data-i18n="newFolder">Neuer Ordner</button>
+          <button class="ghost small" id="zipAll" data-i18n="zipAll">⤓ Alle als ZIP</button>
+          <button class="ghost small" id="backupSave" data-i18n="backupSave">Sicherung speichern</button>
+          <button class="ghost small" id="backupLoad" data-i18n="backupLoad">Sicherung einlesen</button>
+          <input type="file" id="backupInput" accept=".json,application/json" hidden>
         </div>
         <div class="dir-line" id="dirLine"></div>
       </section>
@@ -728,17 +749,33 @@
         </div>
       </section>
 
-      <section class="import-sec">
-        <h3 data-i18n="importTitle">Aus Arbeitsblatt erstellen</h3>
+      <section class="import-sec" id="createSec">
+        <h3 data-i18n="importTitle">Set erstellen</h3>
         <ol class="import-two">
           <li><button class="ghost small" id="copyPrompt" data-i18n="copyKiPrompt">KI-Prompt kopieren</button>
-            <span data-i18n="importStep1">und mit dem PDF in Claude oder ChatGPT einfügen</span></li>
-          <li><div class="dropzone" id="dropzone">
-            <span data-i18n-html="dropHere">📥 <b>Erhaltene .txt-Datei hierher ziehen</b><br><small>oder klicken — sie wird ein Set in der Sammlung</small></span>
-            <input type="file" id="fileInput" accept=".txt,.md,.text,text/plain" multiple hidden>
-          </div></li>
+            <span data-i18n="importStep1">und mit Arbeitsblatt oder Thema in Claude oder ChatGPT einfügen</span></li>
+          <li><span data-i18n="importStep2">Die Antwort der KI hier einfügen:</span>
+            <textarea class="paste-box" id="pasteBox" data-i18n-ph="pastePh" placeholder="# Titel"></textarea>
+            <div class="dropzone" id="dropzone">
+              <span data-i18n-html="dropHere">📥 <b>… oder die .txt-Datei hierher ziehen</b></span>
+              <input type="file" id="fileInput" accept=".txt,.md,.text,text/plain" multiple hidden>
+            </div></li>
         </ol>
+        <div class="set-status" id="createTarget"></div>
+        <div class="preview" id="preview" hidden>
+          <label class="field-label" for="previewTitle" data-i18n="previewTitle">Titel</label>
+          <input type="text" id="previewTitle">
+          <label class="field-label" for="previewDir" data-i18n="previewFolder">Ordner</label>
+          <select id="previewDir"></select>
+          <label class="field-label" id="previewCount"></label>
+          <ol class="preview-list" id="previewList"></ol>
+          <div class="row grow">
+            <button class="primary" id="previewSave" data-i18n="previewSave">In die Sammlung</button>
+            <button class="ghost" id="previewDiscard" data-i18n="previewDiscard">Verwerfen</button>
+          </div>
+        </div>
         <div class="drop-status" id="dropStatus"></div>
+        <p class="create-hint" data-i18n="byHand">Von Hand: Fragen unter «Aktuelle Liste» eintippen und speichern.</p>
       </section>
       </div>
     </details>
@@ -775,11 +812,23 @@
 
 <div class="goal-flash" id="goalFlash">TOR!</div>
 <canvas id="confetti"></canvas>
+<dialog class="share-dialog" id="shareDialog">
+  <h3 id="shareTitle"></h3>
+  <div class="qr" id="shareQr"></div>
+  <input type="text" id="shareUrl" readonly>
+  <p class="create-hint" data-i18n="shareHint">Wer den Link öffnet, bekommt das Set in die eigene Sammlung.</p>
+  <div class="row grow" style="margin-top:10px">
+    <button class="primary" id="shareCopy" data-i18n="copyLink">Link kopieren</button>
+    <button class="ghost" id="shareClose" data-i18n="shareClose">Schliessen</button>
+  </div>
+</dialog>
 <div class="file-overlay" id="fileOverlay" data-i18n="fileOverlay">📥 Datei loslassen, um Fragen zu importieren</div>
 
 <!-- KaTeX für Formeldarstellung ($…$ inline, $$…$$ abgesetzt). Fällt das CDN aus, bleibt der Rohtext lesbar. -->
 <script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<!-- Ablage (Namen, Ordner-Abgleich) gemeinsam mit den anderen My-Apps: aus ~/MySuite, sync.sh tafel -->
+<script src="design/js/my-ablage.js"></script>
 
 <script>
 (() => {
@@ -802,7 +851,55 @@
       beamerCardText: 'Für die Klasse. Spielfeld, Punkte, Frage — ohne Lösung. Öffnet als eigenes Fenster.',
       teacherCardTitle: 'Lehrer:innen-Ansicht',
       teacherCardText: 'Steuerung, Aufgabenverwaltung und die Lösung.',
-      kiPrompt: "Extrahiere alle Übungsaufgaben und deren Lösungen aus diesem PDF. Formatiere sie exakt so: Für jede Aufgabe eine Zeile 'F: <Frage>', eine Zeile 'A: <Antwort>', dann eine Zeile mit nur '---' als Trennzeichen. Die Fragen werden im Unterricht am Beamer gezeigt: Formuliere sie kurz, mach aus Teilaufgaben (a, b, …) eigene Aufgaben und lass Aufgaben weg, die eine Abbildung brauchen. Als Antwort nur das Endergebnis bzw. eine kurze Lösung, keinen Lösungsweg; fehlt eine Lösung im PDF, rechne sie selbst aus. Mathematische Formeln als LaTeX in Dollarzeichen ($...$ für inline, $$...$$ für abgesetzt), nur Befehle, die KaTeX kennt. Keine zusätzlichen Erklärungen, Nummerierungen oder Markdown. Erstelle daraus direkt eine .txt-Datei (UTF-8) zum Herunterladen. Benenne sie nach dem Thema, z. B. „Bruchrechnen – Kürzen.txt“, ohne Zeichen wie / : ?, denn der Dateiname wird zum Set-Titel. Falls du Dateien direkt speichern kannst, lege sie in den Ordner „MyTafelfussball“ in meinen Dokumenten, sonst in die Downloads.",
+      kiPrompt: [
+        "Du erstellst Quizfragen für das Unterrichtsspiel «Tafelfussball» (Fragen am Beamer, zwei Teams). Erstelle ein Aufgaben-Set nach meinen Angaben.",
+        "",
+        "===== NUR DAS HIER AUSFÜLLEN (Rest unverändert lassen) =====",
+        "Thema oder Material: [Thema in einem Satz — oder: siehe angehängtes Arbeitsblatt/PDF]",
+        "Für wen: [z. B. 8. Klasse]",
+        "Anzahl Aufgaben: [z. B. 15 — bei Material: alle]",
+        "Besonderes: [optional, z. B. nur Kapitel 3]",
+        "============================================================",
+        "",
+        "Schicke ich Material mit, nimm die Aufgaben und Lösungen NUR daraus: Teilaufgaben (a, b, …) werden eigene",
+        "Aufgaben, Aufgaben mit Abbildung lässt du weg, fehlt eine Lösung, bestimmst du sie selbst. Sonst nimmst du",
+        "dein eigenes Wissen zum angegebenen Thema.",
+        "",
+        "SO GIBST DU ES AUS — daran scheitert es sonst:",
+        "- Gib beides aus, in dieser Reihenfolge:",
+        "  1. eine Datei zum Herunterladen, Endung .txt (kein .docx, kein PDF). Der Dateiname ist der Titel ohne",
+        "     Umlaute, Akzente und Sonderzeichen, mit Leerzeichen und normalem Bindestrich: Brueche - Kuerzen.txt",
+        "  2. denselben Inhalt nochmals in EINEM Code-Block (```), zum Kopieren.",
+        "- Kannst du keine Dateien erzeugen, reicht der Code-Block allein.",
+        "- Kein Wort davor oder danach: keine Einleitung, keine Erklärung, keine Rückfrage.",
+        "",
+        "FORMAT (genau so):",
+        "",
+        "# Brüche – Kürzen",
+        "",
+        "F: Kürze $\\frac{6}{8}$.",
+        "A: $\\frac{3}{4}$",
+        "---",
+        "F: Wie heisst die Zahl unter dem Bruchstrich?",
+        "A: Nenner",
+        "---",
+        "",
+        "TITEL (die Zeile «# …»):",
+        "- Wie im Material (Kapitel, Thema des Arbeitsblatts), sonst das Thema kurz: «Brüche – Kürzen».",
+        "- Nicht in den Titel: Klasse, Datum, «Quiz», «Aufgaben».",
+        "",
+        "REGELN:",
+        "- «F: » ist die Frage, «A: » die Lösung, «---» trennt die Aufgaben, auch nach der letzten.",
+        "- Die Fragen stehen am Beamer: kurz halten. Als Lösung nur das Ergebnis oder eine kurze Antwort, keine Rechenwege.",
+        "- Formeln als LaTeX zwischen Dollarzeichen ($...$ im Text, $$...$$ abgesetzt), nur Befehle, die KaTeX kennt.",
+        "- Keine Nummerierung, keine Fettschrift, keine Bilder, keine Erklärungen.",
+        "",
+        "ZUM SCHLUSS: geh die Aufgaben nochmals durch und bessere STILL aus, was hier nicht stimmt — am Ende nur das",
+        "fertige Set ausgeben, keine Liste der Änderungen.",
+        "- Ist jede Lösung richtig und kurz genug für den Beamer?",
+        "- Passt das Niveau durchgehend zur angegebenen Klasse?",
+        "- Stimmt das Format überall: «# Titel», «F: », «A: », «---»?",
+      ].join("\n"),
       qLabel: 'Frage', aLabel: 'Lösung',
       noQuestion: 'Noch keine Frage ausgewählt',
       roundDone: '🏁 Runde beendet!',
@@ -836,10 +933,12 @@
       qPh: 'Neue Frage', aPh: 'Lösung',
       add: 'Hinzufügen',
       tasks: 'Aufgaben', deleteAll: 'Alle löschen',
-      importTitle: 'Aus Arbeitsblatt erstellen',
+      importTitle: 'Set erstellen',
       copyKiPrompt: 'KI-Prompt kopieren',
-      importStep1: 'und mit dem PDF in Claude oder ChatGPT einfügen',
-      dropHere: '📥 <b>Erhaltene .txt-Datei hierher ziehen</b><br><small>oder klicken — sie wird ein Set in der Sammlung</small>',
+      importStep1: 'und mit Arbeitsblatt oder Thema in Claude oder ChatGPT einfügen',
+      importStep2: 'Die Antwort der KI hier einfügen:',
+      pastePh: '# Titel\n\nF: Frage\nA: Lösung\n---',
+      dropHere: '📥 <b>… oder die .txt-Datei hierher ziehen</b><br><small>oder klicken; mehrere Dateien kommen direkt in die Sammlung</small>',
       confirmScore: 'Punktestand beider Teams auf 0 setzen?',
       confirmAll: 'Alles zurücksetzen? Punkte, Ball und Fragerunde starten neu — die Aufgaben bleiben erhalten.',
       confirmClear: 'Wirklich ALLE Aufgaben löschen?',
@@ -877,6 +976,18 @@
       importedSets: n => `✓ ${n} Sets in der Sammlung`,
       exportSet: 'Als .txt-Datei herunterladen',
       importNone: 'In der/den Datei(en) nichts im F:/A:/---‑Format erkannt.',
+      byHand: 'Von Hand: Fragen unter «Aktuelle Liste» eintippen und speichern.',
+      previewTitle: 'Titel', previewFolder: 'Ordner', previewSave: 'In die Sammlung', previewDiscard: 'Verwerfen',
+      previewCount: n => `${n} ${n === 1 ? 'Frage' : 'Fragen'} erkannt:`,
+      mainFolder: 'Hauptordner', createHere: 'Hier ein Set erstellen', createIn: d => `Neues Set kommt in: ${d}`,
+      zipAll: '⤓ Alle als ZIP', zipFailed: 'Das ZIP liess sich nicht erstellen (keine Verbindung?).', noSets: 'Noch keine Sets in der Sammlung.',
+      backupSave: 'Sicherung speichern', backupLoad: 'Sicherung einlesen',
+      backupBad: 'Das ist keine Sicherung von MyTafelfussball.', backupDone: n => `✓ ${n} Sets eingelesen`,
+      shareSet: 'Als Link oder QR-Code teilen', copyLink: 'Link kopieren', shareClose: 'Schliessen',
+      shareHint: 'Wer den Link öffnet, bekommt das Set in die eigene Sammlung.',
+      qrFailed: 'Für einen QR-Code zu lang — der Link geht trotzdem.',
+      importedLink: (t, n) => `✓ «${t}» aus dem Link (${n} ${n === 1 ? 'Frage' : 'Fragen'}) in der Sammlung`,
+      linkBroken: 'Der Link ist beschädigt oder unvollständig.',
       useTitle: 'Als aktuelle Frage', editTitle: 'Bearbeiten', delTitle: 'Löschen'
     },
     en: {
@@ -885,7 +996,55 @@
       beamerCardText: 'For the class. Field, score, question — never the answer. Opens as its own window.',
       teacherCardTitle: 'Teacher view',
       teacherCardText: 'Controls, task management, and the answers.',
-      kiPrompt: "Extract all exercises and their solutions from this PDF. Format them exactly like this: for each task one line 'Q: <question>', one line 'A: <answer>', then a line containing only '---' as separator. The questions are shown on a projector in class: keep them short, turn sub-tasks (a, b, …) into separate tasks and leave out tasks that need a figure. As the answer give only the final result or a short solution, no worked steps; if a solution is missing from the PDF, work it out yourself. Write mathematical formulas as LaTeX in dollar signs ($...$ inline, $$...$$ display), using only commands KaTeX supports. No additional explanations, numbering or Markdown. Create a .txt file (UTF-8) directly for me to download. Name it after the topic, e.g. “Fractions – Simplifying.txt”, without characters like / : ?, because the file name becomes the set title. If you can save files directly, put it in the “MyTafelfussball” folder in my Documents, otherwise in Downloads.",
+      kiPrompt: [
+        "You write quiz questions for the classroom game “Tafelfussball” (questions on the projector, two teams). Create a set of tasks from my input.",
+        "",
+        "===== FILL IN THIS PART ONLY (leave the rest unchanged) =====",
+        "Topic or material: [topic in one sentence — or: see attached worksheet/PDF]",
+        "For whom: [e.g. grade 8]",
+        "Number of tasks: [e.g. 15 — with material: all]",
+        "Special notes: [optional, e.g. chapter 3 only]",
+        "============================================================",
+        "",
+        "If I attach material, take the tasks and solutions ONLY from it: sub-tasks (a, b, …) become separate tasks,",
+        "leave out tasks that need a figure, and if a solution is missing, work it out yourself. Otherwise use your",
+        "own knowledge of the topic.",
+        "",
+        "HOW TO OUTPUT IT — this is where it usually goes wrong:",
+        "- Give both, in this order:",
+        "  1. a file to download, extension .txt (no .docx, no PDF). The file name is the title without umlauts,",
+        "     accents and special characters, with spaces and a normal hyphen: Fractions - Simplifying.txt",
+        "  2. the same content again in ONE code block (```), for copying.",
+        "- If you cannot create files, the code block alone is enough.",
+        "- Not a word before or after: no introduction, no explanation, no follow-up question.",
+        "",
+        "FORMAT (exactly like this):",
+        "",
+        "# Fractions – Simplifying",
+        "",
+        "Q: Simplify $\\frac{6}{8}$.",
+        "A: $\\frac{3}{4}$",
+        "---",
+        "Q: What is the number below the fraction bar called?",
+        "A: Denominator",
+        "---",
+        "",
+        "TITLE (the line “# …”):",
+        "- As in the material (chapter, topic of the worksheet), otherwise the topic, short: “Fractions – Simplifying”.",
+        "- Not in the title: grade, date, “quiz”, “tasks”.",
+        "",
+        "RULES:",
+        "- “Q: ” is the question, “A: ” the answer, “---” separates the tasks, also after the last one.",
+        "- The questions are shown on a projector: keep them short. As the answer give only the result or a short answer, no worked steps.",
+        "- Formulas as LaTeX in dollar signs ($...$ inline, $$...$$ display), only commands KaTeX supports.",
+        "- No numbering, no bold, no images, no explanations.",
+        "",
+        "FINALLY: go through the tasks again and QUIETLY fix whatever does not fit — output only the finished set,",
+        "no list of changes.",
+        "- Is every answer correct and short enough for the projector?",
+        "- Does the level fit the grade throughout?",
+        "- Is the format right everywhere: “# Title”, “Q: ”, “A: ”, “---”?",
+      ].join("\n"),
       qLabel: 'Question', aLabel: 'Answer',
       noQuestion: 'No question selected yet',
       roundDone: '🏁 Round finished!',
@@ -919,10 +1078,12 @@
       qPh: 'New question', aPh: 'Answer',
       add: 'Add',
       tasks: 'Tasks', deleteAll: 'Delete all',
-      importTitle: 'Create from a worksheet',
+      importTitle: 'Create a set',
       copyKiPrompt: 'Copy AI prompt',
-      importStep1: 'and paste it with the PDF into Claude or ChatGPT',
-      dropHere: '📥 <b>Drag the .txt file you got here</b><br><small>or click — it becomes a set in the collection</small>',
+      importStep1: 'and paste it with a worksheet or topic into Claude or ChatGPT',
+      importStep2: 'Paste the AI’s answer here:',
+      pastePh: '# Title\n\nQ: Question\nA: Answer\n---',
+      dropHere: '📥 <b>… or drag the .txt file here</b><br><small>or click; several files go straight into the collection</small>',
       confirmScore: 'Reset both team scores to 0?',
       confirmAll: 'Reset everything? Score, ball and round start fresh — tasks are kept.',
       confirmClear: 'Really delete ALL tasks?',
@@ -960,6 +1121,18 @@
       importedSets: n => `✓ ${n} sets in the collection`,
       exportSet: 'Download as .txt file',
       importNone: 'No Q:/A:/--- format found in the file(s).',
+      byHand: 'By hand: type questions under “Current list” and save.',
+      previewTitle: 'Title', previewFolder: 'Folder', previewSave: 'Add to collection', previewDiscard: 'Discard',
+      previewCount: n => `${n} question${n === 1 ? '' : 's'} found:`,
+      mainFolder: 'Main folder', createHere: 'Create a set here', createIn: d => `New set goes into: ${d}`,
+      zipAll: '⤓ All as ZIP', zipFailed: 'Could not create the ZIP (no connection?).', noSets: 'No sets in the collection yet.',
+      backupSave: 'Save backup', backupLoad: 'Load backup',
+      backupBad: 'This is not a MyTafelfussball backup.', backupDone: n => `✓ ${n} sets loaded`,
+      shareSet: 'Share as link or QR code', copyLink: 'Copy link', shareClose: 'Close',
+      shareHint: 'Whoever opens the link gets the set in their own collection.',
+      qrFailed: 'Too long for a QR code — the link still works.',
+      importedLink: (t, n) => `✓ “${t}” from the link (${n} question${n === 1 ? '' : 's'}) in the collection`,
+      linkBroken: 'The link is broken or incomplete.',
       useTitle: 'Set as current question', editTitle: 'Edit', delTitle: 'Delete'
     }
   };
@@ -2060,13 +2233,23 @@
     dropzone.onclick = () => fileInput.click();
     fileInput.onchange = () => { importFiles(fileInput.files); fileInput.value = ""; };
 
-    // Jede Datei wird ein Set im Hauptordner der Sammlung (Titel = Dateiname) und das
-    // letzte davon gleich geladen. Gleicher Name im Hauptordner: nach dem Ersetzen fragen.
+    // Eine einzelne Datei kommt in die Vorschau (wie eingefügter Text): Titel und Ordner lassen
+    // sich vor dem Speichern prüfen. Mehrere Dateien werden direkt je ein Set im Hauptordner
+    // (Titel aus «# Titel», sonst Dateiname), das letzte gleich geladen; gleicher Platz:
+    // nach dem Ersetzen fragen.
     async function importFiles(fileList) {
       const files = [...fileList];
       if (!files.length) return;
+      if (files.length === 1) {
+        const text = await files[0].text().catch(() => "");
+        const tasks = parseTasks(text);
+        if (!tasks.length) { setDropStatus(tr("importNone")); return; }
+        pasteBox.value = ""; preview.hidden = true; // eine neue Datei bringt ihren eigenen Titel
+        showPreview(text, files[0].name.replace(/\.text$/i, ""), tasks);
+        return;
+      }
       const read = await Promise.all(files.map(f => f.text().then(
-        text => ({ title: cleanName(f.name.replace(/\.(txt|md|text)$/i, "")) || tr("tasks"), tasks: parseTasks(text) }),
+        text => ({ title: cleanTitle(MyAblage.titleFromFile(text, f.name.replace(/\.text$/i, ""))) || tr("tasks"), tasks: parseTasks(text) }),
         () => null)));
       const got = read.filter(r => r && r.tasks.length);
       if (!got.length) { setDropStatus(tr("importNone")); return; }
@@ -2074,13 +2257,82 @@
       let lastId = null;
       const done = [];
       for (const r of got) {
-        const id = putSet(r.title, "", r.tasks);
+        const id = putSet(r.title, createDir, r.tasks); // ＋ am Ordner gilt auch hier
         if (id) { lastId = id; done.push(r); }
       }
       if (!lastId) return;
       if (!askLoad || confirm(tr("confirmLoad"))) loadSet(lastId, true);
       setDropStatus(done.length === 1 ? tr("importedSet", done[0].title, done[0].tasks.length) : tr("importedSets", done.length));
     }
+    // ----- Set erstellen: eingefügter Text oder eine Datei → Vorschau → Sammlung -----
+    const pasteBox = document.getElementById("pasteBox");
+    const preview = document.getElementById("preview");
+    const previewTitle = document.getElementById("previewTitle");
+    const previewDir = document.getElementById("previewDir");
+    let pending = null;   // erkannte Aufgaben der Vorschau
+    let createDir = "";   // Zielordner, vorgewählt über ＋ am Ordner
+    let autoTitle = "";   // zuletzt aus dem Text gesetzter Titel: nur er folgt dem Text, eine eigene Eingabe bleibt
+    let shownTasks = "";  // gezeigte Liste: neu gezeichnet (samt Formeln) nur, wenn sich die Fragen ändern
+    const showCreateTarget = () => {
+      document.getElementById("createTarget").textContent = createDir ? tr("createIn", createDir) : "";
+    };
+    // Beim Öffnen werden Titel, Ordnerliste und Ordner einmal gesetzt; danach ändert Tippen im
+    // Einfügefeld nur die erkannten Fragen (und den Titel, solange niemand ihn selbst geändert hat)
+    function showPreview(text, fileName, tasks = parseTasks(text)) {
+      if (!tasks.length) { pending = null; preview.hidden = true; return; }
+      pending = tasks;
+      const opening = preview.hidden;
+      // Titel aus «# Titel», sonst aus dem Dateinamen; fehlt beides, fragt das leere Feld danach
+      const title = cleanTitle(MyAblage.titleFromFile(text, fileName || ""));
+      if (opening || previewTitle.value === autoTitle) previewTitle.value = title;
+      autoTitle = title;
+      if (opening) {
+        previewDir.innerHTML = ["", ...allFolders(coll)].map(d =>
+          `<option value="${escapeHtml(d)}"${d === createDir ? " selected" : ""}>${escapeHtml(d || tr("mainFolder"))}</option>`).join("");
+      }
+      const key = JSON.stringify(tasks);
+      if (key !== shownTasks) {
+        shownTasks = key;
+        document.getElementById("previewCount").textContent = tr("previewCount", tasks.length);
+        const list = document.getElementById("previewList");
+        list.innerHTML = tasks.map(t => `<li>${escapeHtml(t.q)}${t.a ? ` <span class="ans">→ ${escapeHtml(t.a)}</span>` : ""}</li>`).join("");
+        renderMath(list);
+      }
+      if (opening) {
+        preview.hidden = false;
+        document.getElementById("tasksBox").open = true;
+        preview.scrollIntoView({ block: "nearest" });
+      }
+    }
+    function clearPreview() {
+      pending = null; pasteBox.value = ""; preview.hidden = true; shownTasks = "";
+      createDir = ""; showCreateTarget();
+    }
+    // Ein neues Set ablegen und laden (Vorschau, Link). listIsUnsaved vor dem Ändern der
+    // Sammlung fragen, sonst zählt ein ersetztes Set schon als «geändert».
+    function addAndLoad(title, dir, tasks) {
+      const askLoad = listIsUnsaved();
+      const id = putSet(title, dir, tasks);
+      if (id && (!askLoad || confirm(tr("confirmLoad")))) loadSet(id, true);
+      return id;
+    }
+    // kurz entprellt: beim Tippen nicht bei jedem Zeichen parsen und Formeln setzen
+    let pasteTimer = 0;
+    pasteBox.addEventListener("input", () => {
+      clearTimeout(pasteTimer);
+      pasteTimer = setTimeout(() => showPreview(pasteBox.value), 200);
+    });
+    document.getElementById("previewDiscard").onclick = clearPreview;
+    document.getElementById("previewSave").onclick = () => {
+      const title = cleanTitle(previewTitle.value);
+      if (!title) { previewTitle.focus(); return; }
+      if (!pending) return;
+      const tasks = pending;
+      if (!addAndLoad(title, previewDir.value, tasks)) return;
+      clearPreview();
+      setDropStatus(tr("importedSet", title, tasks.length));
+    };
+
     function setDropStatus(msg) {
       dropStatus.textContent = msg;
       dropStatus.style.color = msg.startsWith("✓") ? "var(--gruen)" : "var(--rot)";
@@ -2144,8 +2396,9 @@
     // der Beamer braucht sie nie, und jeder Ballzug schickte sonst die ganze Sammlung mit.
     // Ein Set: { id, title, dir, tasks: [{q, a}], disk?, file? }. Ein Ordner ist nur ein
     // Pfad ("Mathe/Klasse 8", "" = Hauptordner); `folders` hält zusätzlich leere Ordner fest.
-    // Der Titel ist zugleich der Dateiname im Ordner auf der Platte — darum gehen Titel und
-    // Ordnernamen durch cleanName, und «dasselbe Set» heisst gleicher Ordner + gleicher Titel.
+    // Der Titel steht als «# Titel» in der Datei und bleibt, wie er ist (cleanTitle räumt nur
+    // Steuerzeichen und doppelte Leerzeichen weg); den Dateinamen bildet das Modul daraus.
+    // «Dasselbe Set» heisst gleicher Ordner + gleicher Titel oder dieselbe Datei (sameSlot).
     const COLL_KEY = "tafelfussball_sammlung";
     const CLOSED_KEY = "tafelfussball_ordner_zu"; // zugeklappte Ordner, überlebt das Neuladen
     const readLocal = (key, fallback) => { try { return JSON.parse(localStorage.getItem(key)) ?? fallback; } catch { return fallback; } };
@@ -2159,31 +2412,38 @@
       const folders = (c && Array.isArray(c.folders) ? c.folders : []).filter(f => typeof f === "string" && f);
       return { sets, folders };
     }
-    let coll = cleanColl(readLocal(COLL_KEY, null));
+    // Namen, Ort, Ordner-Abgleich und Ordner-Wächter teilt MyTafelfussball mit den anderen
+    // My-Apps: design/js/my-ablage.js, Regeln in design/ABLAGE.md (aus ~/MySuite, nie hier
+    // ändern). Datei: «# Titel», dann F:/A:/---; Dateiname ohne Umlaute und Sonderzeichen
+    // (plainName). Alte Dateien ohne «# Titel» behalten Titel und Namen (`file`).
+    // Über Pfeile, weil toFile/parseTasks/newSetId erst weiter unten stehen.
+    // «Ergänzt, was fehlt»: vorhandene Fragen bleiben in ihrer Reihenfolge, fehlende kommen
+    // hinten dazu — beim Verbinden mit dem Ordner und beim Einlesen einer Sicherung
+    const taskKey = (t) => t.q + "\u0000" + t.a;
+    const mergeTasks = (a, b) => { const has = new Set(a.map(taskKey)); return [...a, ...b.filter(t => !has.has(taskKey(t)))]; };
+    const ablage = MyAblage.sammlung({
+      items: "tasks",
+      fallback: "Aufgaben",
+      toFile: (x) => toFile(x),
+      parseFile: (text, name) => ({ title: MyAblage.titleFromFile(text, name), tasks: parseTasks(text) }),
+      merge: (a, b) => mergeTasks(a, b),
+      newId: () => newSetId(),
+    });
+    const { fileName, sameSlot, slotTaken, readDir, mirrorDir, fromDisk } = ablage;
+    // resolveSlots: alte Stände, in denen zwei Sets nach der neuen Namensregel dieselbe Datei ergäben, trennen
+    let coll = ablage.resolveSlots(cleanColl(readLocal(COLL_KEY, null)));
     let collVer = 0; // zählt Änderungen, damit der Baum nicht bei jedem Ballzug neu entsteht
     let closed = new Set(readLocal(CLOSED_KEY, []));
 
-    const cleanName = (s) => String(s || "").replace(/[\/\\:*?"<>|\u0000-\u001f]/g, "-").replace(/\s+/g, " ").trim().replace(/^\.+/, "");
-    const cleanPath = (p) => String(p || "").split("/").map(cleanName).filter(Boolean).join("/");
-    const place = (x) => (x.dir + "\u0000" + x.title).toLowerCase(); // Gross/Klein: macOS/Windows kennen keinen Unterschied
-    const collate = (a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: "base" });
-    const byTitle = (a, b) => collate(a.title, b.title);
-    const parentOf = (p) => p.includes("/") ? p.slice(0, p.lastIndexOf("/")) : "";
-    const leafOf = (p) => p.slice(p.lastIndexOf("/") + 1);
-    const inDir = (d, root) => d === root || d.startsWith(root + "/");
+    const cleanTitle = (s) => String(s || "").replace(/[\u0000-\u001f]/g, " ").replace(/\s+/g, " ").trim();
+    const { collate, byTitle, parentDir: parentOf, dirName: leafOf, inside: inDir } = MyAblage;
     const newSetId = () => "s" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
     const plainTasks = (tasks) => tasks.map(t => ({ q: t.q, a: t.a }));
     const sameTasks = (a, b) => JSON.stringify(plainTasks(a)) === JSON.stringify(plainTasks(b));
-    const toFile = (tasks) => tasks.map(t => `F: ${t.q}\nA: ${t.a}`).join("\n---\n") + "\n";
+    // Gegenstück zu parseTasks; «# Titel» zuoberst überliest parseTasks (steht vor dem ersten F:)
+    const toFile = (x) => `# ${x.title}\n\n` + x.tasks.map(t => `F: ${t.q}\nA: ${t.a}`).join("\n---\n") + "\n";
 
-    // Alle Ordner: die gemerkten plus jeder Pfad (samt Eltern), in dem ein Set liegt
-    function allFolders(c) {
-      const out = new Set();
-      const add = (p) => { while (p) { out.add(p); p = parentOf(p); } };
-      c.folders.forEach(add);
-      c.sets.forEach(x => add(x.dir));
-      return [...out];
-    }
+    const allFolders = ablage.allFolders;
 
     // Der eine Weg, die Sammlung zu ändern: speichern, zeichnen, in den Ordner spiegeln
     function commitColl(next) {
@@ -2196,8 +2456,8 @@
     }
     const setById = (id) => coll.sets.find(x => x.id === id);
     const loadedSet = () => setById(state.setId);
-    // Das Set mit diesem Titel in diesem Ordner (ausser `exceptId`)
-    const atPlace = (title, dir, exceptId) => coll.sets.find(x => x.id !== exceptId && place(x) === place({ title, dir }));
+    // Das Set an diesem Platz (gleicher Titel oder gleiche Datei) in diesem Ordner, ausser `exceptId`
+    const atPlace = (title, dir, exceptId) => slotTaken(coll.sets, { title, dir }, exceptId);
     // Die Sets, mit einer Änderung an genau einem davon
     const patched = (id, patch) => coll.sets.map(x => x.id === id ? { ...x, ...patch } : x);
     // Gibt es eine Liste, die beim Laden verloren ginge?
@@ -2235,11 +2495,12 @@
         folders.filter(f => parentOf(f) === dir).sort(collate)
           .forEach(f => {
             const open = !closed.has(f);
-            html += `<div class="coll-row folder${open ? " open" : ""}" data-dir="${escapeHtml(f)}">
+            html += `<div class="coll-row folder${open ? " open" : ""}" draggable="true" data-dir="${escapeHtml(f)}">
               <button class="chev" data-act="toggle" aria-label="${escapeHtml(leafOf(f))}">›</button>
               <span class="coll-name" data-act="toggle">${escapeHtml(leafOf(f))}</span>
               <span class="coll-count">${tr("nSets", countIn(f))}</span>
               <span class="coll-tools">
+                <button data-act="createHere" title="${tr("createHere")}">＋</button>
                 <button data-act="saveHere" title="${tr("saveHere")}">💾</button>
                 <button data-act="renameDir" title="${tr("renameFolder")}">✎</button>
                 <button data-act="delDir" title="${tr("deleteFolder")}">🗑</button>
@@ -2251,6 +2512,7 @@
             <span class="coll-name">${escapeHtml(x.title)}</span>
             <span class="coll-count">${tr("nTasks", x.tasks.length)}</span>
             <span class="coll-tools">
+              <button data-act="share" title="${tr("shareSet")}">🔗</button>
               <button data-act="export" title="${tr("exportSet")}">⤓</button>
               <button data-act="rename" title="${tr("renameSet")}">✎</button>
               <button data-act="del" title="${tr("deleteSet")}">🗑</button>
@@ -2285,7 +2547,7 @@
       return id;
     }
     function storeList(title, dir) {
-      title = cleanName(title);
+      title = cleanTitle(title);
       if (!title) return;
       const id = putSet(title, dir, state.tasks, state.setId);
       if (!id) return;
@@ -2323,25 +2585,32 @@
 
     // ----- Ordner und Sets bearbeiten -----
     document.getElementById("newFolder").onclick = () => {
-      const p = cleanPath(prompt(tr("askFolder"), ""));
+      // ganzer Pfad: bestehende Teile bleiben, wie sie heissen, neue ohne Sonderzeichen
+      const p = ablage.resolveFolderPath(coll, prompt(tr("askFolder"), ""));
       if (!p) return;
-      if (allFolders(coll).some(f => f.toLowerCase() === p.toLowerCase())) { alert(tr("folderExists", p)); return; }
+      if (ablage.folderTaken(coll, p)) { alert(tr("folderExists", p)); return; }
       closed.delete(p);
       commitColl({ ...coll, folders: [...coll.folders, p] });
     };
-    // Ordner umbenennen oder verschieben: Pfad samt allem, was darin liegt, umschreiben
+    // Ordner umbenennen oder verschieben: die Eingabe ist ein ganzer Pfad
     function renameDir(from) {
-      const to = cleanPath(prompt(tr("askRenameFolder"), from));
-      if (!to || to === from) return;
-      if (inDir(to, from)) return; // in sich selbst verschieben geht nicht
-      if (allFolders(coll).some(f => f.toLowerCase() === to.toLowerCase() && f.toLowerCase() !== from.toLowerCase())) { alert(tr("folderExists", to)); return; }
+      const raw = prompt(tr("askRenameFolder"), from);
+      // Vorgabe unverändert bestätigt: nichts tun — sonst würde ein alter Ordner
+      // «Französisch» still zu «Franzoesisch» samt allen Dateien
+      if (raw === null || raw.trim() === from) return;
+      const to = ablage.resolveFolderPath(coll, raw); // bestehende Eltern behalten ihren Namen
+      if (!to || to === from || inDir(to, from)) return; // nicht in sich selbst
+      relocateDir(from, ablage.folderTaken(coll, to, from) ? false : to, to);
+    }
+    // Der eine Weg, einen Ordner samt Inhalt umzuhängen (Umbenennen und Ziehen). Am Ziel liegt
+    // nie schon ein Ordner (`false`), also auch kein Set, das mit den umziehenden kollidiert.
+    function relocateDir(from, to, shown) {
+      if (to === false) { alert(tr("folderExists", shown)); return; }
+      if (!to) return;
       const move = (d) => inDir(d, from) ? to + d.slice(from.length) : d;
-      const sets = coll.sets.map(x => inDir(x.dir, from) ? { ...x, dir: move(x.dir) } : x);
-      const clash = sets.find((x, i) => sets.findIndex(y => place(y) === place(x)) !== i);
-      if (clash) { alert(tr("nameTakenRename", clash.title)); return; }
       closed = new Set([...closed].map(move));
       writeLocal(CLOSED_KEY, [...closed]);
-      commitColl({ sets, folders: [...new Set(allFolders(coll).map(move))] });
+      commitColl(ablage.remapDir(coll, from, to));
     }
     function deleteDir(dir) {
       if (coll.sets.some(x => inDir(x.dir, dir))) { alert(tr("folderNotEmpty")); return; }
@@ -2350,22 +2619,71 @@
     }
     function renameSet(id) {
       const x = setById(id);
-      const title = cleanName(prompt(tr("askSetName"), x.title));
+      const title = cleanTitle(prompt(tr("askSetName"), x.title));
       if (!title || title === x.title) return;
       if (atPlace(title, x.dir, id)) { alert(tr("nameTakenRename", title)); return; }
-      // ohne `file`: die Datei heisst danach wie der neue Titel
-      commitColl({ ...coll, sets: patched(id, { title, file: undefined }) });
+      // eine automatisch benannte Datei zieht mit dem Titel um (dropAutoFile)
+      commitColl({ ...coll, sets: coll.sets.map(y => (y.id === id ? ablage.dropAutoFile(y, { ...y, title }) : y)) });
     }
     // Ein Set als .txt herunterladen (Weitergabe, Backup ohne verbundenen Ordner)
     function exportSet(id) {
       const x = setById(id);
-      const url = URL.createObjectURL(new Blob([toFile(x.tasks)], { type: "text/plain;charset=utf-8" }));
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = fileName(x);
-      a.click();
-      setTimeout(() => URL.revokeObjectURL(url), 1000); // sofortiges Widerrufen bricht den Download in manchen Browsern ab
+      MyAblage.download(fileName(x), toFile(x));
     }
+    document.getElementById("zipAll").onclick = async () => {
+      if (!coll.sets.length) { alert(tr("noSets")); return; }
+      try { MyAblage.download("MyTafelfussball.zip", await ablage.zipBlob(coll)); }
+      catch { alert(tr("zipFailed")); }
+    };
+    // Sicherung: alle Sets als eine Datei (für Safari/iPad ohne Ordner). Einlesen ergänzt,
+    // was fehlt, und ersetzt nichts: gleiche Sets bekommen nur die fehlenden Fragen dazu.
+    document.getElementById("backupSave").onclick = () => {
+      if (!coll.sets.length) { alert(tr("noSets")); return; }
+      MyAblage.download("MyTafelfussball-Sicherung.json", ablage.backupFile(coll, "mytafelfussball"));
+    };
+    const backupInput = document.getElementById("backupInput");
+    document.getElementById("backupLoad").onclick = () => backupInput.click();
+    backupInput.onchange = async () => {
+      const file = backupInput.files[0];
+      backupInput.value = "";
+      if (!file) return;
+      let data = null;
+      try { data = JSON.parse(await file.text()); } catch {}
+      // Fragen erst in Form bringen (cleanColl), zusammengeführt wird im Modul
+      const ok = data && Array.isArray(data.sets) && cleanColl({ sets: data.sets.map(x => ({ ...x, id: String(x?.id ?? "") })), folders: data.folders });
+      const res = ok && ablage.restoreBackup(coll, { ...data, sets: ok.sets, folders: ok.folders }, "mytafelfussball");
+      if (!res) { alert(tr("backupBad")); return; }
+      commitColl(res.next);
+      toastBtn("backupLoad", tr("backupDone", res.count));
+    };
+
+    // Teilen: das Set steckt komprimiert im Link (#t=), der QR-Code ist dieselbe Adresse.
+    // Neue Felder im Array nur hinten anhängen, sonst gelten alte Links nicht mehr.
+    const shareDialog = document.getElementById("shareDialog");
+    const shareUrl = document.getElementById("shareUrl");
+    async function shareSet(id) {
+      const x = setById(id);
+      const url = `${location.origin}${location.pathname}?view=lehrer#t=${await MyAblage.packLink([x.title, x.tasks.map(t => [t.q, t.a])])}`;
+      document.getElementById("shareTitle").textContent = x.title;
+      shareUrl.value = url;
+      const qrBox = document.getElementById("shareQr");
+      qrBox.textContent = "";
+      shareDialog.showModal();
+      try {
+        const qrcode = await MyAblage.loadScript("https://unpkg.com/qrcode-generator@1.4.4/qrcode.js", () => window.qrcode);
+        const qr = qrcode(0, "M");
+        qr.addData(url);
+        qr.make(); // wirft, wenn der Link für einen QR-Code zu lang ist
+        qrBox.innerHTML = qr.createSvgTag({ cellSize: 4, margin: 2, scalable: true });
+      } catch { qrBox.innerHTML = `<p class="create-hint">${escapeHtml(tr("qrFailed"))}</p>`; }
+    }
+    document.getElementById("shareCopy").onclick = async () => {
+      try { await navigator.clipboard.writeText(shareUrl.value); toastBtn("shareCopy", tr("copied")); }
+      catch { shareUrl.select(); }
+    };
+    document.getElementById("shareClose").onclick = () => shareDialog.close();
+    shareDialog.addEventListener("click", (e) => { if (e.target === shareDialog) shareDialog.close(); }); // Klick daneben
+
     function deleteSet(id) {
       const x = setById(id);
       if (!confirm(tr("confirmDeleteSet", x.title))) return;
@@ -2390,21 +2708,29 @@
           writeLocal(CLOSED_KEY, [...closed]);
           renderColl();
         } else if (act === "saveHere") saveAs(dir);
+        else if (act === "createHere") {
+          createDir = dir; showCreateTarget();
+          if (!preview.hidden) previewDir.value = dir;
+          document.getElementById("createSec").scrollIntoView({ block: "nearest" });
+          pasteBox.focus();
+        }
         else if (act === "renameDir") renameDir(dir);
         else if (act === "delDir") deleteDir(dir);
       } else {
         const id = row.dataset.id;
         if (act === "export") exportSet(id);
+        else if (act === "share") shareSet(id);
         else if (act === "rename") renameSet(id);
         else if (act === "del") deleteSet(id);
         else if (!act) loadSet(id);
       }
     });
 
-    // Sets per Ziehen umhängen: Ziel ist der Ordner unter dem Zeiger (auch ein Set darin),
-    // sonst der Hauptordner. Eigener Datentyp, damit das Datei-Overlay nicht anspringt.
+    // Sets und Ordner per Ziehen umhängen: Ziel ist der Ordner unter dem Zeiger (auch ein Set
+    // darin), sonst der Hauptordner. Eigene Datentypen, damit das Datei-Overlay nicht anspringt.
     const SET_MIME = "application/x-tafelfussball-set";
-    const isSetDrag = (e) => [...(e.dataTransfer?.types || [])].includes(SET_MIME);
+    const DIR_MIME = "application/x-tafelfussball-dir";
+    const isSetDrag = (e) => [...(e.dataTransfer?.types || [])].some(t => t === SET_MIME || t === DIR_MIME);
     const dropDirOf = (el) => {
       const row = el.closest(".coll-row.folder");
       if (row) return row.dataset.dir;
@@ -2413,9 +2739,10 @@
     let dropEl = null;
     const markDrop = (el) => { if (dropEl === el) return; dropEl?.classList.remove("drop-target"); dropEl = el; el?.classList.add("drop-target"); };
     collTree.addEventListener("dragstart", (e) => {
-      const row = e.target.closest(".coll-row.set");
+      const row = e.target.closest(".coll-row.set, .coll-row.folder");
       if (!row) return;
-      e.dataTransfer.setData(SET_MIME, row.dataset.id);
+      if (row.classList.contains("folder")) e.dataTransfer.setData(DIR_MIME, row.dataset.dir);
+      else e.dataTransfer.setData(SET_MIME, row.dataset.id);
       e.dataTransfer.effectAllowed = "move";
       row.classList.add("dragging");
     });
@@ -2431,148 +2758,32 @@
       if (!isSetDrag(e)) return;
       e.preventDefault();
       markDrop(null);
-      moveSet(e.dataTransfer.getData(SET_MIME), dropDirOf(e.target));
+      const dir = e.dataTransfer.getData(DIR_MIME);
+      if (dir) moveDir(dir, dropDirOf(e.target));
+      else moveSet(e.dataTransfer.getData(SET_MIME), dropDirOf(e.target));
     });
+    // Ordner samt Inhalt umhängen; die Wächter (Ziel belegt, schon dort) kommen aus dem Modul
+    function moveDir(from, parent) {
+      if (inDir(parent, from)) return; // nicht in sich selbst
+      relocateDir(from, ablage.moveFolderTarget(coll, from, parent), leafOf(from));
+    }
 
     // ---------- Ordner auf der Platte (wie MyVoci/MyMemory) ----------
     // Chrome/Edge am Computer öffnen über die File System Access API einen Ordner; dann
     // liegen die Sets dort als .txt (Unterordner = Ordner) und localStorage ist nur noch
     // Zwischenspeicher. Der Ordner-Handle überlebt nur in IndexedDB, nicht in localStorage.
-    const dirSupported = typeof window.showDirectoryPicker === "function";
-    const openDb = () => new Promise((resolve, reject) => {
-      const req = indexedDB.open("mytafelfussball", 1);
-      req.onupgradeneeded = () => req.result.createObjectStore("kv");
-      req.onsuccess = () => resolve(req.result);
-      req.onerror = () => reject(req.error);
-    });
-    const dbRun = async (mode, act) => {
-      const db = await openDb();
-      return new Promise((resolve, reject) => {
-        const req = act(db.transaction("kv", mode).objectStore("kv"));
-        req.onsuccess = () => resolve(req.result);
-        req.onerror = () => reject(req.error);
-      });
-    };
-    const loadDirHandle = () => dbRun("readonly", kv => kv.get("dir")).catch(() => undefined);
-    const saveDirHandle = (h) => dbRun("readwrite", kv => (h ? kv.put(h, "dir") : kv.delete("dir"))).catch(() => {});
+    const dirSupported = MyAblage.dirSupported();
+    const { load: loadDirHandle, save: saveDirHandle } = MyAblage.handleStore("mytafelfussball");
 
     let link = { handle: null, status: dirSupported ? "none" : "unsupported" };
     const setLink = (next) => { link = next; lastCollSig = null; renderColl(); };
     let wanted = null;     // der Ordner, der gerade gelten soll (ein Auftrag nach dem Trennen ist überholt)
     let mirrored = null;   // der Stand, den der Ordner zuletzt gesehen hat — gespiegelt wird nur die Differenz
-    const known = new Set(); // ids, die wir in den Ordner geschrieben haben (s. fromDisk)
-    const readCache = new Map(); // unveränderte Dateien nicht neu parsen
-    // Alle Ordner-Zugriffe hintereinander: ein Nachlesen darf nicht in ein halb geschriebenes Set lesen
-    let queue = Promise.resolve();
-    const enqueue = (job) => (queue = queue.then(job).catch((e) => {
+    // Alle Ordner-Zugriffe hintereinander (MyAblage.queue): ein Nachlesen darf nicht in ein halb geschriebenes Set lesen
+    const enqueue = MyAblage.queue((e) => {
       console.error(e);
       if (wanted) setLink({ handle: link.handle || wanted, status: "error" });
-    }));
-
-    const isSetFile = (name) => /\.(txt|md)$/i.test(name) && !name.startsWith(".");
-    const fileName = (x) => x.file || `${x.title}.txt`;
-    const setPath = (x) => (x.dir ? x.dir + "/" : "") + fileName(x);
-
-    // Liest den ganzen Ordner. Dateien ohne eine einzige Frage sind keine Sets und bleiben aussen vor.
-    async function readDir(root) {
-      const files = [], folders = [];
-      const walk = async (handle, dir) => {
-        for await (const [name, entry] of handle.entries()) {
-          if (name.startsWith(".")) continue;
-          if (entry.kind === "directory") {
-            const path = dir ? `${dir}/${name}` : name;
-            folders.push(path);
-            await walk(entry, path);
-          } else if (isSetFile(name)) files.push({ name, dir, entry });
-        }
-      };
-      await walk(root, "");
-      const keys = new Set(files.map(f => `${f.dir}/${f.name}`));
-      readCache.forEach((_, k) => { if (!keys.has(k)) readCache.delete(k); }); // gelöschte/umbenannte Dateien nicht ewig mitschleppen
-      // Die Dateien unabhängig voneinander lesen (Promise.all behält die Reihenfolge)
-      const read = await Promise.all(files.map(async ({ name, dir, entry }) => {
-        const file = await entry.getFile();
-        const key = `${dir}/${name}`, hit = readCache.get(key);
-        let tasks;
-        if (hit && hit.mod === file.lastModified && hit.size === file.size) tasks = hit.tasks;
-        else { tasks = parseTasks(await file.text()); readCache.set(key, { mod: file.lastModified, size: file.size, tasks }); }
-        if (!tasks.length) return null;
-        const title = name.replace(/\.(txt|md)$/i, "");
-        // `file` nur, wenn der echte Dateiname nicht «Titel.txt» ist (z. B. .md): dann schreibt die App dorthin zurück
-        const x = { title, dir, tasks, disk: true };
-        if (name !== `${title}.txt`) x.file = name;
-        return x;
-      }));
-      const sets = read.filter(Boolean);
-      return { sets, folders };
-    }
-
-    const dirOf = async (root, path, create) => {
-      let h = root;
-      for (const part of path.split("/").filter(Boolean)) h = await h.getDirectoryHandle(part, { create });
-      return h;
-    };
-    async function writeFile(root, path, text) {
-      const fh = await (await dirOf(root, parentOf(path), true)).getFileHandle(leafOf(path), { create: true });
-      const w = await fh.createWritable();
-      await w.write(text);
-      await w.close();
-    }
-    async function removeFile(root, path) {
-      try { await (await dirOf(root, parentOf(path), false)).removeEntry(leafOf(path)); } catch {}
-    }
-    async function removeEmptyDir(root, path) {
-      try {
-        // Versteckte Dateien (.DS_Store …) zählen nicht — readDir überspringt sie ebenfalls;
-        // sonst bliebe der Ordner stehen und käme beim Nachlesen als Geisterordner zurück.
-        for await (const name of (await dirOf(root, path, false)).keys()) if (!name.startsWith(".")) return;
-        await (await dirOf(root, parentOf(path), false)).removeEntry(leafOf(path), { recursive: true });
-      } catch {}
-    }
-
-    // Schreibt nur, was sich geändert hat (Diff über die id, verglichen werden Pfad und Inhalt).
-    // Gelöscht -> Datei weg; umbenannt/verschoben -> alte Datei weg, neue hin; leere Ordner mit.
-    async function mirrorDir(root, prev, next) {
-      const before = new Map(prev.sets.map(x => [x.id, x]));
-      const after = new Set(next.sets.map(x => x.id));
-      const prevFolders = allFolders(prev), nextFolders = allFolders(next);
-      for (const f of nextFolders) if (!prevFolders.includes(f)) await dirOf(root, f, true);
-      for (const x of next.sets) {
-        const old = before.get(x.id);
-        if (old === x) continue;
-        const path = setPath(x), text = toFile(x.tasks);
-        if (old && setPath(old) === path && toFile(old.tasks) === text) continue;
-        if (old && setPath(old) !== path) await removeFile(root, setPath(old));
-        await writeFile(root, path, text);
-      }
-      for (const x of prev.sets) if (!after.has(x.id)) await removeFile(root, setPath(x));
-      // Ordner erst danach und von innen nach aussen: leer ist er erst ohne seine Dateien
-      const gone = prevFolders.filter(f => !nextFolders.includes(f)).sort((a, b) => b.length - a.length);
-      for (const f of gone) await removeEmptyDir(root, f);
-    }
-
-    // Vom Ordner in die Sammlung. Die id bleibt am Set mit gleichem Ort (daran hängt das
-    // geladene Set). `keepAll` nur beim ausdrücklichen Verbinden: dann bleibt alles aus dem
-    // Browser und wandert in den Ordner. Sonst bleiben nur Sets, die nie im Ordner lagen —
-    // was dort fehlt und dort schon lag, wurde im Finder gelöscht.
-    function fromDisk(prev, disk, keepAll) {
-      const onPlatte = (x) => x.disk || known.has(x.id);
-      const byPlace = new Map(prev.sets.map(x => [place(x), x]));
-      const used = new Set();
-      const sets = disk.sets.map(d => {
-        const old = byPlace.get(place(d));
-        if (!old || used.has(old.id)) return { ...d, id: newSetId() };
-        used.add(old.id);
-        // beim Verbinden ergänzt der Browser, was in der Datei fehlt
-        const extra = keepAll ? old.tasks.filter(t => !d.tasks.some(u => u.q === t.q && u.a === t.a)) : [];
-        return { ...d, id: old.id, tasks: [...d.tasks, ...extra] };
-      });
-      // Bewusst der reine Ordnerinhalt: die ergänzten Fragen soll mirrorDir ja noch schreiben
-      const onDisk = { sets: disk.sets.map((d, i) => ({ ...d, id: sets[i].id })), folders: disk.folders };
-      const local = prev.sets.filter(x => !used.has(x.id) && (keepAll || !onPlatte(x)));
-      const next = { sets: [...sets, ...local].sort(byTitle), folders: [...new Set([...disk.folders, ...(keepAll ? prev.folders : [])])] };
-      return { next, onDisk };
-    }
+    });
 
     function takeDisk(handle, keepAll) {
       wanted = handle;
@@ -2582,7 +2793,7 @@
         if (wanted !== handle) return;
         // Hat sich die Sammlung während des Lesens geändert, ist der Plattenstand veraltet: neu lesen
         if (coll !== seen) { takeDisk(handle, keepAll); return; }
-        const { next, onDisk } = fromDisk(coll, disk, keepAll);
+        const { next, onDisk } = fromDisk(coll, disk, keepAll, handle);
         // Was vom Ordner kommt, gilt als gespiegelt statt zurückgeschrieben — sonst bügelte
         // die App jede von Hand geschriebene Datei in ihr eigenes Format.
         mirrored = onDisk;
@@ -2599,7 +2810,6 @@
         if (wanted !== handle) return; // inzwischen gewechselt oder getrennt
         // nicht geschrieben heisst nicht gespiegelt: sonst holt kein späterer Lauf es nach
         try { await mirrorDir(handle, base, target); } catch (e) { mirrored = base; throw e; }
-        target.sets.forEach(x => known.add(x.id));
       });
     }
 
@@ -2608,7 +2818,7 @@
       if (act === "connect") {
         let handle;
         // Beim ersten Mal in «Dokumente» (wie MyVoci/MyMemory); danach merkt sich der Browser über `id` den Ort
-        try { handle = await window.showDirectoryPicker({ mode: "readwrite", id: "mytafelfussball", startIn: "documents" }); }
+        try { handle = await MyAblage.pickDir("mytafelfussball"); }
         catch { return; } // abgebrochen
         await saveDirHandle(handle);
         takeDisk(handle, true);
@@ -2619,7 +2829,8 @@
       } else if (act === "refresh") {
         takeDisk(link.handle, false);
       } else if (act === "disconnect") {
-        wanted = null; mirrored = null; known.clear(); readCache.clear();
+        if (link.handle) ablage.forget(link.handle);
+        wanted = null; mirrored = null;
         saveDirHandle(null);
         setLink({ handle: null, status: "none" });
       }
@@ -2633,6 +2844,21 @@
       });
       // Im Finder abgelegte oder gelöschte Dateien erscheinen beim Wechsel zurück ins Fenster
       window.addEventListener("focus", () => { if (link.status === "ok") takeDisk(link.handle, false); });
+    }
+
+    // Geöffneter Link (#t=): das Set kommt in die eigene Sammlung (Hauptordner; gleicher Platz:
+    // nach dem Ersetzen fragen, gleicher Inhalt: einfach dasselbe Set) und wird geladen.
+    if (location.hash.startsWith("#t=")) {
+      const data = location.hash.slice(3);
+      history.replaceState(null, "", location.pathname + location.search); // Neuladen importiert nicht nochmals
+      MyAblage.unpackLink(data).then(([title, rows]) => {
+        const tasks = (Array.isArray(rows) ? rows : []).map(([q, a]) => ({ q: String(q || "").trim(), a: String(a || "").trim() })).filter(t => t.q);
+        title = cleanTitle(title);
+        if (!title || !tasks.length) throw new Error("leer");
+        if (!addAndLoad(title, "", tasks)) return;
+        document.getElementById("tasksBox").open = true;
+        setDropStatus(tr("importedLink", title, tasks.length));
+      }).catch(() => alert(tr("linkBroken")));
     }
 
     renderCollHook = renderColl;

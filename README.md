@@ -37,18 +37,20 @@ In den Einstellungen der Lehrer:innen-Ansicht lässt sich die Oberfläche zwisch
 
 Ebenfalls in den Einstellungen: **Auto / Hell / Dunkel**. „Auto" folgt der Systemeinstellung, Hell/Dunkel erzwingen den Modus. Dazu **Farbschema** (fünf Schemen des My-Designsystems) und **Akzentfarbe** (Standard: Moonrise Kingdom, Tanne). Die Teamfarben kommen aus dem Schema, der Rasen bleibt grün. Alles synchron in beiden Fenstern.
 
-## Aufgaben aus PDF importieren
+## Set erstellen (KI, Datei, Text)
 
-In der Box „Aufgaben" unter **„Aus Arbeitsblatt erstellen"**:
+In der Box „Aufgaben" unter **„Set erstellen"** (＋ an einem Ordner wählt ihn gleich als Ziel):
 
-1. **„KI-Prompt kopieren"** und zusammen mit dem Aufgabenblatt (PDF) in ein KI-Tool (Claude/ChatGPT) einfügen. Der Prompt verlangt kurze, beamertaugliche Fragen, Teilaufgaben als eigene Aufgaben, nur Endergebnisse als Lösung und eine `.txt`-Datei, die nach dem Thema benannt ist (der Dateiname wird zum Set-Titel).
-2. Die erhaltene `.txt`-Datei aufs Fenster **ziehen** oder auf die Ablage-Fläche **klicken** und sie auswählen. Sie wird ein **Set in der Sammlung** (Titel = Dateiname) und gleich geladen. Gibt es den Namen schon, wird nach dem Ersetzen gefragt. Ist ein Ordner auf dem Computer verbunden, genügt es auch, die Datei dort hineinzulegen.
+1. **„KI-Prompt kopieren"** und mit dem Arbeitsblatt (PDF) oder einem Thema in ein KI-Tool (Claude/ChatGPT) einfügen. Oben im Prompt füllt man Thema/Material, Klasse und Anzahl aus. Er verlangt kurze, beamertaugliche Fragen, Teilaufgaben als eigene Aufgaben, nur Endergebnisse als Lösung, einen Titel und eine `.txt`-Datei samt Code-Block.
+2. Die **Antwort ins Feld einfügen** oder die erhaltene **`.txt`-Datei** aufs Fenster ziehen bzw. auf die Ablage-Fläche klicken. Eine **Vorschau** zeigt Titel, Ordner und die erkannten Fragen; Titel und Ordner lassen sich ändern. Erst **„In die Sammlung"** legt das Set an und lädt es. Gibt es den Platz schon, wird nach dem Ersetzen gefragt. Mehrere Dateien auf einmal kommen ohne Vorschau direkt in den Hauptordner.
 
-Einzelne Aufgaben lassen sich unter der aktuellen Liste von Hand erfassen (Frage, Lösung, „+" bzw. Enter).
+Von Hand: Fragen unter der aktuellen Liste erfassen (Frage, Lösung, „+" bzw. Enter) und speichern.
 
 Format:
 
 ```
+# Hauptstädte
+
 F: Was ist die Hauptstadt der Schweiz?
 A: Bern
 ---
@@ -57,17 +59,19 @@ A: 56
 ---
 ```
 
-Umgekehrt lädt **⤓** an einem Set dieses als Datei in genau diesem Format herunter — als Backup, für den Gerätewechsel oder zum Weitergeben an Kolleg:innen.
+Die Zeile `# Titel` ist der Titel des Sets; fehlt sie (ältere Dateien), gilt der Dateiname.
 
 ## Sammlung
 
-In der Box „Aufgaben" liegt die **Sammlung** (solange sie leer ist, steht „Aus Arbeitsblatt erstellen" zuoberst): beliebig viele benannte Sets; der Name des geladenen Sets steht auch in der Kopfzeile der Box, geordnet in Ordnern (Unterordner mit „/", z. B. `Mathe/Klasse 8`).
+In der Box „Aufgaben" liegt die **Sammlung** (solange sie leer ist, steht „Set erstellen" zuoberst): beliebig viele benannte Sets; der Name des geladenen Sets steht auch in der Kopfzeile der Box, geordnet in Ordnern (Unterordner mit „/", z. B. `Mathe/Klasse 8`). Neue Datei- und Ordnernamen kommen ohne Umlaute und Sonderzeichen auf die Platte (`Brueche - Kuerzen.txt`), der Titel bleibt, wie er ist.
 
 - **Speichern** legt die aktuelle Liste als Set ab (bzw. überschreibt das geladene Set), **Speichern unter …** als neues Set; 💾 an einem Ordner speichert direkt dort hinein.
 - Klick auf ein Set **lädt** es (ersetzt die aktuelle Liste, startet eine neue Runde; die Punkte bleiben). Ist die aktuelle Liste nicht gespeichert, wird vorher nachgefragt.
-- Sets per **Ziehen** in einen anderen Ordner verschieben; ⤓/✎/🗑 zum Herunterladen, Umbenennen und Löschen. Ordner lassen sich nur löschen, wenn sie leer sind.
+- Sets und Ordner per **Ziehen** in einen anderen Ordner verschieben (auf ein Set gezogen = in dessen Ordner); 🔗/⤓/✎/🗑 zum Teilen, Herunterladen, Umbenennen und Löschen. Ordner lassen sich nur löschen, wenn sie leer sind.
+- **🔗 Teilen**: Link und QR-Code. Wer ihn öffnet, bekommt das Set in die eigene Sammlung (Hauptordner) und gleich geladen.
+- **⤓ Alle als ZIP**: alle Sets samt Ordnern. **Sicherung speichern/einlesen**: alle Sets in einer Datei, z. B. für Safari/iPad ohne Ordner; Einlesen ergänzt, was fehlt, und ersetzt nichts.
 
-**Ordner auf dem Computer** (Chrome/Edge am Computer, wie in MyVoci und MyMemory): Mit „Mit Ordner auf dem Computer verbinden" liegen die Sets als `.txt`-Dateien (F:/A:/---) in einem Ordner deiner Wahl, Unterordner = Ordner der Sammlung. Dateien, die im Finder hinzukommen, umbenannt oder gelöscht werden, erscheinen beim Zurückwechseln ins Fenster. Nach einem Neustart des Browsers braucht der Ordner einmal „Ordner freigeben". Ohne Ordner bleibt die Sammlung im Browser (`localStorage`).
+**Ordner auf dem Computer** (Chrome/Edge am Computer, wie in MyVoci und MyMemory): Mit „Mit Ordner auf dem Computer verbinden" liegen die Sets als `.txt`-Dateien in einem Ordner deiner Wahl (am besten „MyTafelfussball" in Dokumente), Unterordner = Ordner der Sammlung. Dateien, die im Finder hinzukommen, umbenannt oder gelöscht werden, erscheinen beim Zurückwechseln ins Fenster. Nach einem Neustart des Browsers braucht der Ordner einmal „Ordner freigeben". Ohne Ordner bleibt die Sammlung im Browser (`localStorage`).
 
 ## Formeln (KaTeX)
 
