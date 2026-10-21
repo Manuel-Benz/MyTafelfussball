@@ -131,10 +131,12 @@ const ok = (p) => p.then(() => true, () => false); // eingetreten bis zum Zeitli
 
   // Set erstellen: Text einfügen → Vorschau → in die Sammlung
   await page.evaluate(() => { document.getElementById('tasksBox').open = true; });
-  await page.fill('#pasteBox', '```\n# Paste: Test\n\nF: 2 + 2\nA: 4\n---\nF: 3 + 3\nA: 6\n---\n```');
+  await page.fill('#pasteBox', '```\n# Paste: Test\n\nF: 2 + 2\nA: 4\nmit Folgezeile\n---\nQuatsch\nF: 3 + 3\nA: 6\n---\n```');
   await page.locator('#preview').waitFor(); // entprellt: erscheint kurz nach dem Tippen
   const prevOk = await page.locator('#preview').isVisible() && (await page.inputValue('#previewTitle')) === 'Paste: Test'
     && (await page.locator('#previewList li').count()) === 2;
+  const stray = await page.locator('#previewStray').innerText();
+  check(stray.includes('8: «Quatsch»') && !stray.includes('Folgezeile'), `Vorschau meldet nur die unverstandene Zeile (${stray})`);
   await page.click('#previewSave');
   const pasted = await ok(storeHas('Paste: Test'));
   check(prevOk && pasted && (await page.locator('#preview').isHidden()), 'Eingefügter Text: Vorschau mit Titel und 2 Fragen, dann in der Sammlung');

@@ -593,6 +593,7 @@
   .preview-list { max-height: 220px; overflow: auto; margin: 6px 0 10px; padding-left: 20px; font-size: 13px; }
   .preview-list li { margin-bottom: 4px; }
   .preview-list .ans { color: var(--text-2); }
+  .preview-stray { font-size: 13px; color: var(--orange); margin: 0 0 10px; }
   .create-hint { font-size: 12px; color: var(--text-3); margin: 8px 0 0; }
   /* Teilen: Link und QR-Code */
   .share-dialog { border: 1px solid var(--linie); border-radius: var(--radius-l); background: var(--karte); color: var(--text);
@@ -769,6 +770,7 @@
           <select id="previewDir"></select>
           <label class="field-label" id="previewCount"></label>
           <ol class="preview-list" id="previewList"></ol>
+          <p class="preview-stray" id="previewStray" hidden></p>
           <div class="row grow">
             <button class="primary" id="previewSave" data-i18n="previewSave">In die Sammlung</button>
             <button class="ghost" id="previewDiscard" data-i18n="previewDiscard">Verwerfen</button>
@@ -979,6 +981,7 @@
       byHand: 'Von Hand: Fragen unter «Aktuelle Liste» eintippen und speichern.',
       previewTitle: 'Titel', previewFolder: 'Ordner', previewSave: 'In die Sammlung', previewDiscard: 'Verwerfen',
       previewCount: n => `${n} ${n === 1 ? 'Frage' : 'Fragen'} erkannt:`,
+      previewStray: n => `${n === 1 ? 'Eine Zeile' : `${n} Zeilen`} nicht verstanden:`,
       mainFolder: 'Hauptordner', createHere: 'Hier ein Set erstellen', createIn: d => `Neues Set kommt in: ${d}`,
       zipAll: '⤓ Alle als ZIP', zipFailed: 'Das ZIP liess sich nicht erstellen (keine Verbindung?).', noSets: 'Noch keine Sets in der Sammlung.',
       backupSave: 'Sicherung speichern', backupLoad: 'Sicherung einlesen',
@@ -1124,6 +1127,7 @@
       byHand: 'By hand: type questions under “Current list” and save.',
       previewTitle: 'Title', previewFolder: 'Folder', previewSave: 'Add to collection', previewDiscard: 'Discard',
       previewCount: n => `${n} question${n === 1 ? '' : 's'} found:`,
+      previewStray: n => `${n === 1 ? 'One line' : `${n} lines`} not understood:`,
       mainFolder: 'Main folder', createHere: 'Create a set here', createIn: d => `New set goes into: ${d}`,
       zipAll: '⤓ All as ZIP', zipFailed: 'Could not create the ZIP (no connection?).', noSets: 'No sets in the collection yet.',
       backupSave: 'Save backup', backupLoad: 'Load backup',
@@ -2287,6 +2291,11 @@
       if (opening || previewTitle.value === autoTitle) previewTitle.value = title;
       autoTitle = title;
       if (opening) fillPreviewDirs(createDir);
+      const strays = strayTaskLines(text);
+      const strayEl = document.getElementById("previewStray");
+      strayEl.hidden = !strays.length;
+      strayEl.textContent = strays.length
+        ? `${tr("previewStray", strays.length)} ${strays.slice(0, 3).map(x => `${x.n}: «${x.line}»`).join(" · ")}` : "";
       const key = JSON.stringify(tasks);
       if (key !== shownTasks) {
         shownTasks = key;
@@ -2367,6 +2376,17 @@
     });
 
     // F:/A:/--- (bzw. Q:) -> [{q, a}]; auch für die Dateien im Sammlungs-Ordner
+    // Zeilen, die parseTasks übergeht (Hinweis in der Vorschau): was in einem Block
+    // vor dem ersten «F:» steht, ausser «# Titel» und «Sprache:». Zeilen danach
+    // gehören als Folgezeilen zur Frage bzw. Antwort.
+    function strayTaskLines(text) {
+      let inTask = false;
+      return MyAblage.strayLines(text, (line) => {
+        if (/^-{3,}$/.test(line)) { inTask = false; return true; }
+        if (/^[FQA]\s*:/i.test(line)) { inTask = true; return true; }
+        return inTask || /^(sprache|language)\s*:/i.test(line);
+      });
+    }
     function parseTasks(text) {
       const out = [];
       if (!text || !text.trim()) return out;
