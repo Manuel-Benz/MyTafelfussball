@@ -2275,7 +2275,7 @@
     const previewDir = document.getElementById("previewDir");
     let pending = null;   // erkannte Aufgaben der Vorschau
     let createDir = "";   // Zielordner, vorgewählt über ＋ am Ordner
-    let autoTitle = "";   // zuletzt aus dem Text gesetzter Titel: nur er folgt dem Text, eine eigene Eingabe bleibt
+    let autoTitle = "";   // zuletzt aus dem Text gesetzter Titel: eine eigene Eingabe bleibt, bis der Text einen anderen bringt
     let shownTasks = "";  // gezeigte Liste: neu gezeichnet (samt Formeln) nur, wenn sich die Fragen ändern
     const showCreateTarget = () => {
       document.getElementById("createTarget").textContent = createDir ? tr("createIn", createDir) : "";
@@ -2288,14 +2288,16 @@
       const opening = preview.hidden;
       // Titel aus «# Titel», sonst aus dem Dateinamen; fehlt beides, fragt das leere Feld danach
       const title = cleanTitle(MyAblage.titleFromFile(text, fileName || ""));
-      if (opening || previewTitle.value === autoTitle) previewTitle.value = title;
+      // Ein eigener Titel bleibt, solange der Text denselben «# Titel» bringt; eine
+      // ganz andere KI-Antwort (anderer Titel im Text) bringt ihren eigenen mit
+      if (opening || title !== autoTitle) previewTitle.value = title;
       autoTitle = title;
       if (opening) fillPreviewDirs(createDir);
       const strays = strayTaskLines(text);
       const strayEl = document.getElementById("previewStray");
       strayEl.hidden = !strays.length;
       strayEl.textContent = strays.length
-        ? `${tr("previewStray", strays.length)} ${strays.slice(0, 3).map(x => `${x.n}: «${x.line}»`).join(" · ")}` : "";
+        ? `${tr("previewStray", strays.length)} ${MyAblage.strayText(strays)}` : "";
       const key = JSON.stringify(tasks);
       if (key !== shownTasks) {
         shownTasks = key;
@@ -2377,14 +2379,14 @@
 
     // F:/A:/--- (bzw. Q:) -> [{q, a}]; auch für die Dateien im Sammlungs-Ordner
     // Zeilen, die parseTasks übergeht (Hinweis in der Vorschau): was in einem Block
-    // vor dem ersten «F:» steht, ausser «# Titel» und «Sprache:». Zeilen danach
+    // vor dem ersten «F:» steht (ohne «# Titel» und «Sprache:», s. strayLines). Zeilen danach
     // gehören als Folgezeilen zur Frage bzw. Antwort.
     function strayTaskLines(text) {
       let inTask = false;
       return MyAblage.strayLines(text, (line) => {
-        if (/^-{3,}$/.test(line)) { inTask = false; return true; }
+        if (line === "---") { inTask = false; return true; } // wie parseTasks: nur genau «---» trennt
         if (/^[FQA]\s*:/i.test(line)) { inTask = true; return true; }
-        return inTask || /^(sprache|language)\s*:/i.test(line);
+        return inTask;
       });
     }
     function parseTasks(text) {
