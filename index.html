@@ -2286,10 +2286,7 @@
       const title = cleanTitle(MyAblage.titleFromFile(text, fileName || ""));
       if (opening || previewTitle.value === autoTitle) previewTitle.value = title;
       autoTitle = title;
-      if (opening) {
-        previewDir.innerHTML = ["", ...allFolders(coll)].map(d =>
-          `<option value="${escapeHtml(d)}"${d === createDir ? " selected" : ""}>${escapeHtml(d || tr("mainFolder"))}</option>`).join("");
-      }
+      if (opening) fillPreviewDirs(createDir);
       const key = JSON.stringify(tasks);
       if (key !== shownTasks) {
         shownTasks = key;
@@ -2303,6 +2300,14 @@
         document.getElementById("tasksBox").open = true;
         preview.scrollIntoView({ block: "nearest" });
       }
+    }
+    // Ordnerliste der Vorschau; beim Öffnen und nach jeder Änderung der Sammlung (renderColl),
+    // die Wahl bleibt, solange es den Ordner noch gibt
+    function fillPreviewDirs(chosen) {
+      const dirs = ["", ...allFolders(coll)];
+      if (!dirs.includes(chosen)) chosen = "";
+      previewDir.innerHTML = dirs.map(d =>
+        `<option value="${escapeHtml(d)}"${d === chosen ? " selected" : ""}>${escapeHtml(d || tr("mainFolder"))}</option>`).join("");
     }
     function clearPreview() {
       pending = null; pasteBox.value = ""; preview.hidden = true; shownTasks = "";
@@ -2324,6 +2329,9 @@
     });
     document.getElementById("previewDiscard").onclick = clearPreview;
     document.getElementById("previewSave").onclick = () => {
+      // Beim Speichern gilt der Text im Feld, auch wenn die Entprellung noch läuft — sonst
+      // ginge die letzte Korrektur verloren (zeichnet nur neu, wenn sich etwas geändert hat)
+      if (pasteBox.value) { clearTimeout(pasteTimer); showPreview(pasteBox.value); }
       const title = cleanTitle(previewTitle.value);
       if (!title) { previewTitle.focus(); return; }
       if (!pending) return;
@@ -2485,6 +2493,7 @@
       const sig = collVer + "|" + state.setId + "|" + currentLang + "|" + link.status + "|" + [...closed].join("/");
       if (sig === lastCollSig) return;
       lastCollSig = sig;
+      if (!preview.hidden) fillPreviewDirs(previewDir.value); // Ordner kamen dazu oder heissen anders
       document.getElementById("taskSetName").textContent = cur ? "· " + cur.title : "";
       document.getElementById("tasksBox").classList.toggle("fresh", !coll.sets.length);
 
@@ -2593,14 +2602,11 @@
       commitColl({ ...coll, folders: [...coll.folders, p] });
     };
     // Ordner umbenennen oder verschieben: die Eingabe ist ein ganzer Pfad
+    // Die Wächter (Vorgabe unverändert, nur Gross/Klein, bestehende Eltern behalten ihren
+    // Namen, Ziel belegt, nicht in sich selbst) stehen im Modul: renamePathTarget
     function renameDir(from) {
       const raw = prompt(tr("askRenameFolder"), from);
-      // Vorgabe unverändert bestätigt: nichts tun — sonst würde ein alter Ordner
-      // «Französisch» still zu «Franzoesisch» samt allen Dateien
-      if (raw === null || raw.trim() === from) return;
-      const to = ablage.resolveFolderPath(coll, raw); // bestehende Eltern behalten ihren Namen
-      if (!to || to === from || inDir(to, from)) return; // nicht in sich selbst
-      relocateDir(from, ablage.folderTaken(coll, to, from) ? false : to, to);
+      relocateDir(from, ablage.renamePathTarget(coll, from, raw), String(raw || "").trim());
     }
     // Der eine Weg, einen Ordner samt Inhalt umzuhängen (Umbenennen und Ziehen). Am Ziel liegt
     // nie schon ein Ordner (`false`), also auch kein Set, das mit den umziehenden kollidiert.
