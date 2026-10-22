@@ -103,6 +103,30 @@
   }
   /* Zebra rechts vom Titel, ohne Kachel (Regel .logo im Block <style id="logo-zebra"> unten) */
   #launcher p { color: var(--text-2); max-width: 640px; margin: 0; font-size: 17px; line-height: 1.55; }
+  /* Einstellungen der Startseite (DESIGN.md: am rechten Fensterrand neben der Spalte, sonst
+     darüber); die Spalte wird schmaler, damit das Kästchen früh daneben Platz hat */
+  .launcher-inner { max-width: clamp(640px, calc(100vw - 2 * (var(--pop-w) + 32px)), 720px); }
+  :root { --pop-w: 300px; }
+  .leiste .leiste-icon { display: none; padding: 4px 8px; line-height: 0; }
+  body.view-launcher .leiste .leiste-icon { display: block; }
+  .settings-pop {
+    position: fixed; z-index: 60; top: 58px; right: 16px; width: min(var(--pop-w), calc(100vw - 32px));
+    max-height: calc(100vh - 74px); overflow-y: auto; padding: 14px 16px;
+    display: flex; flex-direction: column; gap: 14px; box-shadow: var(--schatten);
+  }
+  .settings-pop[hidden] { display: none; }
+  .settings-pop section + section { border-top: 1px solid var(--linie); padding-top: 12px; }
+  .settings-pop .field-label:first-child, .settings-pop .kopf { margin-top: 0; }
+  .settings-pop .kopf { display: block; margin-bottom: 8px; }
+  /* Streifen über der Liste: der Ordner braucht Freigabe oder ist weg */
+  .dir-strip:empty { display: none; }
+  .dir-strip { margin: 0 4px 10px; padding: 10px 12px; border-radius: var(--radius); background: var(--hover); }
+  /* Symbole wie in den anderen My-Apps (Strich, currentColor) */
+  .ico { width: 17px; height: 17px; display: block; }
+  #byHand { display: flex; align-items: center; justify-content: center; gap: 8px; }
+  .ask-dialog p { margin: 0 0 12px; line-height: 1.45; white-space: pre-line; }
+  .ask-dialog input { width: 100%; margin-bottom: 12px; }
+  .ask-dialog .row { justify-content: flex-end; }
   .card { background: var(--karte); border: 1px solid var(--linie); border-radius: var(--radius-l); }
   .kopf { font-size: 13px; font-weight: 650; text-transform: uppercase; letter-spacing: .08em; color: var(--text-3); }
   /* Kasten «Tafelfussball erstellen»: zu eine Zeile mit Pfeil, offen der KI-Weg und «von Hand» */
@@ -124,7 +148,6 @@
   /* Sammlung als Karte; Kopf wie «Meine Voci» */
   .coll-card { padding: 14px 16px; }
   .list-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 0 4px 8px 10px; }
-  .coll-more { margin-top: 10px; }
 
   .format-example {
     background: var(--code-bg);
@@ -510,7 +533,7 @@
      je ihr Fenster (in MyKahoot startet die eine Kachel das Quiz) */
   .coll-start { flex: 0 0 auto; display: flex; gap: 6px; }
   .coll-start button { min-width: 92px; padding: 6px 14px; font-size: 13px; }
-  .coll-name { flex: 0 1 19rem; min-width: 0; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .coll-name { flex: 0 1 19rem; min-width: 6rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .coll-count { flex: 1 0 auto; color: var(--text-3); font-size: 13px; white-space: nowrap; }
   .coll-tools { display: flex; gap: 0; flex: 0 0 auto; }
   .coll-tools button, .coll-row .chev {
@@ -519,6 +542,9 @@
   }
   .coll-tools button:hover, .coll-row .chev:hover { background: var(--hover); filter: none; }
   .coll-row .chev { width: 22px; margin-left: -6px; transition: transform .12s; }
+  .coll-row.folder .coll-name { display: flex; align-items: center; gap: 4px; }
+  .coll-row.folder .coll-icon { color: var(--text-3); flex: none; }
+  .coll-row.folder .coll-text { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
   .coll-row.open .chev { transform: rotate(90deg); }
   .coll-sub { margin-left: 14px; padding-left: 10px; border-left: 2px solid var(--linie); display: flex; flex-direction: column; gap: 2px; }
   .coll-empty { font-size: 13px; color: var(--text-3); padding: 4px 10px; line-height: 1.45; }
@@ -623,6 +649,7 @@
     <button data-goto="start" data-i18n="startTitle">Startseite</button>
     <button data-goto="lehrer" data-i18n="teacherCardTitle">Lehrer:innen-Ansicht</button>
     <button data-goto="beamer" data-i18n="beamerCardTitle">Beamer-Ansicht</button>
+    <button class="leiste-icon" id="settingsBtn" data-i18n-title="settings" title="Einstellungen" aria-expanded="false"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h10M18 8h2M4 16h4M12 16h8"/><circle cx="16" cy="8" r="2"/><circle cx="10" cy="16" r="2"/></svg></button>
   </nav>
 </header>
 
@@ -653,7 +680,7 @@
       </div>
       <div class="drop-status" id="dropStatus"></div>
       <div class="or-line kopf"><span data-i18n="orByHand">oder von Hand</span></div>
-      <button class="ghost" id="byHand">✎ <span data-i18n="byHand">Leeres Tafelfussball von Hand anlegen</span></button>
+      <button class="ghost" id="byHand"><span class="by-hand-icon"></span><span data-i18n="byHand">Leeres Tafelfussball von Hand anlegen</span></button>
     </div>
   </details>
 
@@ -661,20 +688,34 @@
     <div class="list-head">
       <span class="kopf" data-i18n="collTitle">Meine Tafelfussbälle</span>
       <span class="coll-tools">
-        <button id="createRoot" data-i18n-title="createNew" title="Tafelfussball erstellen">＋</button>
-        <button id="newFolder" data-i18n-title="newFolder" title="Neuer Ordner">📁</button>
+        <button id="createRoot" data-i18n-title="createNew" title="Tafelfussball erstellen" data-icon="plus"></button>
+        <button id="newFolder" data-i18n-title="newFolder" title="Neuer Ordner" data-icon="folder"></button>
+        <button id="zipAll" data-i18n-title="zipAll" title="Alle als ZIP herunterladen" data-icon="download"></button>
       </span>
     </div>
+    <div class="dir-strip dir-line" id="dirStrip"></div>
     <div class="coll-tree" id="collTree" data-dir=""></div>
-    <div class="row coll-more">
-      <button class="ghost small" id="zipAll" data-i18n="zipAll">⤓ Alle als ZIP</button>
-      <button class="ghost small" id="backupSave" data-i18n="backupSave">Sicherung speichern</button>
-      <button class="ghost small" id="backupLoad" data-i18n="backupLoad">Sicherung einlesen</button>
-      <input type="file" id="backupInput" accept=".json,application/json" hidden>
-    </div>
-    <div class="dir-line" id="dirLine"></div>
   </section>
   </div>
+
+  <!-- Einstellungen der Startseite (Knopf in der Leiste): Darstellung und Sprache (dieselben
+       Schalter wie im Lehrer:innen-Fenster, s. #lookControls), Ordner auf dem Computer, Sicherung -->
+  <aside class="card settings-pop" id="settingsPop" hidden>
+    <section id="settingsLook"></section>
+    <section>
+      <span class="kopf" data-i18n="dirTitle">Ordner auf dem Computer</span>
+      <div class="dir-line" id="dirLine"></div>
+    </section>
+    <section>
+      <span class="kopf" data-i18n="backupTitle">Sicherung</span>
+      <p class="create-hint" data-i18n="backupHint">Alle Sets in einer Datei, z. B. für Safari oder das iPad. Einlesen ergänzt, was fehlt, und ersetzt nichts.</p>
+      <div class="row" style="margin-top:8px">
+        <button class="ghost small" id="backupSave" data-i18n="backupSave">Sicherung speichern</button>
+        <button class="ghost small" id="backupLoad" data-i18n="backupLoad">Sicherung einlesen</button>
+        <input type="file" id="backupInput" accept=".json,application/json" hidden>
+      </div>
+    </section>
+  </aside>
 </div>
 
 <!-- ============ App ============ -->
@@ -724,6 +765,7 @@
       <input type="text" id="name1" value="Team 1">
       <label class="field-label" data-i18n="name2">Name Team 2</label>
       <input type="text" id="name2" value="Team 2">
+      <div id="lookControls">
       <label class="field-label" data-i18n="language">Sprache</label>
       <div class="toggle-group" id="langToggle">
         <button data-lang="de" class="active">DE</button>
@@ -739,6 +781,7 @@
       <select id="schemaSelect"></select>
       <label class="field-label" data-i18n="ton">Akzentfarbe</label>
       <div class="swatches" id="tonSwatches"></div>
+      </div>
     </details>
 
     <details class="panel collapsible" id="tasksBox">
@@ -770,7 +813,7 @@
       <h3 data-i18n="game">Spiel</h3>
       <div class="row grow hint-anchor" id="startWrap">
         <button class="primary start-mode" id="nextTask">▶ Spiel starten</button>
-        <div class="hint-bubble" id="startHint" data-i18n="startHint">Keine Aufgaben erfasst — oben unter „Aufgaben" ein Set laden, ein Arbeitsblatt importieren oder Fragen eintippen.</div>
+        <div class="hint-bubble" id="startHint" data-i18n="startHint">Keine Aufgaben erfasst — oben unter «Aufgaben» ein Set laden, ein Arbeitsblatt importieren oder Fragen eintippen.</div>
       </div>
       <div class="row grow" style="margin-top:8px">
         <button class="t1" id="moveT1">Punkt Team 1</button>
@@ -808,7 +851,7 @@
     <button class="ghost" id="shareClose" data-i18n="shareClose">Schliessen</button>
   </div>
 </dialog>
-<div class="file-overlay" id="fileOverlay" data-i18n="fileOverlay">📥 Datei loslassen, um Fragen zu importieren</div>
+<div class="file-overlay" id="fileOverlay" data-i18n="fileOverlay">Datei loslassen — sie kommt in den Kasten «Tafelfussball erstellen»</div>
 
 <!-- KaTeX für Formeldarstellung ($…$ inline, $$…$$ abgesetzt). Fällt das CDN aus, bleibt der Rohtext lesbar. -->
 <script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
@@ -893,7 +936,7 @@
       noQuestion: 'Noch keine Frage ausgewählt',
       roundDone: '🏁 Runde beendet!',
       goal: 'TOR!',
-      fileOverlay: '📥 Datei loslassen — sie wird ein Set in der Sammlung',
+      fileOverlay: 'Datei loslassen — sie kommt in den Kasten «Tafelfussball erstellen»',
       game: 'Spiel',
       pointFor: name => `Punkt ${name}`,
       resetScore: 'Punkte zurücksetzen',
@@ -909,7 +952,7 @@
       fullscreenExit: 'Vollbild beenden',
       order: 'Reihenfolge', orderSeq: 'Der Reihe nach', orderRnd: 'Zufällig',
       counterNone: 'Keine Aufgaben erfasst.',
-      startHint: 'Keine Aufgaben erfasst — auf der Startseite ein Set wählen oder oben unter „Aufgaben" Fragen eintippen.',
+      startHint: 'Keine Aufgaben erfasst — auf der Startseite ein Set wählen oder oben unter «Aufgaben» Fragen eintippen.',
       counterDone: n => `🏁 Runde beendet — alle ${n} Fragen gespielt`,
       counterPos: (x, y) => `Frage ${x} von ${y}`,
       counterReady: n => `${n} Aufgaben bereit`,
@@ -934,6 +977,10 @@
       orByHand: 'oder von Hand',
       createNew: 'Tafelfussball erstellen',
       setsAtStart: 'Sets wählen und erstellen: auf der Startseite (oben in der Leiste).',
+      dirTitle: 'Ordner auf dem Computer', backupTitle: 'Sicherung',
+      backupHint: 'Alle Sets in einer Datei, z. B. für Safari oder das iPad. Einlesen ergänzt, was fehlt, und ersetzt nichts.',
+      newSubfolder: 'Unterordner anlegen', askSubfolder: d => `Neuer Ordner in «${d}»:`,
+      cancel: 'Abbrechen', ok: 'OK', replace: 'Ersetzen', load: 'Laden', startEmpty: 'Leer beginnen', del: 'Löschen',
       dropAtStart: 'Dateien kommen auf der Startseite in die Sammlung: dort in den Kasten «Tafelfussball erstellen» ziehen.',
       confirmScore: 'Punktestand beider Teams auf 0 setzen?',
       confirmAll: 'Alles zurücksetzen? Punkte, Ball und Fragerunde starten neu — die Aufgaben bleiben erhalten.',
@@ -960,8 +1007,8 @@
       setLinked: t => `Set <b>«${t}»</b>`, setChanged: 'ungespeicherte Änderungen',
       setUnsaved: 'Nicht in der Sammlung gespeichert.',
       dirOffer: 'Die Sets können auch als .txt-Dateien in einem Ordner auf dem Computer liegen (wie in MyVoci und MyMemory) — dann bleiben sie, wenn der Browser aufräumt. Am besten einen Ordner «MyTafelfussball» in «Dokumente» anlegen.',
-      dirChoose: '📁 Mit Ordner auf dem Computer verbinden',
-      dirConnected: (name, n) => `📁 Verbunden mit «${name}» — ${n} ${n === 1 ? 'Set' : 'Sets'}`,
+      dirChoose: 'Mit Ordner auf dem Computer verbinden',
+      dirConnected: (name, n) => `Verbunden mit «${name}» — ${n} ${n === 1 ? 'Set' : 'Sets'}`,
       dirReload: 'Neu laden', dirDisconnect: 'Trennen',
       dirPrompt: name => `Der Ordner «${name}» braucht deine Freigabe, bevor die Sets dort gespeichert werden.`,
       dirReconnect: 'Ordner freigeben',
@@ -977,7 +1024,7 @@
       previewCount: n => `${n} ${n === 1 ? 'Frage' : 'Fragen'} erkannt:`,
       previewStray: n => `${n === 1 ? 'Eine Zeile' : `${n} Zeilen`} nicht verstanden:`,
       mainFolder: 'Hauptordner', createHere: 'Hier ein Tafelfussball erstellen',
-      zipAll: '⤓ Alle als ZIP', zipFailed: 'Das ZIP liess sich nicht erstellen (keine Verbindung?).', noSets: 'Noch keine Sets in der Sammlung.',
+      zipAll: 'Alle als ZIP herunterladen', zipFailed: 'Das ZIP liess sich nicht erstellen (keine Verbindung?).', noSets: 'Noch keine Sets in der Sammlung.',
       backupSave: 'Sicherung speichern', backupLoad: 'Sicherung einlesen',
       backupBad: 'Das ist keine Sicherung von MyTafelfussball.', backupDone: n => `✓ ${n} Sets eingelesen`,
       shareSet: 'Als Link oder QR-Code teilen', copyLink: 'Link kopieren', shareClose: 'Schliessen',
@@ -1048,7 +1095,7 @@
       noQuestion: 'No question selected yet',
       roundDone: '🏁 Round finished!',
       goal: 'GOAL!',
-      fileOverlay: '📥 Drop the file — it becomes a set in the collection',
+      fileOverlay: 'Drop the file — it goes into “Create a Tafelfussball”',
       game: 'Game',
       pointFor: name => `Point ${name}`,
       resetScore: 'Reset score',
@@ -1089,6 +1136,10 @@
       orByHand: 'or by hand',
       createNew: 'Create a Tafelfussball',
       setsAtStart: 'Pick and create sets on the start page (top bar).',
+      dirTitle: 'Folder on this computer', backupTitle: 'Backup',
+      backupHint: 'All sets in one file, e.g. for Safari or the iPad. Importing adds what is missing and replaces nothing.',
+      newSubfolder: 'Create subfolder', askSubfolder: d => `New folder in “${d}”:`,
+      cancel: 'Cancel', ok: 'OK', replace: 'Replace', load: 'Load', startEmpty: 'Start empty', del: 'Delete',
       dropAtStart: 'Files go into the collection on the start page: drag them into “Create a Tafelfussball” there.',
       confirmScore: 'Reset both team scores to 0?',
       confirmAll: 'Reset everything? Score, ball and round start fresh — tasks are kept.',
@@ -1115,8 +1166,8 @@
       setLinked: t => `Set <b>“${t}”</b>`, setChanged: 'unsaved changes',
       setUnsaved: 'Not saved in the collection.',
       dirOffer: 'Your sets can also live as .txt files in a folder on this computer (like in MyVoci and MyMemory) — then they survive a browser clean-up. Ideally create a folder “MyTafelfussball” in “Documents”.',
-      dirChoose: '📁 Connect a folder on this computer',
-      dirConnected: (name, n) => `📁 Connected to “${name}” — ${n} ${n === 1 ? 'set' : 'sets'}`,
+      dirChoose: 'Connect a folder on this computer',
+      dirConnected: (name, n) => `Connected to “${name}” — ${n} ${n === 1 ? 'set' : 'sets'}`,
       dirReload: 'Reload', dirDisconnect: 'Disconnect',
       dirPrompt: name => `The folder “${name}” needs your permission before the sets are saved there.`,
       dirReconnect: 'Grant access',
@@ -1132,7 +1183,7 @@
       previewCount: n => `${n} question${n === 1 ? '' : 's'} found:`,
       previewStray: n => `${n === 1 ? 'One line' : `${n} lines`} not understood:`,
       mainFolder: 'Main folder', createHere: 'Create a Tafelfussball here',
-      zipAll: '⤓ All as ZIP', zipFailed: 'Could not create the ZIP (no connection?).', noSets: 'No sets in the collection yet.',
+      zipAll: 'Download all as ZIP', zipFailed: 'Could not create the ZIP (no connection?).', noSets: 'No sets in the collection yet.',
       backupSave: 'Save backup', backupLoad: 'Load backup',
       backupBad: 'This is not a MyTafelfussball backup.', backupDone: n => `✓ ${n} sets loaded`,
       shareSet: 'Share as link or QR code', copyLink: 'Copy link', shareClose: 'Close',
@@ -1157,6 +1208,54 @@
     document.querySelectorAll("[data-i18n-title]").forEach(el => { el.title = tr(el.dataset.i18nTitle); });
     document.documentElement.lang = currentLang;
   }
+
+  // ---------- Symbole (DESIGN.md, «Sammlung auf der Startseite»: Formen wie in MyVoci) ----------
+  const icon = (d) => `<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
+  const ICON = {
+    plus: icon('<path d="M12 5v14M5 12h14"/>'),
+    folder: icon('<path d="M3 7a1 1 0 0 1 1-1h5l2 2h8a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1z"/>'),
+    download: icon('<path d="M12 3v12M7.5 10.5 12 15l4.5-4.5M4 20h16"/>'),
+    link: icon('<path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>'),
+    edit: icon('<path d="M16.5 3.5a2.12 2.12 0 013 3L7 19l-4 1 1-4 12.5-12.5z"/>'),
+    trash: icon('<path d="M4 7h16M9 7V5h6v2"/><path d="M6 7l1 12a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1l1-12"/>'),
+    chevron: icon('<path d="M9 6l6 6-6 6"/>'),
+    play: icon('<path d="M7 5l12 7-12 7z"/>'),
+  };
+  document.querySelectorAll("[data-icon]").forEach(b => { b.innerHTML = ICON[b.dataset.icon]; });
+  document.querySelector(".by-hand-icon").innerHTML = ICON.edit;
+
+  // ---------- Rückfragen (DESIGN.md: eigene Dialoge statt confirm/prompt/alert) ----------
+  // Gibt ein Promise zurück: true/false, mit `input` den Text bzw. null. Esc und Klick daneben
+  // brechen ab, ⏎ im Feld bestätigt. Tasten bleiben im Dialog (sonst liefe der Ball mit).
+  function ask({ text, input = false, value = "", yes, cancel = true }) {
+    return new Promise((resolve) => {
+      const no = input ? null : false;
+      const dlg = document.createElement("dialog");
+      dlg.className = "share-dialog ask-dialog";
+      const done = (v) => { dlg.close(); dlg.remove(); resolve(v); };
+      dlg.addEventListener("cancel", (e) => { e.preventDefault(); done(no); });
+      dlg.addEventListener("click", (e) => { if (e.target === dlg) done(no); });
+      dlg.addEventListener("keydown", (e) => e.stopPropagation());
+      const p = document.createElement("p");
+      p.textContent = text;
+      dlg.append(p);
+      const field = input ? Object.assign(document.createElement("input"), { type: "text", value }) : null;
+      if (field) dlg.append(field);
+      const row = document.createElement("div");
+      row.className = "row";
+      if (cancel) row.append(Object.assign(document.createElement("button"), { className: "ghost", textContent: tr("cancel"), onclick: () => done(no) }));
+      const ok = Object.assign(document.createElement("button"), { className: "primary", textContent: yes || tr("ok"), onclick: () => done(field ? field.value : true) });
+      row.append(ok);
+      dlg.append(row);
+      if (field) field.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); ok.click(); } });
+      document.body.append(dlg);
+      dlg.showModal();
+      if (field) field.select(); else ok.focus();
+    });
+  }
+  const confirmBox = (text, yes) => ask({ text, yes });
+  const promptBox = (text, value) => ask({ text, input: true, value });
+  const tell = (text) => ask({ text, cancel: false });
 
   // ---------- Darstellung: Schema, Ton, Hell/Dunkel (My-Designsystem) ----------
   // "auto": kein data-modus -> die Tokens folgen dem System. Manuell gewinnt das Attribut.
@@ -1201,6 +1300,21 @@
     if (!win) { window.open(url, "_blank"); return; } // Popup blockiert
     if (win.location.href === "about:blank") win.location.href = url;
     win.focus();
+  }
+
+  const isBeamer = view === "beamer";
+  // Einstellungen der Startseite: Knopf in der Leiste, Kästchen am rechten Rand (DESIGN.md).
+  // Dieselben Schalter wie im Lehrer:innen-Fenster — sie ziehen hierher um.
+  if (isLauncher) {
+    const pop = document.getElementById("settingsPop");
+    const btn = document.getElementById("settingsBtn");
+    document.getElementById("settingsLook").append(document.getElementById("lookControls"));
+    const setOpen = (open) => { pop.hidden = !open; btn.setAttribute("aria-expanded", String(open)); btn.classList.toggle("aktiv", open); };
+    btn.onclick = () => setOpen(pop.hidden);
+    document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !pop.hidden && !document.querySelector("dialog[open]")) setOpen(false); });
+    document.addEventListener("pointerdown", (e) => {
+      if (!pop.hidden && !pop.contains(e.target) && !btn.contains(e.target) && !e.target.closest("dialog")) setOpen(false);
+    });
   }
 
   // Kopfleiste: die eigene Ansicht markiert, die anderen öffnen bzw. holen ihr Fenster
@@ -1407,6 +1521,12 @@
 
   // Einstellungen: Schema-Auswahl und Ton-Tupfer (Farben lesen sich live aus dem Schema)
   function renderLookControls() {
+    document.querySelectorAll("#langToggle button").forEach(b => {
+      b.classList.toggle("active", b.dataset.lang === state.lang);
+    });
+    document.querySelectorAll("#themeToggle button").forEach(b => {
+      b.classList.toggle("active", b.dataset.themeChoice === state.theme);
+    });
     document.getElementById("schemaSelect").value = state.schema;
     const box = document.getElementById("tonSwatches");
     // data-schema am Tupfer setzt dort --akzent auf den Schema-Akzent zurück (am <html> überschreibt ihn data-ton)
@@ -1426,8 +1546,8 @@
     if (lastLook !== look) {
       applyLook(state);
       lastLook = look;
-      if (isTeacher) renderLookControls();
-      else if (!isLauncher && lastStandsSchema !== state.schema) { // Trikotfarben hängen nur am Schema (Ton/Modus gehen live über Tokens)
+      if (!isBeamer) renderLookControls();
+      else if (lastStandsSchema !== state.schema) { // Trikotfarben hängen nur am Schema (Ton/Modus gehen live über Tokens)
         buildStands();
         lastStandsSchema = state.schema;
       }
@@ -1439,7 +1559,7 @@
       lastRenderedQ = lastRenderedA = null; // sprachabhängige Texte neu rendern
       lastTaskListSig = null; // Aufgabenliste neu bauen (Button-Tooltips sind sprachabhängig)
       lastLang = state.lang;
-      if (isTeacher) renderLookControls(); // Tooltips der Tupfer
+      if (!isBeamer) renderLookControls(); // Tooltips der Tupfer
     }
     // Die Startseite zeigt kein Spiel, nur die Sammlung (welches Set gerade geladen ist)
     if (isLauncher) { if (renderCollHook) renderCollHook(); return; }
@@ -1534,15 +1654,8 @@
     document.getElementById("moveT1").textContent = tr("pointFor", state.teams[0]);
     document.getElementById("moveT2").textContent = tr("pointFor", state.teams[1]);
 
-    // Order- und Sprach-Toggle
     document.querySelectorAll("#orderToggle button").forEach(b => {
       b.classList.toggle("active", b.dataset.order === state.order);
-    });
-    document.querySelectorAll("#langToggle button").forEach(b => {
-      b.classList.toggle("active", b.dataset.lang === state.lang);
-    });
-    document.querySelectorAll("#themeToggle button").forEach(b => {
-      b.classList.toggle("active", b.dataset.themeChoice === state.theme);
     });
 
     // Ein Button führt durchs Spiel: Starten -> Antwort aufdecken -> Nächste Frage -> ... -> Runde beendet
@@ -1579,9 +1692,9 @@
             <div class="task-a">${escapeHtml(t.a)}</div>
           </div>
           <div class="task-actions">
-            <button data-act="use" title="${tr("useTitle")}">▶</button>
-            <button data-act="edit" title="${tr("editTitle")}">✎</button>
-            <button data-act="del" title="${tr("delTitle")}">🗑</button>
+            <button data-act="use" title="${tr("useTitle")}">${ICON.play}</button>
+            <button data-act="edit" title="${tr("editTitle")}">${ICON.edit}</button>
+            <button data-act="del" title="${tr("delTitle")}">${ICON.trash}</button>
           </div>`;
         list.appendChild(item);
       });
@@ -1654,7 +1767,7 @@
     // Ball sichtbar ins Tor gleiten lassen; zurück zur Mitte holt ihn der
     // Watchdog in render() — in jedem Fenster, auch wenn dieses hier zugeht.
     state.ball = team === 0 ? maxIndex() + 1 : -(maxIndex() + 1);
-    persistAndSync(); // Konfetti/„TOR!" laufen via render() -> celebrateIfGoal (auch im Beamer)
+    persistAndSync(); // Konfetti/«TOR!» laufen via render() -> celebrateIfGoal (auch im Beamer)
   }
 
   function nextTask() {
@@ -2053,6 +2166,19 @@
     });
   }
 
+  // ---------- Darstellung und Sprache (Lehrer:innen-Einstellungen, Startseite) ----------
+  if (!isBeamer) {
+    document.querySelectorAll("#langToggle button").forEach(b => {
+      b.onclick = () => { state.lang = b.dataset.lang === "en" ? "en" : "de"; persistAndSync(); };
+    });
+    document.querySelectorAll("#themeToggle button").forEach(b => {
+      b.onclick = () => { state.theme = b.dataset.themeChoice; persistAndSync(); };
+    });
+    const schemaSelect = document.getElementById("schemaSelect");
+    schemaSelect.innerHTML = SCHEMES.map(([id, name]) => `<option value="${id}">${name}</option>`).join("");
+    schemaSelect.onchange = () => { state.schema = schemaSelect.value; persistAndSync(); };
+  }
+
   // ---------- Teacher controls wiring ----------
   if (isTeacher) {
     document.getElementById("moveT1").onclick = () => moveBall(+1); // Team1 -> rechts
@@ -2071,11 +2197,11 @@
     startWrap.addEventListener("mouseenter", showStartHint);
     startWrap.addEventListener("mouseleave", () => { clearTimeout(startHintTimer); startHint.classList.remove("show"); });
     startWrap.addEventListener("click", showStartHint);
-    document.getElementById("resetScore").onclick = () => {
-      if (confirm(tr("confirmScore"))) { state.scores = [0,0]; persistAndSync(); }
+    document.getElementById("resetScore").onclick = async () => {
+      if (await confirmBox(tr("confirmScore"), tr("resetScore"))) { state.scores = [0,0]; persistAndSync(); }
     };
-    document.getElementById("resetAll").onclick = () => {
-      if (!confirm(tr("confirmAll"))) return;
+    document.getElementById("resetAll").onclick = async () => {
+      if (!(await confirmBox(tr("confirmAll"), tr("resetAll")))) return;
       state.scores = [0, 0];
       state.ball = 0;
       state.currentTaskId = null;
@@ -2099,15 +2225,6 @@
     document.querySelectorAll("#orderToggle button").forEach(b => {
       b.onclick = () => { state.order = b.dataset.order; persistAndSync(); };
     });
-    document.querySelectorAll("#langToggle button").forEach(b => {
-      b.onclick = () => { state.lang = b.dataset.lang === "en" ? "en" : "de"; persistAndSync(); };
-    });
-    document.querySelectorAll("#themeToggle button").forEach(b => {
-      b.onclick = () => { state.theme = b.dataset.themeChoice; persistAndSync(); };
-    });
-    const schemaSelect = document.getElementById("schemaSelect");
-    schemaSelect.innerHTML = SCHEMES.map(([id, name]) => `<option value="${id}">${name}</option>`).join("");
-    schemaSelect.onchange = () => { state.schema = schemaSelect.value; persistAndSync(); };
 
     // Stationen
     const stationsInput = document.getElementById("stations");
@@ -2142,8 +2259,8 @@
     document.getElementById("newA").addEventListener("keydown", e => { if (e.key === "Enter") addTask(); });
     document.getElementById("newQ").addEventListener("keydown", e => { if (e.key === "Enter") document.getElementById("newA").focus(); });
 
-    document.getElementById("clearTasks").onclick = () => {
-      if (state.tasks.length && confirm(tr("confirmClear"))) {
+    document.getElementById("clearTasks").onclick = async () => {
+      if (state.tasks.length && await confirmBox(tr("confirmClear"), tr("deleteAll"))) {
         state.tasks = []; state.currentTaskId = null; state.seqPointer = -1;
         state.asked = []; state.history = []; state.revealed = false;
         state.setId = null; state.newDir = ""; // neue, leere Liste — das Set in der Sammlung bleibt
@@ -2152,7 +2269,7 @@
     };
 
     // Task-Liste: Aktionen (Event-Delegation)
-    document.getElementById("taskList").addEventListener("click", (e) => {
+    document.getElementById("taskList").addEventListener("click", async (e) => {
       const btn = e.target.closest("button");
       const item = e.target.closest(".task-item");
       if (!btn || !item) return;
@@ -2170,9 +2287,11 @@
         if (state.currentTaskId === id) state.currentTaskId = null;
         persistAndSync();
       } else if (act === "edit") {
-        const t = state.tasks.find(t => t.id === id);
-        const q = prompt(tr("editQ"), t.q); if (q === null) return;
-        const a = prompt(tr("editA"), t.a); if (a === null) return;
+        const old = state.tasks.find(t => t.id === id);
+        const q = await promptBox(tr("editQ"), old.q); if (q === null) return;
+        const a = await promptBox(tr("editA"), old.a); if (a === null) return;
+        const t = state.tasks.find(t => t.id === id); // während der Rückfrage kann der State gewechselt haben
+        if (!t) return;
         t.q = q.trim() || t.q; // leere Eingabe soll die Frage nicht löschen
         t.a = a.trim();
         persistAndSync();
@@ -2229,7 +2348,7 @@
     // «In die Sammlung» — wie in MyVoci, MyMemory und MyKahoot (ABLAGE.md, «Erstellen») -----
     document.getElementById("copyPrompt").onclick = async () => {
       try { await navigator.clipboard.writeText(tr("kiPrompt")); toastBtn("copyPrompt", tr("copied")); }
-      catch { prompt(tr("copyFallback"), tr("kiPrompt")); }
+      catch { promptBox(tr("copyFallback"), tr("kiPrompt")); }
     };
     const dropStatus = document.getElementById("dropStatus");
     const fileOverlay = document.getElementById("fileOverlay");
@@ -2288,7 +2407,8 @@
       const got = read.filter(r => r && r.tasks.length);
       if (!got.length) { setDropStatus(tr("importNone")); return; }
       const dir = createDir.value;
-      const done = got.filter(r => putSet(r.title, dir, r.tasks));
+      const done = [];
+      for (const r of got) if (await putSet(r.title, dir, r.tasks)) done.push(r);
       if (!done.length) return;
       openTo(dir);
       setDropStatus(done.length === 1 ? tr("importedSet", done[0].title, done[0].tasks.length) : tr("importedSets", done.length));
@@ -2342,7 +2462,7 @@
       pasteTimer = setTimeout(() => showPreview(pasteBox.value, pastedFile), 200);
     });
     document.getElementById("previewDiscard").onclick = clearPreview;
-    document.getElementById("previewSave").onclick = () => {
+    document.getElementById("previewSave").onclick = async () => {
       // Beim Speichern gilt der Text im Feld, auch wenn die Entprellung noch läuft — sonst
       // ginge die letzte Korrektur verloren (zeichnet nur neu, wenn sich etwas geändert hat)
       if (pasteBox.value) { clearTimeout(pasteTimer); showPreview(pasteBox.value, pastedFile); }
@@ -2350,15 +2470,15 @@
       if (!title) { previewTitle.focus(); return; }
       if (!pending) return;
       const tasks = pending, dir = createDir.value;
-      if (!putSet(title, dir, tasks)) return;
+      if (!(await putSet(title, dir, tasks))) return;
       openTo(dir);
       clearPreview();
       setDropStatus(tr("importedSet", title, tasks.length));
     };
     // Von Hand: eine leere aktuelle Liste (nach Rückfrage, falls die jetzige ungespeichert ist).
     // Getippt wird im Lehrer:innen-Fenster; «Speichern» legt sie im gewählten Ordner ab.
-    document.getElementById("byHand").onclick = () => {
-      if (listIsUnsaved() && !confirm(tr("confirmNew"))) return;
+    document.getElementById("byHand").onclick = async () => {
+      if (listIsUnsaved() && !(await confirmBox(tr("confirmNew"), tr("startEmpty")))) return;
       Object.assign(state, { tasks: [], setId: null, newDir: createDir.value,
         currentTaskId: null, seqPointer: -1, history: [], asked: [], revealed: false });
       persistAndSync();
@@ -2380,7 +2500,7 @@
     window.addEventListener("drop", (e) => {
       if (!hasFiles(e)) return;
       e.preventDefault();
-      if (!isLauncher) { alert(tr("dropAtStart")); return; }
+      if (!isLauncher) { tell(tr("dropAtStart")); return; }
       dragDepth = 0; fileOverlay.classList.remove("show");
       importFiles(e.dataTransfer.files);
     });
@@ -2518,6 +2638,7 @@
     const collTree = document.getElementById("collTree");
     const dirLine = document.getElementById("dirLine");
     const dirLineLehrer = document.getElementById("dirLineLehrer");
+    const dirStrip = document.getElementById("dirStrip");
     const setStatus = document.getElementById("setStatus");
     let lastCollSig = null;
 
@@ -2553,13 +2674,17 @@
           .forEach(f => {
             const open = !closed.has(f);
             html += `<div class="coll-row folder${open ? " open" : ""}" draggable="true" data-dir="${escapeHtml(f)}">
-              <button class="chev" data-act="toggle" aria-label="${escapeHtml(leafOf(f))}">›</button>
-              <span class="coll-name" data-act="toggle">${escapeHtml(leafOf(f))}</span>
+              <span class="coll-name" data-act="toggle">
+                <button class="chev" aria-label="${escapeHtml(leafOf(f))}">${ICON.chevron}</button>
+                <span class="coll-icon">${ICON.folder}</span>
+                <span class="coll-text">${escapeHtml(leafOf(f))}</span>
+              </span>
               <span class="coll-count">${tr("nSets", countIn(f))}</span>
               <span class="coll-tools">
-                <button data-act="createHere" title="${tr("createHere")}">＋</button>
-                <button data-act="renameDir" title="${tr("renameFolder")}">✎</button>
-                <button data-act="delDir" title="${tr("deleteFolder")}">🗑</button>
+                <button data-act="createHere" title="${tr("createHere")}">${ICON.plus}</button>
+                <button data-act="newSub" title="${tr("newSubfolder")}">${ICON.folder}</button>
+                <button data-act="renameDir" title="${tr("renameFolder")}">${ICON.edit}</button>
+                <button data-act="delDir" title="${tr("deleteFolder")}">${ICON.trash}</button>
               </span></div>`;
             if (open) html += `<div class="coll-sub" data-dir="${escapeHtml(f)}">${tree(f)}</div>`;
           });
@@ -2572,10 +2697,10 @@
               <button data-act="lehrer" title="${escapeHtml(tr("startTeacherTitle", x.title))}">${tr("startTeacher")}</button>
             </span>
             <span class="coll-tools">
-              <button data-act="share" title="${tr("shareSet")}">🔗</button>
-              <button data-act="export" title="${tr("exportSet")}">⤓</button>
-              <button data-act="rename" title="${tr("renameSet")}">✎</button>
-              <button data-act="del" title="${tr("deleteSet")}">🗑</button>
+              <button data-act="export" title="${tr("exportSet")}">${ICON.download}</button>
+              <button data-act="share" title="${tr("shareSet")}">${ICON.link}</button>
+              <button data-act="rename" title="${tr("renameSet")}">${ICON.edit}</button>
+              <button data-act="del" title="${tr("deleteSet")}">${ICON.trash}</button>
             </span></div>`;
         });
         return html;
@@ -2583,6 +2708,8 @@
       collTree.innerHTML = (coll.sets.length || folders.length) ? tree("") : `<div class="coll-empty">${tr("collEmpty")}</div>`;
 
       dirLine.innerHTML = dirLineHtml();
+      // Freigabe nötig oder Ordner weg: zusätzlich als Streifen über der Liste (die Einstellungen sind meist zu)
+      dirStrip.innerHTML = link.status === "prompt" || link.status === "error" ? dirLineHtml() : "";
     }
     // Ordner auf dem Computer: Angebot, Freigabe, Fehler oder Verbunden
     function dirLineHtml() {
@@ -2600,28 +2727,29 @@
     // Legt `tasks` unter `title` in `dir` ab und gibt die id zurück (null bei Abbruch). Liegt dort
     // schon ein Set mit dem Namen und anderem Inhalt, wird nach dem Ersetzen gefragt — ausser es
     // ist `keepId`, das geladene Set.
-    function putSet(title, dir, tasks, keepId) {
+    async function putSet(title, dir, tasks, keepId) {
       const other = atPlace(title, dir);
-      if (other && other.id !== keepId && !sameTasks(other.tasks, tasks) && !confirm(tr("nameTaken", other.title))) return null;
+      if (other && other.id !== keepId && !sameTasks(other.tasks, tasks) && !(await confirmBox(tr("nameTaken", other.title), tr("replace")))) return null;
       tasks = plainTasks(tasks);
       const id = other ? other.id : newSetId();
       commitColl({ ...coll, sets: other ? patched(id, { tasks }) : [...coll.sets, { id, title, dir, tasks }] });
       return id;
     }
-    function storeList(title, dir) {
+    async function storeList(title, dir) {
       title = cleanTitle(title);
       if (!title) return;
-      const id = putSet(title, dir, state.tasks, state.setId);
+      const id = await putSet(title, dir, state.tasks, state.setId);
       if (!id) return;
       state.setId = id;
       persistAndSync();
     }
-    function saveAs(dir) {
-      if (!state.tasks.length) return; // 💾 am Ordner ist nie gesperrt; ein leeres Set gäbe es im Ordner nicht
+    // Speichern unter: im Ordner des geladenen Sets bzw. der von Hand begonnenen Liste
+    async function saveAs() {
+      if (!state.tasks.length) return; // ein leeres Set gäbe es im Ordner nicht
       const cur = loadedSet();
-      const title = prompt(tr("askSetName"), cur && dir === undefined ? cur.title : "");
+      const title = await promptBox(tr("askSetName"), cur ? cur.title : "");
       if (title === null) return;
-      storeList(title, dir !== undefined ? dir : (cur ? cur.dir : state.newDir));
+      storeList(title, cur ? cur.dir : state.newDir);
     }
     document.getElementById("saveSet").onclick = () => {
       const cur = loadedSet();
@@ -2632,12 +2760,12 @@
     document.getElementById("saveSetAs").onclick = () => saveAs();
 
     // Gibt zurück, ob die aktuelle Liste danach dieses Set ist
-    function loadSet(id, asked) { // asked: Rückfrage schon gestellt (Import)
+    async function loadSet(id, asked) { // asked: Rückfrage schon gestellt (Import)
       const x = setById(id);
       if (!x) return false;
       if (x.id === state.setId && !listIsUnsaved()) return true; // schon geladen, nichts geändert
       // Nochmals dasselbe Set = Änderungen verwerfen; ein anderes = aktuelle Liste ersetzen
-      if (!asked && listIsUnsaved() && !confirm(tr("confirmLoad"))) return false;
+      if (!asked && listIsUnsaved() && !(await confirmBox(tr("confirmLoad"), tr("load")))) return false;
       state.tasks = x.tasks.map(t => ({ id: uid(), q: t.q, a: t.a }));
       state.setId = x.id;
       state.newDir = "";
@@ -2649,47 +2777,55 @@
     }
     // Kachel Beamer bzw. Lehrer:in: das Set wird die aktuelle Liste, dann öffnet die Ansicht ihr
     // Fenster (oder kommt nach vorn). Ist es schon geladen, bleibt die Liste samt Änderungen.
-    function startSet(id, target) {
-      if (id !== state.setId && !loadSet(id)) return;
+    async function startSet(id, target) {
+      if (id !== state.setId && !(await loadSet(id))) return;
       focusOrOpenView(target);
     }
 
     // ----- Ordner und Sets bearbeiten -----
-    document.getElementById("newFolder").onclick = () => {
-      // ganzer Pfad: bestehende Teile bleiben, wie sie heissen, neue ohne Sonderzeichen
-      const p = ablage.resolveFolderPath(coll, prompt(tr("askFolder"), ""));
+    // Neuer Ordner im Kopf (ganzer Pfad) bzw. an einem Ordner (darin): bestehende Teile bleiben,
+    // wie sie heissen, neue ohne Sonderzeichen
+    async function newFolder(parent) {
+      const name = await promptBox(parent ? tr("askSubfolder", parent) : tr("askFolder"), "");
+      if (name === null || !name.trim()) return;
+      const p = ablage.resolveFolderPath(coll, parent ? `${parent}/${name}` : name);
       if (!p) return;
-      if (ablage.folderTaken(coll, p)) { alert(tr("folderExists", p)); return; }
-      closed.delete(p);
+      if (ablage.folderTaken(coll, p)) { tell(tr("folderExists", p)); return; }
+      for (let d = p; d; d = parentOf(d)) closed.delete(d);
+      writeLocal(CLOSED_KEY, [...closed]);
       commitColl({ ...coll, folders: [...coll.folders, p] });
-    };
+    }
+    document.getElementById("newFolder").onclick = () => newFolder("");
     // Ordner umbenennen oder verschieben: die Eingabe ist ein ganzer Pfad
     // Die Wächter (Vorgabe unverändert, nur Gross/Klein, bestehende Eltern behalten ihren
     // Namen, Ziel belegt, nicht in sich selbst) stehen im Modul: renamePathTarget
-    function renameDir(from) {
-      const raw = prompt(tr("askRenameFolder"), from);
+    async function renameDir(from) {
+      const raw = await promptBox(tr("askRenameFolder"), from);
       relocateDir(from, ablage.renamePathTarget(coll, from, raw), String(raw || "").trim());
     }
     // Der eine Weg, einen Ordner samt Inhalt umzuhängen (Umbenennen und Ziehen). Am Ziel liegt
     // nie schon ein Ordner (`false`), also auch kein Set, das mit den umziehenden kollidiert.
     function relocateDir(from, to, shown) {
-      if (to === false) { alert(tr("folderExists", shown)); return; }
+      if (to === false) { tell(tr("folderExists", shown)); return; }
       if (!to) return;
       const move = (d) => inDir(d, from) ? to + d.slice(from.length) : d;
       closed = new Set([...closed].map(move));
       writeLocal(CLOSED_KEY, [...closed]);
       commitColl(ablage.remapDir(coll, from, to));
     }
-    function deleteDir(dir) {
-      if (coll.sets.some(x => inDir(x.dir, dir))) { alert(tr("folderNotEmpty")); return; }
-      if (!confirm(tr("confirmDeleteFolder", dir))) return;
+    async function deleteDir(dir) {
+      const full = () => coll.sets.some(x => inDir(x.dir, dir));
+      if (full()) { tell(tr("folderNotEmpty")); return; }
+      if (!(await confirmBox(tr("confirmDeleteFolder", dir), tr("del")))) return;
+      if (full()) { tell(tr("folderNotEmpty")); return; } // während der Rückfrage ist etwas dazugekommen
       commitColl({ ...coll, folders: allFolders(coll).filter(f => !inDir(f, dir)) });
     }
-    function renameSet(id) {
+    async function renameSet(id) {
       const x = setById(id);
-      const title = cleanTitle(prompt(tr("askSetName"), x.title));
-      if (!title || title === x.title) return;
-      if (atPlace(title, x.dir, id)) { alert(tr("nameTakenRename", title)); return; }
+      const title = cleanTitle(await promptBox(tr("askSetName"), x.title));
+      const now = setById(id); // während der Rückfrage kann es umgezogen oder weg sein
+      if (!title || !now || title === now.title) return;
+      if (atPlace(title, now.dir, id)) { tell(tr("nameTakenRename", title)); return; }
       // eine automatisch benannte Datei zieht mit dem Titel um (dropAutoFile)
       commitColl({ ...coll, sets: coll.sets.map(y => (y.id === id ? ablage.dropAutoFile(y, { ...y, title }) : y)) });
     }
@@ -2699,14 +2835,14 @@
       MyAblage.download(fileName(x), toFile(x));
     }
     document.getElementById("zipAll").onclick = async () => {
-      if (!coll.sets.length) { alert(tr("noSets")); return; }
+      if (!coll.sets.length) { tell(tr("noSets")); return; }
       try { MyAblage.download("MyTafelfussball.zip", await ablage.zipBlob(coll)); }
-      catch { alert(tr("zipFailed")); }
+      catch { tell(tr("zipFailed")); }
     };
     // Sicherung: alle Sets als eine Datei (für Safari/iPad ohne Ordner). Einlesen ergänzt,
     // was fehlt, und ersetzt nichts: gleiche Sets bekommen nur die fehlenden Fragen dazu.
     document.getElementById("backupSave").onclick = () => {
-      if (!coll.sets.length) { alert(tr("noSets")); return; }
+      if (!coll.sets.length) { tell(tr("noSets")); return; }
       MyAblage.download("MyTafelfussball-Sicherung.json", ablage.backupFile(coll, "mytafelfussball"));
     };
     const backupInput = document.getElementById("backupInput");
@@ -2720,7 +2856,7 @@
       // Fragen erst in Form bringen (cleanColl), zusammengeführt wird im Modul
       const ok = data && Array.isArray(data.sets) && cleanColl({ sets: data.sets.map(x => ({ ...x, id: String(x?.id ?? "") })), folders: data.folders });
       const res = ok && ablage.restoreBackup(coll, { ...data, sets: ok.sets, folders: ok.folders }, "mytafelfussball");
-      if (!res) { alert(tr("backupBad")); return; }
+      if (!res) { tell(tr("backupBad")); return; }
       commitColl(res.next);
       toastBtn("backupLoad", tr("backupDone", res.count));
     };
@@ -2752,16 +2888,16 @@
     document.getElementById("shareClose").onclick = () => shareDialog.close();
     shareDialog.addEventListener("click", (e) => { if (e.target === shareDialog) shareDialog.close(); }); // Klick daneben
 
-    function deleteSet(id) {
+    async function deleteSet(id) {
       const x = setById(id);
-      if (!confirm(tr("confirmDeleteSet", x.title))) return;
+      if (!(await confirmBox(tr("confirmDeleteSet", x.title), tr("del")))) return;
       commitColl({ ...coll, sets: coll.sets.filter(y => y.id !== id) });
       if (state.setId === id) { state.setId = null; persistAndSync(); }
     }
     function moveSet(id, dir) {
       const x = setById(id);
       if (!x || x.dir === dir) return;
-      if (atPlace(x.title, dir, id)) { alert(tr("nameTakenRename", x.title)); return; }
+      if (atPlace(x.title, dir, id)) { tell(tr("nameTakenRename", x.title)); return; }
       commitColl({ ...coll, sets: patched(id, { dir }) });
     }
 
@@ -2776,6 +2912,7 @@
           writeLocal(CLOSED_KEY, [...closed]);
           renderColl();
         } else if (act === "createHere") openCreate(dir);
+        else if (act === "newSub") newFolder(dir);
         else if (act === "renameDir") renameDir(dir);
         else if (act === "delDir") deleteDir(dir);
       } else {
@@ -2899,6 +3036,7 @@
     };
     dirLine.addEventListener("click", onDirAct);
     dirLineLehrer.addEventListener("click", onDirAct);
+    dirStrip.addEventListener("click", onDirAct);
 
     if (dirSupported) {
       loadDirHandle().then(async (handle) => {
@@ -2915,21 +3053,21 @@
     if (location.hash.startsWith("#t=")) {
       const data = location.hash.slice(3);
       history.replaceState(null, "", location.pathname + location.search); // Neuladen importiert nicht nochmals
-      MyAblage.unpackLink(data).then(([title, rows]) => {
+      MyAblage.unpackLink(data).then(async ([title, rows]) => {
         const tasks = (Array.isArray(rows) ? rows : []).map(([q, a]) => ({ q: String(q || "").trim(), a: String(a || "").trim() })).filter(t => t.q);
         title = cleanTitle(title);
         if (!title || !tasks.length) throw new Error("leer");
         if (isLauncher) {
-          if (!putSet(title, "", tasks)) return;
+          if (!(await putSet(title, "", tasks))) return;
           setDropStatus(tr("importedLink", title, tasks.length));
           return;
         }
         // alter Link auf das Lehrer:innen-Fenster: dort gleich laden
         const askLoad = listIsUnsaved();
-        const id = putSet(title, "", tasks);
-        if (id && (!askLoad || confirm(tr("confirmLoad")))) loadSet(id, true);
+        const id = await putSet(title, "", tasks);
+        if (id && (!askLoad || await confirmBox(tr("confirmLoad"), tr("load")))) loadSet(id, true);
         document.getElementById("tasksBox").open = true;
-      }).catch(() => alert(tr("linkBroken")));
+      }).catch(() => tell(tr("linkBroken")));
     }
 
     // Startseite und Lehrer:innen-Fenster teilen die Sammlung: ändert das eine sie, übernimmt das

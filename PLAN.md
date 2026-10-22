@@ -29,6 +29,7 @@
 ### 4. Gemeinsame Ablage mit den anderen My-Apps (21.10.2026)
 - ✅ Regeln aus MySuite `ABLAGE.md`, Code aus `design/js/my-ablage.js`: Datei mit `# Titel`, Dateinamen ohne Umlaute/Sonderzeichen (alte Dateien behalten ihren Namen), Ordner ziehen, Ordner-Pfade behalten bestehende Teile, «Set erstellen» mit Einfügefeld und Vorschau, KI-Prompt im gemeinsamen Aufbau. Headless-Test `tools/test-ordner.js`.
 - ✅ Angleichung (22.10.2026): Startseite wie MyVoci/MyKahoot — Kasten «Tafelfussball erstellen» (ein Feld für Text oder Datei, «von Hand») und die Sammlung «Meine Tafelfussbälle»; jede Set-Zeile mit den Kacheln Beamer und Lehrer:in. Das Lehrer:innen-Fenster behält nur die aktuelle Liste.
+- ✅ Wie die anderen My-Apps (22.10.2026, DESIGN.md): Einstellungen auf der Startseite (Darstellung, Sprache, Ordner, Sicherung), eigene Dialoge statt confirm/prompt/alert, Strich-Symbole statt Emoji, ⤓ ZIP im Listenkopf, Unterordner am Ordner, «…» statt „…“.
 - Offen: am iPad und mit einem echten Ordner am Mac von Hand ausprobieren (auch: Startseite und Lehrer:innen-Fenster gleichzeitig offen, Speichern in beiden).
 - Offen (Idee): «Speichern unter …» im Lehrer:innen-Fenster mit Ordnerwahl (heute: Ordner des geladenen Sets, verschieben per Ziehen auf der Startseite).
 

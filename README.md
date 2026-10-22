@@ -31,11 +31,11 @@ Startseite und Lehrer:innen-Ansicht haben oben in der Kopfleiste alle drei Fenst
 
 ## Sprache
 
-In den Einstellungen der Lehrer:innen-Ansicht lässt sich die Oberfläche zwischen **Deutsch und Englisch** umschalten (DE/EN) — Beamer-Ansicht und Startseite wechseln mit. Der Import versteht `F:` und `Q:` als Frage-Marker.
+In den Einstellungen (Startseite: Knopf oben rechts in der Leiste; Lehrer:innen-Ansicht: Box „Einstellungen“) lässt sich die Oberfläche zwischen **Deutsch und Englisch** umschalten (DE/EN) — Beamer-Ansicht und Startseite wechseln mit. Der Import versteht `F:` und `Q:` als Frage-Marker.
 
 ## Darstellung
 
-Ebenfalls in den Einstellungen: **Auto / Hell / Dunkel**. „Auto" folgt der Systemeinstellung, Hell/Dunkel erzwingen den Modus. Dazu **Farbschema** (fünf Schemen des My-Designsystems) und **Akzentfarbe** (Standard: Moonrise Kingdom, Tanne). Die Teamfarben kommen aus dem Schema, der Rasen bleibt grün. Alles synchron in beiden Fenstern.
+Ebenfalls in den Einstellungen: **Auto / Hell / Dunkel**. Auf der Startseite stehen dort auch **Ordner auf dem Computer** und die **Sicherung**. „Auto" folgt der Systemeinstellung, Hell/Dunkel erzwingen den Modus. Dazu **Farbschema** (fünf Schemen des My-Designsystems) und **Akzentfarbe** (Standard: Moonrise Kingdom, Tanne). Die Teamfarben kommen aus dem Schema, der Rasen bleibt grün. Alles synchron in beiden Fenstern.
 
 ## Tafelfussball erstellen (KI, Datei, Text)
 

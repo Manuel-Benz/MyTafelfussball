@@ -29,13 +29,15 @@ const ok = (p) => p.then(() => true, () => false); // eingetreten bis zum Zeitli
   const errors = [];
   page.on('pageerror', (e) => errors.push(e.message));
   page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text()); });
-  // prompt/confirm: Vorgabe bestätigen (ohne Argument käme bei prompt ein leerer Text zurück)
-  let prompts = 0, answer = null; // answer: nächste Antwort auf ein prompt, sonst die Vorgabe
-  page.on('dialog', (d) => {
-    if (d.type() === 'prompt') prompts++;
-    d.accept(d.type() === 'prompt' && answer !== null ? answer : d.defaultValue());
-    answer = null;
-  });
+  // Browser-Dialoge darf es nicht mehr geben (DESIGN.md: eigene Dialoge)
+  page.on('dialog', (d) => { errors.push(`Browser-Dialog: ${d.message()}`); d.dismiss(); });
+  // Eigener Dialog der App: Text eintragen (sonst die Vorgabe lassen) und bestätigen
+  const answer = async (p, value) => {
+    const dlg = p.locator('dialog.ask-dialog[open]');
+    await dlg.waitFor({ timeout: 5000 });
+    if (value !== undefined) await dlg.locator('input').fill(value);
+    await dlg.locator('button.primary').click();
+  };
   await page.goto(base);
   // Ausgangslage: drei Sets nur im Browser, OPFS leer und als Ordner verbunden
   await page.evaluate(async (KEY) => {
@@ -110,22 +112,24 @@ const ok = (p) => p.then(() => true, () => false); // eingetreten bis zum Zeitli
 
   // Ordner umbenennen, Vorgabe unverändert bestätigen: nichts darf umziehen
   await page.locator('.coll-row.folder[data-dir="Französisch"] [data-act="renameDir"]').click({ force: true });
+  const asked = await ok(answer(page));
   await wait(300);
   const fr = (await store()).sets.find((s) => s.id === 's1');
-  check(prompts === 1 && fr && fr.dir === 'Französisch/Klasse 2' && !(await files()).some((p) => p.startsWith('Franzoesisch')),
+  check(asked && fr && fr.dir === 'Französisch/Klasse 2' && !(await files()).some((p) => p.startsWith('Franzoesisch')),
     `Umbenennen ohne Änderung lässt den Ordner stehen (${fr && fr.dir})`);
 
   // Unterordner unter einem Umlaut-Ordner umbenennen: der Elternordner bleibt, wie er heisst
-  answer = 'Französisch/Klasse 3';
   await page.locator('.coll-row.folder[data-dir="Französisch/Klasse 2"] [data-act="renameDir"]').click({ force: true });
+  await answer(page, 'Französisch/Klasse 3');
   const sub = await ok(dirIs('s1', 'Französisch/Klasse 3'));
   const afterSub = await store();
   check(sub && !afterSub.folders.concat(afterSub.sets.map((x) => x.dir)).some((d) => d.startsWith('Franzoesisch')),
     'Unterordner umbenannt, Elternordner «Französisch» bleibt');
 
   // Neuer Ordner mit Pfad: bestehender Teil bleibt, neuer ohne Umlaut
-  answer = 'französisch/Übungen';
   await page.click('#newFolder');
+  await answer(page, 'französisch/Übungen');
+  await wait(200);
   const nf = (await store()).folders;
   check(nf.includes('Französisch/Uebungen') && !nf.some((d) => d.startsWith('Franzoesisch') || d.startsWith('französisch')),
     `Neuer Ordner im bestehenden Ordner (${nf.join(', ')})`);
@@ -159,12 +163,14 @@ const ok = (p) => p.then(() => true, () => false); // eingetreten bis zum Zeitli
   await page.click('#zipAll');
   check((await zipDl.then((d) => d.suggestedFilename(), () => '')) === 'MyTafelfussball.zip', 'ZIP aller Sets');
   const bakDl = page.waitForEvent('download');
+  await page.click('#settingsBtn'); // Sicherung steht in den Einstellungen
   await page.click('#backupSave');
   const bak = JSON.parse(require('fs').readFileSync(await (await bakDl).path(), 'utf8'));
   check(bak.app === 'mytafelfussball' && bak.sets.length === (await store()).sets.length && bak.sets.every((x) => !('disk' in x) && !('file' in x)),
     `Sicherung mit allen Sets, ohne Ordner-Buchführung (${bak.sets.length})`);
   // Sicherung einlesen: ein gelöschtes Set kommt zurück, die anderen werden nicht verdoppelt
   await page.locator('.coll-row.set', { hasText: 'Lektion 2' }).locator('[data-act="del"]').click({ force: true });
+  await answer(page);
   await storeHas('Lektion 2', false);
   await page.setInputFiles('#backupInput', await (await bakDl).path());
   const back = await ok(storeHas('Lektion 2'));
@@ -202,7 +208,7 @@ const ok = (p) => p.then(() => true, () => false); // eingetreten bis zum Zeitli
   const [lehrer] = await Promise.all([page.context().waitForEvent('page'), row.locator('[data-act="lehrer"]').click()]);
   await lehrer.waitForLoadState();
   lehrer.on('pageerror', (e) => errors.push(e.message));
-  lehrer.on('dialog', (d) => d.accept(d.type() === 'prompt' ? 'Von Hand 1' : undefined));
+  lehrer.on('dialog', (d) => { errors.push(`Browser-Dialog: ${d.message()}`); d.dismiss(); });
   check(/view=lehrer/.test(lehrer.url()) && await lehrer.locator('.task-item').count() === 1 && await lehrer.isHidden('#collTree'),
     'Lehrer:in: Fenster mit dem Set, ohne Sammlung');
   check(await page.locator('.coll-row.set.loaded', { hasText: 'Lektion 2' }).count() === 1, 'Startseite markiert das geladene Set');
@@ -217,6 +223,7 @@ const ok = (p) => p.then(() => true, () => false); // eingetreten bis zum Zeitli
   await lehrer.waitForFunction(() => !document.querySelector('.task-item'));
   await lehrer.fill('#newQ', '5 + 5'); await lehrer.fill('#newA', '10'); await lehrer.click('#addTask');
   await lehrer.click('#saveSet');
+  await answer(lehrer, 'Von Hand 1');
   check(await ok(until(() => JSON.parse(localStorage.getItem('tafelfussball_sammlung')).sets.some((x) => x.title === 'Von Hand 1' && x.dir === 'Klasse 3'))),
     'von Hand: im Lehrer:innen-Fenster getippt und gespeichert, liegt im gewählten Ordner');
   check(await ok(page.locator('.coll-row.set', { hasText: 'Von Hand 1' }).waitFor({ timeout: 5000 })), 'Startseite zeigt das neue Set sofort');
@@ -230,6 +237,22 @@ const ok = (p) => p.then(() => true, () => false); // eingetreten bis zum Zeitli
   });
   await page.locator('#preview').waitFor();
   check((await page.inputValue('#pasteBox')).includes('Ohne Titel?') && await page.inputValue('#previewTitle') === 'Gezogen', 'Datei ins Feld: Text im Feld, Titel aus dem Dateinamen');
+
+  // Einstellungen auf der Startseite: Darstellung und Sprache, Esc schliesst
+  await page.bringToFront();
+  await page.click('#settingsBtn');
+  check(await page.isVisible('#settingsPop #langToggle') && await page.isVisible('#settingsPop #schemaSelect') && await page.isVisible('#settingsPop #dirLine'),
+    'Einstellungen der Startseite: Sprache, Schema, Ordner auf dem Computer');
+  await page.click('#settingsPop #langToggle [data-lang="en"]');
+  check(await page.textContent('#createSec > summary') === 'Create a Tafelfussball', 'Sprache auf der Startseite umgestellt');
+  await page.click('#settingsPop #langToggle [data-lang="de"]');
+  await page.keyboard.press('Escape');
+  check(await page.isHidden('#settingsPop'), 'Esc schliesst die Einstellungen');
+  // Unterordner am Ordner, Symbole statt Emoji
+  await page.locator('.coll-row.folder[data-dir="Klasse 3"] [data-act="newSub"]').click({ force: true });
+  await answer(page, 'Tests');
+  check(await ok(until(() => JSON.parse(localStorage.getItem('tafelfussball_sammlung')).folders.includes('Klasse 3/Tests'))), 'Unterordner am Ordner angelegt');
+  check(!/[🔗⤓✎🗑📁＋]/u.test(await page.locator('#collTree').innerText()), 'Zeilen ohne Emoji-Symbole');
 
   check(errors.length === 0, `keine Fehler in der Konsole${errors.length ? ': ' + errors.join(' | ') : ''}`);
   await browser.close();
