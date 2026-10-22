@@ -2,7 +2,8 @@
 // die OPFS-Wurzel gilt als verbundener Ordner (Handle in IndexedDB mytafelfussball → kv →
 // dir), dann Spiegeln, Nachlesen, Löschen im «Finder», alte Datei ohne «# Titel»,
 // Ordner umbenennen ohne Änderung, Einfügen mit Vorschau, Ordner ziehen, ZIP, Sicherung,
-// Teilen und Link öffnen. Nach jedem ./sync.sh tafel laufen lassen:
+// Teilen und Link öffnen — alles auf der Startseite; dazu die Kacheln Beamer/Lehrer:in,
+// «von Hand» und Speichern im Lehrer:innen-Fenster. Nach jedem ./sync.sh tafel laufen lassen:
 //   node tools/test-ordner.js
 // Braucht Playwright samt Chromium (PLAYWRIGHT=<Pfad zum Paket>, falls nicht
 // installiert) und Internet (KaTeX vom CDN).
@@ -11,7 +12,7 @@ const { spawn } = require('child_process');
 const { chromium } = require(process.env.PLAYWRIGHT || 'playwright');
 const A = require('../design/js/my-ablage.js');
 const PORT = 8773;
-const base = `http://127.0.0.1:${PORT}/index.html?view=lehrer`;
+const base = `http://127.0.0.1:${PORT}/index.html`; // Startseite: Erstellen und Sammlung
 const KEY = 'tafelfussball_sammlung';
 const results = [];
 const check = (ok, msg) => { results.push(ok); console.log(`${ok ? '✅' : '❌'} ${msg}`); };
@@ -24,7 +25,7 @@ const ok = (p) => p.then(() => true, () => false); // eingetreten bis zum Zeitli
   process.on('exit', () => server.kill());
   for (let i = 0; i < 100; i++) { try { await fetch(base); break; } catch { await wait(50); } }
   const browser = await chromium.launch();
-  const page = await browser.newPage({ acceptDownloads: true });
+  const page = await browser.newPage({ acceptDownloads: true, viewport: { width: 1280, height: 1600 } }); // hoch genug: Ziehen ohne Scrollen
   const errors = [];
   page.on('pageerror', (e) => errors.push(e.message));
   page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text()); });
@@ -130,7 +131,11 @@ const ok = (p) => p.then(() => true, () => false); // eingetreten bis zum Zeitli
     `Neuer Ordner im bestehenden Ordner (${nf.join(', ')})`);
 
   // Set erstellen: Text einfügen → Vorschau → in die Sammlung
-  await page.evaluate(() => { document.getElementById('tasksBox').open = true; });
+  check(!(await page.evaluate(() => document.getElementById('createSec').open)) && (await page.textContent('#createSec > summary')) === 'Tafelfussball erstellen',
+    'Kasten «Tafelfussball erstellen» steht zu');
+  await page.click('#createSec > summary');
+  check(await page.isVisible('#copyPrompt') && await page.isVisible('#byHand') && !(await page.$('#createSec input[type=file]')),
+    'offen: KI-Prompt, ein Feld, «von Hand», kein «Datei wählen»');
   await page.fill('#pasteBox', '```\n# Paste: Test\n\nF: 2 + 2\nA: 4\nmit Folgezeile\n---\nQuatsch\nF: 3 + 3\nA: 6\n---\n```');
   await page.locator('#preview').waitFor(); // entprellt: erscheint kurz nach dem Tippen
   const prevOk = await page.locator('#preview').isVisible() && (await page.inputValue('#previewTitle')) === 'Paste: Test'
@@ -169,7 +174,7 @@ const ok = (p) => p.then(() => true, () => false); // eingetreten bis zum Zeitli
   await page.locator('.coll-row.set', { hasText: 'Paste: Test' }).locator('[data-act="share"]').click({ force: true });
   await until(() => !!document.querySelector('#shareQr svg, #shareQr p'));
   const shareUrl = await page.inputValue('#shareUrl');
-  check(shareUrl.includes('?view=lehrer#t=1.') && (await page.locator('#shareQr svg').count()) === 1, 'Teilen zeigt Link und QR-Code');
+  check(shareUrl.includes('index.html#t=1.') && (await page.locator('#shareQr svg').count()) === 1, 'Teilen zeigt Link (auf die Startseite) und QR-Code');
   await page.click('#shareClose');
 
   // Link öffnen: das Set kommt in die Sammlung, der Hash verschwindet
@@ -178,6 +183,53 @@ const ok = (p) => p.then(() => true, () => false); // eingetreten bis zum Zeitli
   await page.goto(`${base}#t=${data}`);
   const linked = await ok(storeHas('Aus dem Link'));
   check(linked && !(await page.evaluate(() => location.hash)), 'Link öffnen: Set in der Sammlung, Adresse wieder ohne #t=');
+  // Ein alter Link aufs Lehrer:innen-Fenster geht weiter und lädt das Set dort
+  const oldData = await A.packLink(['Alter Link', [['Hauptstadt von Italien', 'Rom']]]);
+  await page.goto('about:blank');
+  await page.goto(`${base}?view=lehrer#t=${oldData}`);
+  check(await ok(storeHas('Alter Link')) && await ok(until(() => JSON.parse(localStorage.getItem('tafelfussball_state_v1')).tasks.some((t) => t.a === 'Rom'))),
+    'alter Link (?view=lehrer) legt ab und lädt');
+  await page.goto(base);
+
+  // Kacheln: Beamer bzw. Lehrer:in laden das Set und öffnen ihr Fenster
+  const row = page.locator('.coll-row.set', { hasText: 'Lektion 2' });
+  check(await row.locator('[data-act="beamer"]').isVisible() && await row.locator('[data-act="lehrer"]').isVisible(), 'Set-Zeile mit den Kacheln Beamer und Lehrer:in');
+  const [beamer] = await Promise.all([page.context().waitForEvent('page'), row.locator('[data-act="beamer"]').click()]);
+  await beamer.waitForLoadState();
+  const st1 = await page.evaluate(() => JSON.parse(localStorage.getItem('tafelfussball_state_v1')));
+  check(/view=beamer/.test(beamer.url()) && st1.tasks.map((t) => t.q).join() === 'sein', `Beamer: Set geladen, Beamer-Fenster offen (${beamer.url()})`);
+  await page.bringToFront();
+  const [lehrer] = await Promise.all([page.context().waitForEvent('page'), row.locator('[data-act="lehrer"]').click()]);
+  await lehrer.waitForLoadState();
+  lehrer.on('pageerror', (e) => errors.push(e.message));
+  lehrer.on('dialog', (d) => d.accept(d.type() === 'prompt' ? 'Von Hand 1' : undefined));
+  check(/view=lehrer/.test(lehrer.url()) && await lehrer.locator('.task-item').count() === 1 && await lehrer.isHidden('#collTree'),
+    'Lehrer:in: Fenster mit dem Set, ohne Sammlung');
+  check(await page.locator('.coll-row.set.loaded', { hasText: 'Lektion 2' }).count() === 1, 'Startseite markiert das geladene Set');
+
+  // ＋ am Ordner: Kasten mit diesem Ordner; von Hand: leere Liste im Lehrer:innen-Fenster,
+  // «Speichern» legt sie in diesem Ordner ab — die Startseite zeigt sie gleich
+  await page.bringToFront();
+  await page.evaluate(() => { document.getElementById('createSec').open = false; });
+  await page.locator('.coll-row.folder[data-dir="Klasse 3"] [data-act="createHere"]').click({ force: true });
+  check(await page.evaluate(() => document.getElementById('createSec').open) && await page.inputValue('#createDir') === 'Klasse 3', '＋ am Ordner öffnet den Kasten mit diesem Ordner');
+  await page.click('#byHand');
+  await lehrer.waitForFunction(() => !document.querySelector('.task-item'));
+  await lehrer.fill('#newQ', '5 + 5'); await lehrer.fill('#newA', '10'); await lehrer.click('#addTask');
+  await lehrer.click('#saveSet');
+  check(await ok(until(() => JSON.parse(localStorage.getItem('tafelfussball_sammlung')).sets.some((x) => x.title === 'Von Hand 1' && x.dir === 'Klasse 3'))),
+    'von Hand: im Lehrer:innen-Fenster getippt und gespeichert, liegt im gewählten Ordner');
+  check(await ok(page.locator('.coll-row.set', { hasText: 'Von Hand 1' }).waitFor({ timeout: 5000 })), 'Startseite zeigt das neue Set sofort');
+  check(await ok(hasFiles('Klasse 3/Von Hand 1.txt')), 'und es liegt im Ordner');
+
+  // Eine Datei ins Feld gezogen: Text sichtbar im Feld, Vorschau mit Dateiname als Titel
+  await page.evaluate(() => {
+    const dt = new DataTransfer();
+    dt.items.add(new File(['F: Ohne Titel?\nA: ja\n'], 'Gezogen.txt', { type: 'text/plain' }));
+    document.getElementById('pasteBox').dispatchEvent(new DragEvent('drop', { dataTransfer: dt, bubbles: true, cancelable: true }));
+  });
+  await page.locator('#preview').waitFor();
+  check((await page.inputValue('#pasteBox')).includes('Ohne Titel?') && await page.inputValue('#previewTitle') === 'Gezogen', 'Datei ins Feld: Text im Feld, Titel aus dem Dateinamen');
 
   check(errors.length === 0, `keine Fehler in der Konsole${errors.length ? ': ' + errors.join(' | ') : ''}`);
   await browser.close();

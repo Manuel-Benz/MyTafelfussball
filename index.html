@@ -77,7 +77,6 @@
   }
   .leiste nav button:hover { background: rgba(255,255,255,.08); color: #FFFFFF; filter: none; }
   .leiste nav .aktiv { background: var(--leiste-aktiv); color: #FFFFFF; }
-  body.view-launcher .leiste nav { display: none; }
 
   /* ---------- Launcher ---------- */
   #launcher {
@@ -86,15 +85,14 @@
     overflow-y: auto;  /* eigener Scroll-Kontext */
   }
   body.view-launcher #launcher { display: block; }
+  /* Startseite = Spalte wie in MyVoci/MyKahoot: Titel, Kasten «Tafelfussball erstellen», Sammlung */
   .launcher-inner {
-    min-height: 100%;         /* füllt den Screen -> zentriert bei wenig Inhalt */
+    max-width: 720px;
+    margin: 0 auto;
     display: flex;
     flex-direction: column;
-    align-items: center;
-    justify-content: center;  /* wächst der Inhalt, entsteht kein Clipping */
-    gap: 24px;
-    padding: 40px 24px;
-    text-align: center;
+    gap: 20px;
+    padding: 40px 16px 60px;
   }
   #launcher h1 {
     font-size: clamp(32px, 6vw, 64px);
@@ -105,21 +103,28 @@
   }
   /* Zebra rechts vom Titel, ohne Kachel (Regel .logo im Block <style id="logo-zebra"> unten) */
   #launcher p { color: var(--text-2); max-width: 640px; margin: 0; font-size: 17px; line-height: 1.55; }
-  .launch-cards { display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; }
-  .launch-card {
-    background: var(--karte);
-    border: 1px solid var(--linie);
-    border-radius: var(--radius-l);
-    padding: 28px 28px;
-    width: 290px;
-    cursor: pointer;
-    text-decoration: none;
-    color: var(--text);
-    transition: transform .12s, border-color .12s, box-shadow .12s;
+  .card { background: var(--karte); border: 1px solid var(--linie); border-radius: var(--radius-l); }
+  .kopf { font-size: 13px; font-weight: 650; text-transform: uppercase; letter-spacing: .08em; color: var(--text-3); }
+  /* Kasten «Tafelfussball erstellen»: zu eine Zeile mit Pfeil, offen der KI-Weg und «von Hand» */
+  .create-card > summary {
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    padding: 16px 20px; font-size: 18px; font-weight: 700; cursor: pointer; list-style: none;
   }
-  .launch-card:hover { transform: translateY(-3px); border-color: var(--akzent); box-shadow: var(--schatten); }
-  .launch-card h2 { margin: 0 0 8px; font-size: 22px; color: var(--akzent-text); }
-  .launch-card p { font-size: 15px !important; }
+  .create-card > summary::-webkit-details-marker { display: none; }
+  .create-card > summary::after { content: "›"; font-size: 22px; line-height: 1; color: var(--text-3); transition: transform .12s; }
+  .create-card[open] > summary::after { transform: rotate(90deg); }
+  .create-body { padding: 0 20px 20px; display: flex; flex-direction: column; gap: 12px; }
+  .create-in { display: flex; align-items: center; gap: 12px; }
+  .create-in select { flex: 1; min-width: 0; }
+  .create-steps { margin: 0; padding-left: 20px; font-size: 14px; line-height: 1.5; color: var(--text-2); }
+  .create-steps li { margin-bottom: 4px; }
+  .create-steps code { background: var(--hover); padding: 0 4px; border-radius: 4px; }
+  .or-line { display: flex; align-items: center; gap: 12px; }
+  .or-line::before, .or-line::after { content: ""; flex: 1; height: 1px; background: var(--linie); }
+  /* Sammlung als Karte; Kopf wie «Meine Voci» */
+  .coll-card { padding: 14px 16px; }
+  .list-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 0 4px 8px 10px; }
+  .coll-more { margin-top: 10px; }
 
   .format-example {
     background: var(--code-bg);
@@ -489,7 +494,7 @@
   .counter { font-size: 13px; color: var(--text-3); }
 
   /* Sammlung: kompakte Liste (viele gleichartige Sets, in Ordnern) */
-  .coll-tree { display: flex; flex-direction: column; gap: 2px; max-height: 300px; overflow-y: auto; margin: 0 -4px; padding: 2px 4px; border-radius: var(--radius); }
+  .coll-tree { display: flex; flex-direction: column; gap: 2px; margin: 0 -4px; padding: 2px 4px; border-radius: var(--radius); }
   .coll-tree.drop-target { background: var(--akzent-weich); }
   .coll-row {
     display: flex; align-items: center; gap: 6px;
@@ -498,10 +503,13 @@
   }
   .coll-row:hover { background: var(--hover); }
   .coll-row.drop-target { background: var(--akzent-weich); }
-  .coll-row.set { cursor: pointer; }
   .coll-row.set.dragging { opacity: .4; }
   .coll-row.loaded .coll-name { color: var(--akzent-text); }
   .coll-row.loaded .coll-name::before { content: "● "; font-size: 10px; vertical-align: 2px; }
+  /* Die grosse Kachel eines Sets ist zweigeteilt: Beamer und Lehrer:in laden das Set und öffnen
+     je ihr Fenster (in MyKahoot startet die eine Kachel das Quiz) */
+  .coll-start { flex: 0 0 auto; display: flex; gap: 6px; }
+  .coll-start button { min-width: 92px; padding: 6px 14px; font-size: 13px; }
   .coll-name { flex: 0 1 19rem; min-width: 0; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .coll-count { flex: 1 0 auto; color: var(--text-3); font-size: 13px; white-space: nowrap; }
   .coll-tools { display: flex; gap: 0; flex: 0 0 auto; }
@@ -523,20 +531,12 @@
   .set-status { font-size: 13px; color: var(--text-2); margin-bottom: 8px; }
   .set-status b { color: var(--text); font-weight: 600; }
   .set-status .changed { color: var(--orange); font-weight: 600; }
-  /* Box «Aufgaben»: Sammlung, aktuelle Liste, Import. Ohne Sets (.fresh) steht der Import zuoberst. */
-  .tasks-flow { display: flex; flex-direction: column; gap: 18px; }
-  #tasksBox.fresh .import-sec { order: -1; }
-  .tasks-flow h3 { margin-top: 0; }
   #tasksBox summary .set-name:not(:empty) { margin-left: .4em; }
   #tasksBox summary .set-name { display: inline-block; max-width: 14em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: bottom; text-transform: none; letter-spacing: 0; }
   .add-row { display: flex; gap: 6px; margin-top: 8px; }
   .add-row #newQ { flex: 2; min-width: 0; }
   .add-row #newA { flex: 1; min-width: 0; }
   .add-row button { flex: 0 0 auto; padding: 0 14px; font-size: 18px; }
-  .import-two { margin: 0; padding-left: 20px; font-size: 13px; line-height: 1.45; color: var(--text-2); }
-  .import-two li { margin-bottom: 8px; }
-  .import-two li::marker { font-weight: 700; color: var(--text-3); }
-  .import-two .dropzone { margin-top: 2px; }
   .dir-line .dir-offer { display: flex; align-items: center; gap: 6px; }
   .dir-line .info { color: var(--text-3); cursor: help; font-size: 14px; }
 
@@ -569,31 +569,21 @@
     .score-num.bump, .answer-inline.show, .goal-flash.show { animation: none; }
   }
 
-  /* Datei-Import */
-  .dropzone {
-    border: 2px dashed var(--linie);
-    border-radius: var(--radius);
-    padding: 16px;
-    text-align: center;
-    color: var(--text-2);
-    cursor: pointer;
-    font-size: 13px;
-    line-height: 1.45;
-    transition: border-color .12s, background .12s, color .12s;
-  }
-  .dropzone:hover { border-color: var(--akzent); color: var(--text); background: var(--akzent-weich); }
-  .dropzone small { color: var(--text-3); }
-  .drop-status { font-size: 13px; min-height: 1em; margin-top: 6px; color: var(--gruen); }
+  .drop-status { font-size: 13px; color: var(--gruen); }
+  .drop-status:empty { display: none; }
   /* Set erstellen: Einfügefeld und Vorschau vor dem Speichern */
-  .paste-box { font: inherit; font-size: 13px; width: 100%; min-height: 84px; resize: vertical; margin-top: 4px;
+  .paste-box { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; width: 100%; min-height: 84px; resize: vertical;
     background: var(--karte); color: var(--text); border: 1px solid var(--linie); border-radius: var(--radius); padding: 8px 12px; }
   .paste-box:focus-visible { outline: 2px solid var(--akzent); outline-offset: 1px; }
-  .preview { border: 1px solid var(--linie); border-radius: var(--radius); padding: 4px 12px 12px; margin-top: 8px; background: var(--karte); }
+  .preview { border: 1px solid var(--linie); border-radius: var(--radius-l); padding: 14px; background: var(--karte); display: flex; flex-direction: column; gap: 6px; }
+  .preview input { width: 100%; }
+  .preview-folder { margin: 0; font-size: 14px; color: var(--text-2); }
+  .preview .row > .primary { flex: 1; }
   .preview[hidden] { display: none; }
-  .preview-list { max-height: 220px; overflow: auto; margin: 6px 0 10px; padding-left: 20px; font-size: 13px; }
+  .preview-list { max-height: 220px; overflow: auto; margin: 0 0 6px; padding-left: 20px; font-size: 14px; }
   .preview-list li { margin-bottom: 4px; }
   .preview-list .ans { color: var(--text-2); }
-  .preview-stray { font-size: 13px; color: var(--orange); margin: 0 0 10px; }
+  .preview-stray { font-size: 13px; color: var(--orange); margin: 0 0 6px; }
   .create-hint { font-size: 12px; color: var(--text-3); margin: 8px 0 0; }
   /* Teilen: Link und QR-Code */
   .share-dialog { border: 1px solid var(--linie); border-radius: var(--radius-l); background: var(--karte); color: var(--text);
@@ -627,28 +617,63 @@
 <header class="leiste">
   <img src="design/icons/tafel.svg" alt="">
   <span>MyTafelfussball</span>
+  <!-- Die eigene Ansicht ist markiert (.aktiv, s. Fensterwechsel im Skript); die anderen
+       öffnen ihr Fenster bzw. holen es nach vorn -->
   <nav>
-    <span class="aktiv" data-i18n="teacherCardTitle">Lehrer:innen-Ansicht</span>
-    <button id="gotoBeamer" data-i18n="beamerCardTitle">Beamer-Ansicht</button>
+    <button data-goto="start" data-i18n="startTitle">Startseite</button>
+    <button data-goto="lehrer" data-i18n="teacherCardTitle">Lehrer:innen-Ansicht</button>
+    <button data-goto="beamer" data-i18n="beamerCardTitle">Beamer-Ansicht</button>
   </nav>
 </header>
 
-<!-- ============ Launcher ============ -->
+<!-- ============ Startseite: Tafelfussball erstellen und Sammlung (wie MyVoci/MyKahoot) ============ -->
 <div id="launcher">
   <div class="launcher-inner">
   <h1>MyTafelfussball<span class="logo" role="img" aria-label="MyTafelfussball-Zebra"></span></h1>
-  <p data-i18n-html="intro">Öffne die <b>Beamer-Ansicht</b> im Vollbild auf dem Projektor und die <b>Lehrer:innen-Ansicht</b> auf deinem Laptop. Beide Fenster synchronisieren sich automatisch.</p>
-  <div class="launch-cards">
-    <a class="launch-card" id="cardBeamer" href="?view=beamer" target="_blank" rel="noopener">
-      <h2 data-i18n="beamerCardTitle">Beamer-Ansicht</h2>
-      <p data-i18n="beamerCardText">Für die Klasse. Spielfeld, Punkte, Frage — ohne Lösung. Öffnet als eigenes Fenster.</p>
-    </a>
-    <a class="launch-card" id="cardLehrer" href="?view=lehrer" target="_blank" rel="noopener">
-      <h2 data-i18n="teacherCardTitle">Lehrer:innen-Ansicht</h2>
-      <p data-i18n="teacherCardText">Steuerung, Aufgabenverwaltung und die Lösung.</p>
-    </a>
-  </div>
+  <p data-i18n-html="intro">Wähle unten ein Set: <b>Beamer</b> öffnet das Spielfeld für die Klasse, <b>Lehrer:in</b> die Steuerung mit den Lösungen. Beide Fenster synchronisieren sich automatisch.</p>
 
+  <details class="card create-card" id="createSec">
+    <summary data-i18n="importTitle">Tafelfussball erstellen</summary>
+    <div class="create-body">
+      <label class="create-in"><span class="kopf" data-i18n="createInLabel">Speichern in</span><select id="createDir"></select></label>
+      <ol class="create-steps" data-i18n-html="createSteps"></ol>
+      <button class="primary" id="copyPrompt" data-i18n="copyKiPrompt">KI-Prompt kopieren</button>
+      <textarea class="paste-box" id="pasteBox" rows="8" data-i18n-ph="pastePh" data-i18n-title="pasteLabel"></textarea>
+      <div class="preview" id="preview" hidden>
+        <label class="kopf" for="previewTitle" data-i18n="previewTitle">Titel</label>
+        <input type="text" id="previewTitle" data-i18n-ph="previewTitleMissing">
+        <p class="preview-folder" id="previewFolder"></p>
+        <label class="kopf" id="previewCount"></label>
+        <ol class="preview-list" id="previewList"></ol>
+        <p class="preview-stray" id="previewStray" hidden></p>
+        <div class="row">
+          <button class="primary" id="previewSave" data-i18n="previewSave">In die Sammlung</button>
+          <button class="ghost" id="previewDiscard" data-i18n="previewDiscard">Verwerfen</button>
+        </div>
+      </div>
+      <div class="drop-status" id="dropStatus"></div>
+      <div class="or-line kopf"><span data-i18n="orByHand">oder von Hand</span></div>
+      <button class="ghost" id="byHand">✎ <span data-i18n="byHand">Leeres Tafelfussball von Hand anlegen</span></button>
+    </div>
+  </details>
+
+  <section class="card coll-card">
+    <div class="list-head">
+      <span class="kopf" data-i18n="collTitle">Meine Tafelfussbälle</span>
+      <span class="coll-tools">
+        <button id="createRoot" data-i18n-title="createNew" title="Tafelfussball erstellen">＋</button>
+        <button id="newFolder" data-i18n-title="newFolder" title="Neuer Ordner">📁</button>
+      </span>
+    </div>
+    <div class="coll-tree" id="collTree" data-dir=""></div>
+    <div class="row coll-more">
+      <button class="ghost small" id="zipAll" data-i18n="zipAll">⤓ Alle als ZIP</button>
+      <button class="ghost small" id="backupSave" data-i18n="backupSave">Sicherung speichern</button>
+      <button class="ghost small" id="backupLoad" data-i18n="backupLoad">Sicherung einlesen</button>
+      <input type="file" id="backupInput" accept=".json,application/json" hidden>
+    </div>
+    <div class="dir-line" id="dirLine"></div>
+  </section>
   </div>
 </div>
 
@@ -718,20 +743,6 @@
 
     <details class="panel collapsible" id="tasksBox">
       <summary><span data-i18n="tasks">Aufgaben</span><span class="set-name" id="taskSetName"></span> (<span id="taskCount">0</span>)</summary>
-      <div class="tasks-flow">
-      <section>
-        <h3 data-i18n="collTitle">Sammlung</h3>
-        <div class="coll-tree" id="collTree" data-dir=""></div>
-        <div class="row" style="margin-top:8px">
-          <button class="ghost small" id="newFolder" data-i18n="newFolder">Neuer Ordner</button>
-          <button class="ghost small" id="zipAll" data-i18n="zipAll">⤓ Alle als ZIP</button>
-          <button class="ghost small" id="backupSave" data-i18n="backupSave">Sicherung speichern</button>
-          <button class="ghost small" id="backupLoad" data-i18n="backupLoad">Sicherung einlesen</button>
-          <input type="file" id="backupInput" accept=".json,application/json" hidden>
-        </div>
-        <div class="dir-line" id="dirLine"></div>
-      </section>
-
       <section>
         <h3 data-i18n="currentList">Aktuelle Liste</h3>
         <div class="set-status" id="setStatus"></div>
@@ -748,38 +759,11 @@
         <div class="row" style="margin-top:8px">
           <button class="ghost danger small" id="clearTasks" data-i18n="deleteAll">Alle löschen</button>
         </div>
+        <!-- Ordner braucht Freigabe oder ist weg: «Speichern» käme sonst nicht in den Ordner -->
+        <div class="dir-line" id="dirLineLehrer"></div>
+        <p class="create-hint" data-i18n="setsAtStart">Sets wählen und erstellen: auf der Startseite (oben in der Leiste).</p>
       </section>
 
-      <section class="import-sec" id="createSec">
-        <h3 data-i18n="importTitle">Set erstellen</h3>
-        <ol class="import-two">
-          <li><button class="ghost small" id="copyPrompt" data-i18n="copyKiPrompt">KI-Prompt kopieren</button>
-            <span data-i18n="importStep1">und mit Arbeitsblatt oder Thema in Claude oder ChatGPT einfügen</span></li>
-          <li><span data-i18n="importStep2">Die Antwort der KI hier einfügen:</span>
-            <textarea class="paste-box" id="pasteBox" data-i18n-ph="pastePh" placeholder="# Titel"></textarea>
-            <div class="dropzone" id="dropzone">
-              <span data-i18n-html="dropHere">📥 <b>… oder die .txt-Datei hierher ziehen</b></span>
-              <input type="file" id="fileInput" accept=".txt,.md,.text,text/plain" multiple hidden>
-            </div></li>
-        </ol>
-        <div class="set-status" id="createTarget"></div>
-        <div class="preview" id="preview" hidden>
-          <label class="field-label" for="previewTitle" data-i18n="previewTitle">Titel</label>
-          <input type="text" id="previewTitle">
-          <label class="field-label" for="previewDir" data-i18n="previewFolder">Ordner</label>
-          <select id="previewDir"></select>
-          <label class="field-label" id="previewCount"></label>
-          <ol class="preview-list" id="previewList"></ol>
-          <p class="preview-stray" id="previewStray" hidden></p>
-          <div class="row grow">
-            <button class="primary" id="previewSave" data-i18n="previewSave">In die Sammlung</button>
-            <button class="ghost" id="previewDiscard" data-i18n="previewDiscard">Verwerfen</button>
-          </div>
-        </div>
-        <div class="drop-status" id="dropStatus"></div>
-        <p class="create-hint" data-i18n="byHand">Von Hand: Fragen unter «Aktuelle Liste» eintippen und speichern.</p>
-      </section>
-      </div>
     </details>
 
     <div class="panel">
@@ -838,7 +822,8 @@
 
   const STORAGE_KEY = "tafelfussball_state_v1";
   const params = new URLSearchParams(location.search);
-  const view = params.get("view"); // "beamer" | "lehrer" | null
+  const view = params.get("view"); // "beamer" | "lehrer" | null (= Startseite)
+  const isLauncher = view !== "beamer" && view !== "lehrer";
 
   document.body.classList.add(
     view === "beamer" ? "view-beamer" :
@@ -848,11 +833,13 @@
   // ---------- Sprache (DE/EN) ----------
   const I18N = {
     de: {
-      intro: 'Öffne die <b>Beamer-Ansicht</b> im Vollbild auf dem Projektor und die <b>Lehrer:innen-Ansicht</b> auf deinem Laptop. Beide Fenster synchronisieren sich automatisch.',
+      intro: 'Wähle unten ein Set: <b>Beamer</b> öffnet das Spielfeld für die Klasse (im Vollbild auf dem Projektor), <b>Lehrer:in</b> die Steuerung mit den Lösungen (auf deinem Laptop). Beide Fenster synchronisieren sich automatisch.',
+      startTitle: 'Startseite',
       beamerCardTitle: 'Beamer-Ansicht',
-      beamerCardText: 'Für die Klasse. Spielfeld, Punkte, Frage — ohne Lösung. Öffnet als eigenes Fenster.',
       teacherCardTitle: 'Lehrer:innen-Ansicht',
-      teacherCardText: 'Steuerung, Aufgabenverwaltung und die Lösung.',
+      startBeamer: 'Beamer', startTeacher: 'Lehrer:in',
+      startBeamerTitle: t => `«${t}» laden und die Beamer-Ansicht öffnen`,
+      startTeacherTitle: t => `«${t}» laden und die Lehrer:innen-Ansicht öffnen`,
       kiPrompt: [
         "Du erstellst Quizfragen für das Unterrichtsspiel «Tafelfussball» (Fragen am Beamer, zwei Teams). Erstelle ein Aufgaben-Set nach meinen Angaben.",
         "",
@@ -922,7 +909,7 @@
       fullscreenExit: 'Vollbild beenden',
       order: 'Reihenfolge', orderSeq: 'Der Reihe nach', orderRnd: 'Zufällig',
       counterNone: 'Keine Aufgaben erfasst.',
-      startHint: 'Keine Aufgaben erfasst — oben unter „Aufgaben" ein Set laden, ein Arbeitsblatt importieren oder Fragen eintippen.',
+      startHint: 'Keine Aufgaben erfasst — auf der Startseite ein Set wählen oder oben unter „Aufgaben" Fragen eintippen.',
       counterDone: n => `🏁 Runde beendet — alle ${n} Fragen gespielt`,
       counterPos: (x, y) => `Frage ${x} von ${y}`,
       counterReady: n => `${n} Aufgaben bereit`,
@@ -935,33 +922,40 @@
       qPh: 'Neue Frage', aPh: 'Lösung',
       add: 'Hinzufügen',
       tasks: 'Aufgaben', deleteAll: 'Alle löschen',
-      importTitle: 'Set erstellen',
+      importTitle: 'Tafelfussball erstellen',
+      createInLabel: 'Speichern in',
+      createSteps: '<li>Kopiere den KI-Prompt (Knopf unten) in ein KI-Tool wie <b>Claude</b> oder <b>ChatGPT</b>.</li>'
+        + '<li>Fülle dort <b>den Block zuoberst</b> aus: Thema <i>oder</i> Material (Arbeitsblatt, PDF anhängen), Klasse, Anzahl Fragen … Alles darunter unverändert lassen.</li>'
+        + '<li>Du erhältst eine .txt-Datei <i>und</i> denselben Text zum Kopieren (Format <code>F:</code> / <code>A:</code> / <code>---</code>).</li>'
+        + '<li>Den Text unten einfügen oder die Datei ins Feld ziehen. Die Vorschau zeigt, was erkannt wurde — «In die Sammlung» legt das Set an.</li>',
       copyKiPrompt: 'KI-Prompt kopieren',
-      importStep1: 'und mit Arbeitsblatt oder Thema in Claude oder ChatGPT einfügen',
-      importStep2: 'Die Antwort der KI hier einfügen:',
-      pastePh: '# Titel\n\nF: Frage\nA: Lösung\n---',
-      dropHere: '📥 <b>… oder die .txt-Datei hierher ziehen</b><br><small>oder klicken; mehrere Dateien kommen direkt in die Sammlung</small>',
+      pasteLabel: 'Antwort der KI',
+      pastePh: 'KI-Antwort hier einfügen — oder die .txt-Datei hierher ziehen\n\n# Bruchrechnen\n\nF: 1/2 + 1/4\nA: 3/4\n---',
+      orByHand: 'oder von Hand',
+      createNew: 'Tafelfussball erstellen',
+      setsAtStart: 'Sets wählen und erstellen: auf der Startseite (oben in der Leiste).',
+      dropAtStart: 'Dateien kommen auf der Startseite in die Sammlung: dort in den Kasten «Tafelfussball erstellen» ziehen.',
       confirmScore: 'Punktestand beider Teams auf 0 setzen?',
       confirmAll: 'Alles zurücksetzen? Punkte, Ball und Fragerunde starten neu — die Aufgaben bleiben erhalten.',
       confirmClear: 'Wirklich ALLE Aufgaben löschen?',
-      collTitle: 'Sammlung', currentList: 'Aktuelle Liste',
-      collEmpty: 'Noch keine Sets. Importiere oben ein Arbeitsblatt oder speichere die aktuelle Liste.',
+      collTitle: 'Meine Tafelfussbälle', currentList: 'Aktuelle Liste',
+      collEmpty: 'Noch keine Sets. Erstelle oben eines.',
       nSets: n => `${n} ${n === 1 ? 'Set' : 'Sets'}`,
       nTasks: n => `${n} ${n === 1 ? 'Frage' : 'Fragen'}`,
       newFolder: 'Neuer Ordner',
       askFolder: 'Name des neuen Ordners (Unterordner mit «/», z. B. Mathe/Klasse 8):',
       askRenameFolder: 'Neuer Name des Ordners (Unterordner mit «/»):',
-      saveHere: 'Aktuelle Liste in diesem Ordner speichern',
       renameFolder: 'Ordner umbenennen', deleteFolder: 'Ordner löschen (nur wenn leer)',
       folderNotEmpty: 'Der Ordner ist nicht leer — zuerst ausräumen.',
       folderExists: name => `Den Ordner «${name}» gibt es schon.`,
       confirmDeleteFolder: name => `Ordner «${name}» löschen?`,
-      loadSet: 'Laden — ersetzt die aktuelle Liste', renameSet: 'Umbenennen', deleteSet: 'Löschen',
+      renameSet: 'Umbenennen', deleteSet: 'Löschen',
       confirmDeleteSet: t => `Set «${t}» löschen?`,
       askSetName: 'Name des Sets:',
       nameTaken: t => `«${t}» gibt es in diesem Ordner schon. Ersetzen?`,
       nameTakenRename: t => `«${t}» gibt es in diesem Ordner schon.`,
       confirmLoad: 'Die aktuelle Liste ist nicht gespeichert. Trotzdem laden und ersetzen?',
+      confirmNew: 'Die aktuelle Liste ist nicht gespeichert. Trotzdem mit einer leeren beginnen?',
       saveSet: 'Speichern', saveSetAs: 'Speichern unter\u00a0…', savedOk: 'Gespeichert ✓',
       setLinked: t => `Set <b>«${t}»</b>`, setChanged: 'ungespeicherte Änderungen',
       setUnsaved: 'Nicht in der Sammlung gespeichert.',
@@ -978,11 +972,11 @@
       importedSets: n => `✓ ${n} Sets in der Sammlung`,
       exportSet: 'Als .txt-Datei herunterladen',
       importNone: 'In der/den Datei(en) nichts im F:/A:/---‑Format erkannt.',
-      byHand: 'Von Hand: Fragen unter «Aktuelle Liste» eintippen und speichern.',
-      previewTitle: 'Titel', previewFolder: 'Ordner', previewSave: 'In die Sammlung', previewDiscard: 'Verwerfen',
+      byHand: 'Leeres Tafelfussball von Hand anlegen',
+      previewTitle: 'Titel', previewTitleMissing: 'Titel fehlt — bitte eintragen', previewFolder: d => `Ordner: ${d}`, previewSave: 'In die Sammlung', previewDiscard: 'Verwerfen',
       previewCount: n => `${n} ${n === 1 ? 'Frage' : 'Fragen'} erkannt:`,
       previewStray: n => `${n === 1 ? 'Eine Zeile' : `${n} Zeilen`} nicht verstanden:`,
-      mainFolder: 'Hauptordner', createHere: 'Hier ein Set erstellen', createIn: d => `Neues Set kommt in: ${d}`,
+      mainFolder: 'Hauptordner', createHere: 'Hier ein Tafelfussball erstellen',
       zipAll: '⤓ Alle als ZIP', zipFailed: 'Das ZIP liess sich nicht erstellen (keine Verbindung?).', noSets: 'Noch keine Sets in der Sammlung.',
       backupSave: 'Sicherung speichern', backupLoad: 'Sicherung einlesen',
       backupBad: 'Das ist keine Sicherung von MyTafelfussball.', backupDone: n => `✓ ${n} Sets eingelesen`,
@@ -994,11 +988,13 @@
       useTitle: 'Als aktuelle Frage', editTitle: 'Bearbeiten', delTitle: 'Löschen'
     },
     en: {
-      intro: 'Open the <b>projector view</b> in fullscreen on the projector and the <b>teacher view</b> on your laptop. Both windows sync automatically.',
+      intro: 'Pick a set below: <b>Projector</b> opens the field for the class (fullscreen on the projector), <b>Teacher</b> the controls with the answers (on your laptop). Both windows sync automatically.',
+      startTitle: 'Start page',
       beamerCardTitle: 'Projector view',
-      beamerCardText: 'For the class. Field, score, question — never the answer. Opens as its own window.',
       teacherCardTitle: 'Teacher view',
-      teacherCardText: 'Controls, task management, and the answers.',
+      startBeamer: 'Projector', startTeacher: 'Teacher',
+      startBeamerTitle: t => `Load “${t}” and open the projector view`,
+      startTeacherTitle: t => `Load “${t}” and open the teacher view`,
       kiPrompt: [
         "You write quiz questions for the classroom game “Tafelfussball” (questions on the projector, two teams). Create a set of tasks from my input.",
         "",
@@ -1068,7 +1064,7 @@
       fullscreenExit: 'Exit fullscreen',
       order: 'Order', orderSeq: 'In order', orderRnd: 'Random',
       counterNone: 'No tasks yet.',
-      startHint: 'No tasks yet — under “Tasks” above, load a set, import a worksheet or type in questions.',
+      startHint: 'No tasks yet — pick a set on the start page or type in questions under “Tasks” above.',
       counterDone: n => `🏁 Round finished — all ${n} questions played`,
       counterPos: (x, y) => `Question ${x} of ${y}`,
       counterReady: n => `${n} tasks ready`,
@@ -1081,33 +1077,40 @@
       qPh: 'New question', aPh: 'Answer',
       add: 'Add',
       tasks: 'Tasks', deleteAll: 'Delete all',
-      importTitle: 'Create a set',
+      importTitle: 'Create a Tafelfussball',
+      createInLabel: 'Save in',
+      createSteps: '<li>Copy the AI prompt (button below) into an AI tool such as <b>Claude</b> or <b>ChatGPT</b>.</li>'
+        + '<li>Fill in <b>the block at the top</b>: topic <i>or</i> material (attach a worksheet or PDF), class, number of questions … Leave everything below unchanged.</li>'
+        + '<li>You get a .txt file <i>and</i> the same text to copy (format <code>Q:</code> / <code>A:</code> / <code>---</code>).</li>'
+        + '<li>Paste the text below or drag the file into the box. The preview shows what was recognised — “Add to collection” creates the set.</li>',
       copyKiPrompt: 'Copy AI prompt',
-      importStep1: 'and paste it with a worksheet or topic into Claude or ChatGPT',
-      importStep2: 'Paste the AI’s answer here:',
-      pastePh: '# Title\n\nQ: Question\nA: Answer\n---',
-      dropHere: '📥 <b>… or drag the .txt file here</b><br><small>or click; several files go straight into the collection</small>',
+      pasteLabel: 'Answer from the AI',
+      pastePh: 'Paste the AI answer here — or drag the .txt file here\n\n# Fractions\n\nQ: 1/2 + 1/4\nA: 3/4\n---',
+      orByHand: 'or by hand',
+      createNew: 'Create a Tafelfussball',
+      setsAtStart: 'Pick and create sets on the start page (top bar).',
+      dropAtStart: 'Files go into the collection on the start page: drag them into “Create a Tafelfussball” there.',
       confirmScore: 'Reset both team scores to 0?',
       confirmAll: 'Reset everything? Score, ball and round start fresh — tasks are kept.',
       confirmClear: 'Really delete ALL tasks?',
-      collTitle: 'Collection', currentList: 'Current list',
-      collEmpty: 'No sets yet. Import a worksheet above or save the current list.',
+      collTitle: 'My Tafelfussballs', currentList: 'Current list',
+      collEmpty: 'No sets yet. Create one above.',
       nSets: n => `${n} ${n === 1 ? 'set' : 'sets'}`,
       nTasks: n => `${n} ${n === 1 ? 'question' : 'questions'}`,
       newFolder: 'New folder',
       askFolder: 'Name of the new folder (subfolders with “/”, e.g. Maths/Year 8):',
       askRenameFolder: 'New name of the folder (subfolders with “/”):',
-      saveHere: 'Save the current list in this folder',
       renameFolder: 'Rename folder', deleteFolder: 'Delete folder (only if empty)',
       folderNotEmpty: 'The folder is not empty — clear it out first.',
       folderExists: name => `The folder “${name}” already exists.`,
       confirmDeleteFolder: name => `Delete folder “${name}”?`,
-      loadSet: 'Load — replaces the current list', renameSet: 'Rename', deleteSet: 'Delete',
+      renameSet: 'Rename', deleteSet: 'Delete',
       confirmDeleteSet: t => `Delete set “${t}”?`,
       askSetName: 'Name of the set:',
       nameTaken: t => `“${t}” already exists in this folder. Replace it?`,
       nameTakenRename: t => `“${t}” already exists in this folder.`,
       confirmLoad: 'The current list is not saved. Load and replace it anyway?',
+      confirmNew: 'The current list is not saved. Start an empty one anyway?',
       saveSet: 'Save', saveSetAs: 'Save as\u00a0…', savedOk: 'Saved ✓',
       setLinked: t => `Set <b>“${t}”</b>`, setChanged: 'unsaved changes',
       setUnsaved: 'Not saved in the collection.',
@@ -1124,11 +1127,11 @@
       importedSets: n => `✓ ${n} sets in the collection`,
       exportSet: 'Download as .txt file',
       importNone: 'No Q:/A:/--- format found in the file(s).',
-      byHand: 'By hand: type questions under “Current list” and save.',
-      previewTitle: 'Title', previewFolder: 'Folder', previewSave: 'Add to collection', previewDiscard: 'Discard',
+      byHand: 'Create an empty Tafelfussball by hand',
+      previewTitle: 'Title', previewTitleMissing: 'Title missing — please enter one', previewFolder: d => `Folder: ${d}`, previewSave: 'Add to collection', previewDiscard: 'Discard',
       previewCount: n => `${n} question${n === 1 ? '' : 's'} found:`,
       previewStray: n => `${n === 1 ? 'One line' : `${n} lines`} not understood:`,
-      mainFolder: 'Main folder', createHere: 'Create a set here', createIn: d => `New set goes into: ${d}`,
+      mainFolder: 'Main folder', createHere: 'Create a Tafelfussball here',
       zipAll: '⤓ All as ZIP', zipFailed: 'Could not create the ZIP (no connection?).', noSets: 'No sets in the collection yet.',
       backupSave: 'Save backup', backupLoad: 'Load backup',
       backupBad: 'This is not a MyTafelfussball backup.', backupDone: n => `✓ ${n} sets loaded`,
@@ -1154,10 +1157,6 @@
     document.querySelectorAll("[data-i18n-title]").forEach(el => { el.title = tr(el.dataset.i18nTitle); });
     document.documentElement.lang = currentLang;
   }
-  function storedLang() {
-    try { return JSON.parse(localStorage.getItem(STORAGE_KEY))?.lang === "en" ? "en" : "de"; }
-    catch { return "de"; }
-  }
 
   // ---------- Darstellung: Schema, Ton, Hell/Dunkel (My-Designsystem) ----------
   // "auto": kein data-modus -> die Tokens folgen dem System. Manuell gewinnt das Attribut.
@@ -1180,18 +1179,14 @@
     if (!Number.isInteger(s.ton) || s.ton < 0 || s.ton > 9) s.ton = DEFAULT_TON;
     return s;
   }
-  function storedLook() {
-    try { return cleanLook(JSON.parse(localStorage.getItem(STORAGE_KEY)) || {}); }
-    catch { return cleanLook({}); }
-  }
 
-  // ---------- Fensterwechsel (Launcher & Lehrer ↔ Beamer) ----------
-  // Eigenes Fenster benennen, damit die Gegenseite es per window.open(name) wiederfindet.
-  const WIN_NAMES = { beamer: "tafelfussball_beamer", lehrer: "tafelfussball_lehrer" };
-  if (view === "beamer" || view === "lehrer") window.name = WIN_NAMES[view];
+  // ---------- Fensterwechsel (Startseite, Lehrer:innen, Beamer) ----------
+  // Eigenes Fenster benennen, damit die anderen es per window.open(name) wiederfinden.
+  const WIN_NAMES = { start: "tafelfussball_start", beamer: "tafelfussball_beamer", lehrer: "tafelfussball_lehrer" };
+  window.name = WIN_NAMES[isLauncher ? "start" : view];
 
   function focusOrOpenView(target) {
-    const url = "?view=" + target;
+    const url = target === "start" ? location.pathname : "?view=" + target;
     let features = "";
     if (target === "beamer") {
       // Beamer als eigenes Fenster (statt Tab), mittig und möglichst gross
@@ -1208,19 +1203,12 @@
     win.focus();
   }
 
-  if (view !== "beamer" && view !== "lehrer") {
-    currentLang = storedLang();
-    applyTranslations();
-    applyLook(storedLook());
-
-    // Launcher: Ansichten öffnen bzw. bereits offene Fenster in den Vordergrund holen
-    const beamerCard = document.getElementById("cardBeamer");
-    if (beamerCard) beamerCard.addEventListener("click", (e) => { e.preventDefault(); focusOrOpenView("beamer"); });
-    const lehrerCard = document.getElementById("cardLehrer");
-    if (lehrerCard) lehrerCard.addEventListener("click", (e) => { e.preventDefault(); focusOrOpenView("lehrer"); });
-
-    return; // keine Spiellogik nötig
-  }
+  // Kopfleiste: die eigene Ansicht markiert, die anderen öffnen bzw. holen ihr Fenster
+  document.querySelectorAll(".leiste [data-goto]").forEach(b => {
+    const target = b.dataset.goto;
+    if (target === (isLauncher ? "start" : view)) b.classList.add("aktiv");
+    else b.onclick = () => focusOrOpenView(target);
+  });
 
   const isTeacher = view === "lehrer";
 
@@ -1241,6 +1229,7 @@
     schema: DEFAULT_SCHEMA,  // Farbschema des My-Designsystems
     ton: DEFAULT_TON,        // Akzent-Ton 1–9 des Schemas, 0 = Akzent des Schemas
     setId: null,             // aus der Sammlung geladenes Set (für "Speichern" und "geändert")
+    newDir: "",              // Ordner für eine von Hand begonnene Liste («Speichern» legt sie dort ab)
     seqPointer: -1,
     kicks: 0,                // zählt echte Ballschritte (Funken nur dann, nicht beim Zurücksetzen)
     rev: 0                   // Änderungszähler zur Konfliktvermeidung
@@ -1267,6 +1256,7 @@
       s.lang = s.lang === "en" ? "en" : "de";
       cleanLook(s);
       if (typeof s.setId !== "string") s.setId = null;
+      if (typeof s.newDir !== "string") s.newDir = "";
       s.revealed = s.revealed === true;
       if (!Array.isArray(s.history)) s.history = [];
       if (!Array.isArray(s.asked)) s.asked = [];
@@ -1408,11 +1398,12 @@
   let lastFinished = roundFinished();    // Rundenende erkennen (Feuerwerk) — nicht schon beim Laden
   let lastRenderedQ = null, lastRenderedA = null; // KaTeX nur bei Textänderung neu rendern
   let lastTaskListSig = null; // Aufgabenliste nur bei Änderung neu bauen
+  let lastTaskCount = null; // leer geworden? (Box «Aufgaben» öffnen)
   let ballWatchdog = null; // holt den Ball aus dem Tor, falls das auslösende Fenster weg ist
   let lastLang = null; // Sprachwechsel erkennen
   let lastLook = null; // Wechsel von Darstellung/Schema/Ton erkennen
   let lastStandsSchema = null; // Tribüne nur bei Schemawechsel neu zeichnen (Beamer)
-  let renderCollHook = null; // Sammlung zeichnen (nur Lehrer:innen-Fenster, s. unten)
+  let renderCollHook = null; // Sammlung bzw. Status der aktuellen Liste zeichnen (Startseite, Lehrer:innen, s. unten)
 
   // Einstellungen: Schema-Auswahl und Ton-Tupfer (Farben lesen sich live aus dem Schema)
   function renderLookControls() {
@@ -1436,7 +1427,7 @@
       applyLook(state);
       lastLook = look;
       if (isTeacher) renderLookControls();
-      else if (lastStandsSchema !== state.schema) { // Trikotfarben hängen nur am Schema (Ton/Modus gehen live über Tokens)
+      else if (!isLauncher && lastStandsSchema !== state.schema) { // Trikotfarben hängen nur am Schema (Ton/Modus gehen live über Tokens)
         buildStands();
         lastStandsSchema = state.schema;
       }
@@ -1450,6 +1441,8 @@
       lastLang = state.lang;
       if (isTeacher) renderLookControls(); // Tooltips der Tupfer
     }
+    // Die Startseite zeigt kein Spiel, nur die Sammlung (welches Set gerade geladen ist)
+    if (isLauncher) { if (renderCollHook) renderCollHook(); return; }
     // Scoreboard
     document.getElementById("badge1").textContent = state.teams[0];
     document.getElementById("badge2").textContent = state.teams[1];
@@ -1500,6 +1493,10 @@
     }
     document.getElementById("answerInline").classList.toggle("show", state.revealed && !!task);
     if (isTeacher) renderControls();
+    // Wird die Liste leer (beim Start, nach «von Hand» auf der Startseite, nach «Alle löschen»),
+    // geht die Box «Aufgaben» auf — der nächste Schritt ist dann das Erfassen. Danach darf man sie schliessen.
+    if (isTeacher && !state.tasks.length && lastTaskCount !== 0) document.getElementById("tasksBox").open = true;
+    lastTaskCount = state.tasks.length;
     celebrateIfGoal();
     const finished = roundFinished();
     if (finished && !lastFinished) celebrateRound();
@@ -1700,6 +1697,7 @@
   // Tastatur (Lehrer- UND Beamer-Fenster): ←/→ Ball · ⌘/Strg+→ weiter (Frage/Antwort) ·
   // ⌘/Strg+← Frage zurück · L Lösung auf-/verdecken
   window.addEventListener("keydown", (e) => {
+    if (isLauncher) return;
     const t = e.target;
     if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable)) return;
     const mod = e.metaKey || e.ctrlKey;
@@ -2044,8 +2042,8 @@
   }
 
   // ---------- Fensterwechsel-Buttons (Beamer ↔ Lehrer:innen) ----------
-  if (!isTeacher) document.getElementById("gotoLehrer").onclick = () => focusOrOpenView("lehrer");
-  if (!isTeacher) {
+  if (view === "beamer") document.getElementById("gotoLehrer").onclick = () => focusOrOpenView("lehrer");
+  if (view === "beamer") {
     const fsBtn = document.getElementById("fullscreenBtn");
     if (!document.fullscreenEnabled) fsBtn.hidden = true;
     fsBtn.onclick = () => document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen().catch(() => {});
@@ -2057,7 +2055,6 @@
 
   // ---------- Teacher controls wiring ----------
   if (isTeacher) {
-    document.getElementById("gotoBeamer").onclick = () => focusOrOpenView("beamer");
     document.getElementById("moveT1").onclick = () => moveBall(+1); // Team1 -> rechts
     document.getElementById("moveT2").onclick = () => moveBall(-1); // Team2 -> links
 
@@ -2149,7 +2146,7 @@
       if (state.tasks.length && confirm(tr("confirmClear"))) {
         state.tasks = []; state.currentTaskId = null; state.seqPointer = -1;
         state.asked = []; state.history = []; state.revealed = false;
-        state.setId = null; // neue, leere Liste — das Set in der Sammlung bleibt
+        state.setId = null; state.newDir = ""; // neue, leere Liste — das Set in der Sammlung bleibt
         persistAndSync();
       }
     };
@@ -2222,25 +2219,56 @@
       }, { offset: -Infinity, element: null }).element;
     }
 
-    // Import
+  }
+
+  // ---------- Sammlung und Erstellen ----------
+  // Gezeigt auf der Startseite. Das Lehrer:innen-Fenster braucht sie auch: «Speichern» legt die
+  // aktuelle Liste in die Sammlung (und in den verbundenen Ordner), ein alter Link (#t=) lädt dort.
+  if (isLauncher || isTeacher) {
+    // ----- Tafelfussball erstellen: KI-Prompt, ein Feld für Text oder Datei, Vorschau,
+    // «In die Sammlung» — wie in MyVoci, MyMemory und MyKahoot (ABLAGE.md, «Erstellen») -----
     document.getElementById("copyPrompt").onclick = async () => {
       try { await navigator.clipboard.writeText(tr("kiPrompt")); toastBtn("copyPrompt", tr("copied")); }
       catch { prompt(tr("copyFallback"), tr("kiPrompt")); }
     };
-
-    // ----- Datei-Import (Drag & Drop aufs Fenster + Klick-Auswahl) -----
-    const fileInput = document.getElementById("fileInput");
-    const dropzone = document.getElementById("dropzone");
     const dropStatus = document.getElementById("dropStatus");
     const fileOverlay = document.getElementById("fileOverlay");
+    const createSec = document.getElementById("createSec");
+    const createDir = document.getElementById("createDir");
+    const pasteBox = document.getElementById("pasteBox");
+    const preview = document.getElementById("preview");
+    const previewTitle = document.getElementById("previewTitle");
+    let pending = null;   // erkannte Aufgaben der Vorschau
+    let pastedFile = "";  // Datei im Feld: ihr Name ist der Ersatztitel
+    let autoTitle = "";   // zuletzt aus dem Text gesetzter Titel: eine eigene Eingabe bleibt, bis der Text einen anderen bringt
+    let shownTasks = "";  // gezeigte Liste: neu gezeichnet (samt Formeln) nur, wenn sich die Fragen ändern
 
-    dropzone.onclick = () => fileInput.click();
-    fileInput.onchange = () => { importFiles(fileInput.files); fileInput.value = ""; };
+    // «Speichern in»: nach jeder Änderung der Sammlung neu gefüllt (renderColl); die Wahl
+    // bleibt, solange es den Ordner noch gibt
+    function fillCreateDirs() {
+      const dirs = ["", ...allFolders(coll)];
+      const chosen = dirs.includes(createDir.value) ? createDir.value : "";
+      createDir.innerHTML = dirs.map(d =>
+        `<option value="${escapeHtml(d)}"${d === chosen ? " selected" : ""}>${escapeHtml(d || tr("mainFolder"))}</option>`).join("");
+      showFolder();
+    }
+    const showFolder = () => {
+      document.getElementById("previewFolder").textContent = tr("previewFolder", createDir.value || tr("mainFolder"));
+    };
+    createDir.onchange = showFolder;
+    // ＋ an einem Ordner bzw. im Kopf der Liste: der Kasten geht auf, dieser Ordner ist gewählt
+    function openCreate(dir) {
+      createDir.value = dir;
+      showFolder();
+      createSec.open = true;
+      createSec.scrollIntoView({ block: "start", behavior: "smooth" });
+      pasteBox.focus({ preventScroll: true });
+    }
+    document.getElementById("createRoot").onclick = () => openCreate("");
 
-    // Eine einzelne Datei kommt in die Vorschau (wie eingefügter Text): Titel und Ordner lassen
-    // sich vor dem Speichern prüfen. Mehrere Dateien werden direkt je ein Set im Hauptordner
-    // (Titel aus «# Titel», sonst Dateiname), das letzte gleich geladen; gleicher Platz:
-    // nach dem Ersetzen fragen.
+    // Eine einzelne Datei kommt ins Feld (sichtbar und änderbar, wie eingefügter Text) und in die
+    // Vorschau. Mehrere Dateien werden direkt je ein Set im gewählten Ordner (Titel aus «# Titel»,
+    // sonst Dateiname); gleicher Platz: nach dem Ersetzen fragen.
     async function importFiles(fileList) {
       const files = [...fileList];
       if (!files.length) return;
@@ -2248,8 +2276,10 @@
         const text = await files[0].text().catch(() => "");
         const tasks = parseTasks(text);
         if (!tasks.length) { setDropStatus(tr("importNone")); return; }
-        pasteBox.value = ""; preview.hidden = true; // eine neue Datei bringt ihren eigenen Titel
-        showPreview(text, files[0].name.replace(/\.text$/i, ""), tasks);
+        createSec.open = true;
+        pasteBox.value = text;
+        pastedFile = files[0].name.replace(/\.text$/i, "");
+        showPreview(text, pastedFile, tasks);
         return;
       }
       const read = await Promise.all(files.map(f => f.text().then(
@@ -2257,42 +2287,24 @@
         () => null)));
       const got = read.filter(r => r && r.tasks.length);
       if (!got.length) { setDropStatus(tr("importNone")); return; }
-      const askLoad = listIsUnsaved(); // vor dem Ändern der Sammlung, sonst zählt ein ersetztes Set als «geändert»
-      let lastId = null;
-      const done = [];
-      for (const r of got) {
-        const id = putSet(r.title, createDir, r.tasks); // ＋ am Ordner gilt auch hier
-        if (id) { lastId = id; done.push(r); }
-      }
-      if (!lastId) return;
-      if (!askLoad || confirm(tr("confirmLoad"))) loadSet(lastId, true);
+      const dir = createDir.value;
+      const done = got.filter(r => putSet(r.title, dir, r.tasks));
+      if (!done.length) return;
+      openTo(dir);
       setDropStatus(done.length === 1 ? tr("importedSet", done[0].title, done[0].tasks.length) : tr("importedSets", done.length));
     }
-    // ----- Set erstellen: eingefügter Text oder eine Datei → Vorschau → Sammlung -----
-    const pasteBox = document.getElementById("pasteBox");
-    const preview = document.getElementById("preview");
-    const previewTitle = document.getElementById("previewTitle");
-    const previewDir = document.getElementById("previewDir");
-    let pending = null;   // erkannte Aufgaben der Vorschau
-    let createDir = "";   // Zielordner, vorgewählt über ＋ am Ordner
-    let autoTitle = "";   // zuletzt aus dem Text gesetzter Titel: eine eigene Eingabe bleibt, bis der Text einen anderen bringt
-    let shownTasks = "";  // gezeigte Liste: neu gezeichnet (samt Formeln) nur, wenn sich die Fragen ändern
-    const showCreateTarget = () => {
-      document.getElementById("createTarget").textContent = createDir ? tr("createIn", createDir) : "";
-    };
-    // Beim Öffnen werden Titel, Ordnerliste und Ordner einmal gesetzt; danach ändert Tippen im
-    // Einfügefeld nur die erkannten Fragen (und den Titel, solange niemand ihn selbst geändert hat)
-    function showPreview(text, fileName, tasks = parseTasks(text)) {
-      if (!tasks.length) { pending = null; preview.hidden = true; return; }
+    // Beim ersten Erkennen werden Titel und Liste gesetzt; danach ändert Tippen im Feld nur die
+    // erkannten Fragen (und den Titel, solange niemand ihn selbst geändert hat)
+    function showPreview(text, name, tasks = parseTasks(text)) {
+      if (!tasks.length) { pending = null; preview.hidden = true; shownTasks = ""; return; }
       pending = tasks;
       const opening = preview.hidden;
       // Titel aus «# Titel», sonst aus dem Dateinamen; fehlt beides, fragt das leere Feld danach
-      const title = cleanTitle(MyAblage.titleFromFile(text, fileName || ""));
+      const title = cleanTitle(MyAblage.titleFromFile(text, name || ""));
       // Ein eigener Titel bleibt, solange der Text denselben «# Titel» bringt; eine
       // ganz andere KI-Antwort (anderer Titel im Text) bringt ihren eigenen mit
       if (opening || title !== autoTitle) previewTitle.value = title;
       autoTitle = title;
-      if (opening) fillPreviewDirs(createDir);
       const strays = strayTaskLines(text);
       const strayEl = document.getElementById("previewStray");
       strayEl.hidden = !strays.length;
@@ -2307,49 +2319,50 @@
         renderMath(list);
       }
       if (opening) {
+        showFolder();
         preview.hidden = false;
-        document.getElementById("tasksBox").open = true;
         preview.scrollIntoView({ block: "nearest" });
       }
     }
-    // Ordnerliste der Vorschau; beim Öffnen und nach jeder Änderung der Sammlung (renderColl),
-    // die Wahl bleibt, solange es den Ordner noch gibt
-    function fillPreviewDirs(chosen) {
-      const dirs = ["", ...allFolders(coll)];
-      if (!dirs.includes(chosen)) chosen = "";
-      previewDir.innerHTML = dirs.map(d =>
-        `<option value="${escapeHtml(d)}"${d === chosen ? " selected" : ""}>${escapeHtml(d || tr("mainFolder"))}</option>`).join("");
-    }
     function clearPreview() {
-      pending = null; pasteBox.value = ""; preview.hidden = true; shownTasks = "";
-      createDir = ""; showCreateTarget();
+      pending = null; pasteBox.value = ""; pastedFile = ""; preview.hidden = true; shownTasks = "";
     }
-    // Ein neues Set ablegen und laden (Vorschau, Link). listIsUnsaved vor dem Ändern der
-    // Sammlung fragen, sonst zählt ein ersetztes Set schon als «geändert».
-    function addAndLoad(title, dir, tasks) {
-      const askLoad = listIsUnsaved();
-      const id = putSet(title, dir, tasks);
-      if (id && (!askLoad || confirm(tr("confirmLoad")))) loadSet(id, true);
-      return id;
+    // Den Ordner (samt Eltern) aufklappen, damit das neue Set zu sehen ist
+    function openTo(dir) {
+      for (let d = dir; d; d = parentOf(d)) closed.delete(d);
+      writeLocal(CLOSED_KEY, [...closed]);
+      lastCollSig = null;
+      renderColl();
     }
     // kurz entprellt: beim Tippen nicht bei jedem Zeichen parsen und Formeln setzen
     let pasteTimer = 0;
     pasteBox.addEventListener("input", () => {
+      if (!pasteBox.value.trim()) pastedFile = "";
       clearTimeout(pasteTimer);
-      pasteTimer = setTimeout(() => showPreview(pasteBox.value), 200);
+      pasteTimer = setTimeout(() => showPreview(pasteBox.value, pastedFile), 200);
     });
     document.getElementById("previewDiscard").onclick = clearPreview;
     document.getElementById("previewSave").onclick = () => {
       // Beim Speichern gilt der Text im Feld, auch wenn die Entprellung noch läuft — sonst
       // ginge die letzte Korrektur verloren (zeichnet nur neu, wenn sich etwas geändert hat)
-      if (pasteBox.value) { clearTimeout(pasteTimer); showPreview(pasteBox.value); }
+      if (pasteBox.value) { clearTimeout(pasteTimer); showPreview(pasteBox.value, pastedFile); }
       const title = cleanTitle(previewTitle.value);
       if (!title) { previewTitle.focus(); return; }
       if (!pending) return;
-      const tasks = pending;
-      if (!addAndLoad(title, previewDir.value, tasks)) return;
+      const tasks = pending, dir = createDir.value;
+      if (!putSet(title, dir, tasks)) return;
+      openTo(dir);
       clearPreview();
       setDropStatus(tr("importedSet", title, tasks.length));
+    };
+    // Von Hand: eine leere aktuelle Liste (nach Rückfrage, falls die jetzige ungespeichert ist).
+    // Getippt wird im Lehrer:innen-Fenster; «Speichern» legt sie im gewählten Ordner ab.
+    document.getElementById("byHand").onclick = () => {
+      if (listIsUnsaved() && !confirm(tr("confirmNew"))) return;
+      Object.assign(state, { tasks: [], setId: null, newDir: createDir.value,
+        currentTaskId: null, seqPointer: -1, history: [], asked: [], revealed: false });
+      persistAndSync();
+      focusOrOpenView("lehrer");
     };
 
     function setDropStatus(msg) {
@@ -2358,24 +2371,29 @@
       setTimeout(() => { if (dropStatus.textContent === msg) dropStatus.textContent = ""; }, 5000);
     }
 
+    // Dateien aufs Fenster (auch ins Feld) ziehen: nur auf der Startseite. Im Lehrer:innen-Fenster
+    // öffnete der Browser die Datei sonst anstelle der Steuerung.
     // Nur bei echten Datei-Drags reagieren (nicht beim internen Sortieren der Liste)
     const hasFiles = (e) => e.dataTransfer && [...(e.dataTransfer.types || [])].includes("Files");
     let dragDepth = 0;
-    window.addEventListener("dragenter", (e) => {
-      if (!hasFiles(e)) return;
-      dragDepth++; fileOverlay.classList.add("show");
-    });
     window.addEventListener("dragover", (e) => { if (hasFiles(e)) e.preventDefault(); });
-    window.addEventListener("dragleave", (e) => {
-      if (!hasFiles(e)) return;
-      if (--dragDepth <= 0) { dragDepth = 0; fileOverlay.classList.remove("show"); }
-    });
     window.addEventListener("drop", (e) => {
       if (!hasFiles(e)) return;
       e.preventDefault();
+      if (!isLauncher) { alert(tr("dropAtStart")); return; }
       dragDepth = 0; fileOverlay.classList.remove("show");
       importFiles(e.dataTransfer.files);
     });
+    if (isLauncher) {
+      window.addEventListener("dragenter", (e) => {
+        if (!hasFiles(e)) return;
+        dragDepth++; fileOverlay.classList.add("show");
+      });
+      window.addEventListener("dragleave", (e) => {
+        if (!hasFiles(e)) return;
+        if (--dragDepth <= 0) { dragDepth = 0; fileOverlay.classList.remove("show"); }
+      });
+    }
 
     // F:/A:/--- (bzw. Q:) -> [{q, a}]; auch für die Dateien im Sammlungs-Ordner
     // Zeilen, die parseTasks übergeht (Hinweis in der Vorschau): was in einem Block
@@ -2422,8 +2440,8 @@
     }
 
     // ---------- Sammlung: benannte Sets in Ordnern ----------
-    // Lebt nur im Lehrer:innen-Fenster und unter eigenem Schlüssel, nicht im Spiel-State:
-    // der Beamer braucht sie nie, und jeder Ballzug schickte sonst die ganze Sammlung mit.
+    // Lebt auf der Startseite und im Lehrer:innen-Fenster, unter eigenem Schlüssel und nicht im
+    // Spiel-State: der Beamer braucht sie nie, und jeder Ballzug schickte sonst die ganze Sammlung mit.
     // Ein Set: { id, title, dir, tasks: [{q, a}], disk?, file? }. Ein Ordner ist nur ein
     // Pfad ("Mathe/Klasse 8", "" = Hauptordner); `folders` hält zusätzlich leere Ordner fest.
     // Der Titel steht als «# Titel» in der Datei und bleibt, wie er ist (cleanTitle räumt nur
@@ -2499,6 +2517,7 @@
     // ----- Zeichnen -----
     const collTree = document.getElementById("collTree");
     const dirLine = document.getElementById("dirLine");
+    const dirLineLehrer = document.getElementById("dirLineLehrer");
     const setStatus = document.getElementById("setStatus");
     let lastCollSig = null;
 
@@ -2512,12 +2531,19 @@
       document.getElementById("saveSet").disabled = state.tasks.length === 0 || unchanged;
       document.getElementById("saveSetAs").disabled = state.tasks.length === 0;
 
+      document.getElementById("taskSetName").textContent = cur ? "· " + cur.title : "";
+      // Baum und Ordner-Zeile stehen auf der Startseite. Hier nur, wenn der Ordner Freigabe braucht
+      // oder weg ist: sonst käme ein «Speichern» unbemerkt nicht in den Ordner.
+      if (!isLauncher) {
+        const html = link.status === "prompt" || link.status === "error" ? dirLineHtml() : "";
+        if (dirLineLehrer.innerHTML !== html) dirLineLehrer.innerHTML = html;
+        return;
+      }
+
       const sig = collVer + "|" + state.setId + "|" + currentLang + "|" + link.status + "|" + [...closed].join("/");
       if (sig === lastCollSig) return;
       lastCollSig = sig;
-      if (!preview.hidden) fillPreviewDirs(previewDir.value); // Ordner kamen dazu oder heissen anders
-      document.getElementById("taskSetName").textContent = cur ? "· " + cur.title : "";
-      document.getElementById("tasksBox").classList.toggle("fresh", !coll.sets.length);
+      fillCreateDirs(); // Ordner kamen dazu oder heissen anders
 
       const folders = allFolders(coll);
       const countIn = (d) => coll.sets.filter(x => inDir(x.dir, d)).length;
@@ -2532,16 +2558,19 @@
               <span class="coll-count">${tr("nSets", countIn(f))}</span>
               <span class="coll-tools">
                 <button data-act="createHere" title="${tr("createHere")}">＋</button>
-                <button data-act="saveHere" title="${tr("saveHere")}">💾</button>
                 <button data-act="renameDir" title="${tr("renameFolder")}">✎</button>
                 <button data-act="delDir" title="${tr("deleteFolder")}">🗑</button>
               </span></div>`;
             if (open) html += `<div class="coll-sub" data-dir="${escapeHtml(f)}">${tree(f)}</div>`;
           });
         coll.sets.filter(x => x.dir === dir).forEach(x => {
-          html += `<div class="coll-row set${x.id === state.setId ? " loaded" : ""}" draggable="true" data-id="${x.id}" title="${tr("loadSet")}">
+          html += `<div class="coll-row set${x.id === state.setId ? " loaded" : ""}" draggable="true" data-id="${x.id}">
             <span class="coll-name">${escapeHtml(x.title)}</span>
             <span class="coll-count">${tr("nTasks", x.tasks.length)}</span>
+            <span class="coll-start">
+              <button data-act="beamer" title="${escapeHtml(tr("startBeamerTitle", x.title))}">${tr("startBeamer")}</button>
+              <button data-act="lehrer" title="${escapeHtml(tr("startTeacherTitle", x.title))}">${tr("startTeacher")}</button>
+            </span>
             <span class="coll-tools">
               <button data-act="share" title="${tr("shareSet")}">🔗</button>
               <button data-act="export" title="${tr("exportSet")}">⤓</button>
@@ -2553,12 +2582,14 @@
       };
       collTree.innerHTML = (coll.sets.length || folders.length) ? tree("") : `<div class="coll-empty">${tr("collEmpty")}</div>`;
 
-      // Ordner auf dem Computer: Angebot, Freigabe, Fehler oder Verbunden
+      dirLine.innerHTML = dirLineHtml();
+    }
+    // Ordner auf dem Computer: Angebot, Freigabe, Fehler oder Verbunden
+    function dirLineHtml() {
       const name = escapeHtml(link.handle ? link.handle.name : "");
       const dirBtn = (act, label, cls = "ghost") => `<button class="${cls}" data-dir-act="${act}">${tr(label)}</button>`;
       const dirRow = (first) => `<div class="row">${first}${dirBtn("disconnect", "dirDisconnect")}</div>`;
-      dirLine.innerHTML =
-          link.status === "none" ? `<div class="dir-offer">${dirBtn("connect", "dirChoose")}<span class="info" title="${escapeHtml(tr("dirOffer"))}">ⓘ</span></div>`
+      return link.status === "none" ? `<div class="dir-offer">${dirBtn("connect", "dirChoose")}<span class="info" title="${escapeHtml(tr("dirOffer"))}">ⓘ</span></div>`
         : link.status === "prompt" ? `<p class="warn">${tr("dirPrompt", name)}</p>${dirRow(dirBtn("reconnect", "dirReconnect", "primary"))}`
         : link.status === "error" ? `<p class="err">${tr("dirError", name)}</p>${dirRow(dirBtn("refresh", "dirReload", ""))}`
         : link.status === "ok" ? `<p>${tr("dirConnected", name, coll.sets.length)}</p>${dirRow(dirBtn("refresh", "dirReload"))}`
@@ -2590,7 +2621,7 @@
       const cur = loadedSet();
       const title = prompt(tr("askSetName"), cur && dir === undefined ? cur.title : "");
       if (title === null) return;
-      storeList(title, dir !== undefined ? dir : (cur ? cur.dir : ""));
+      storeList(title, dir !== undefined ? dir : (cur ? cur.dir : state.newDir));
     }
     document.getElementById("saveSet").onclick = () => {
       const cur = loadedSet();
@@ -2600,18 +2631,27 @@
     };
     document.getElementById("saveSetAs").onclick = () => saveAs();
 
+    // Gibt zurück, ob die aktuelle Liste danach dieses Set ist
     function loadSet(id, asked) { // asked: Rückfrage schon gestellt (Import)
       const x = setById(id);
-      if (!x) return;
-      if (x.id === state.setId && !listIsUnsaved()) return; // schon geladen, nichts geändert
+      if (!x) return false;
+      if (x.id === state.setId && !listIsUnsaved()) return true; // schon geladen, nichts geändert
       // Nochmals dasselbe Set = Änderungen verwerfen; ein anderes = aktuelle Liste ersetzen
-      if (!asked && listIsUnsaved() && !confirm(tr("confirmLoad"))) return;
+      if (!asked && listIsUnsaved() && !confirm(tr("confirmLoad"))) return false;
       state.tasks = x.tasks.map(t => ({ id: uid(), q: t.q, a: t.a }));
       state.setId = x.id;
+      state.newDir = "";
       // neue Fragen = neue Runde (Punkte bleiben)
       state.currentTaskId = null; state.seqPointer = -1;
       state.history = []; state.asked = []; state.revealed = false;
       persistAndSync();
+      return true;
+    }
+    // Kachel Beamer bzw. Lehrer:in: das Set wird die aktuelle Liste, dann öffnet die Ansicht ihr
+    // Fenster (oder kommt nach vorn). Ist es schon geladen, bleibt die Liste samt Änderungen.
+    function startSet(id, target) {
+      if (id !== state.setId && !loadSet(id)) return;
+      focusOrOpenView(target);
     }
 
     // ----- Ordner und Sets bearbeiten -----
@@ -2691,7 +2731,7 @@
     const shareUrl = document.getElementById("shareUrl");
     async function shareSet(id) {
       const x = setById(id);
-      const url = `${location.origin}${location.pathname}?view=lehrer#t=${await MyAblage.packLink([x.title, x.tasks.map(t => [t.q, t.a])])}`;
+      const url = `${location.origin}${location.pathname}#t=${await MyAblage.packLink([x.title, x.tasks.map(t => [t.q, t.a])])}`;
       document.getElementById("shareTitle").textContent = x.title;
       shareUrl.value = url;
       const qrBox = document.getElementById("shareQr");
@@ -2735,13 +2775,7 @@
           if (closed.has(dir)) closed.delete(dir); else closed.add(dir);
           writeLocal(CLOSED_KEY, [...closed]);
           renderColl();
-        } else if (act === "saveHere") saveAs(dir);
-        else if (act === "createHere") {
-          createDir = dir; showCreateTarget();
-          if (!preview.hidden) previewDir.value = dir;
-          document.getElementById("createSec").scrollIntoView({ block: "nearest" });
-          pasteBox.focus();
-        }
+        } else if (act === "createHere") openCreate(dir);
         else if (act === "renameDir") renameDir(dir);
         else if (act === "delDir") deleteDir(dir);
       } else {
@@ -2750,7 +2784,7 @@
         else if (act === "share") shareSet(id);
         else if (act === "rename") renameSet(id);
         else if (act === "del") deleteSet(id);
-        else if (!act) loadSet(id);
+        else if (act === "beamer" || act === "lehrer") startSet(id, act);
       }
     });
 
@@ -2841,7 +2875,7 @@
       });
     }
 
-    dirLine.addEventListener("click", async (e) => {
+    const onDirAct = async (e) => {
       const act = e.target.closest("[data-dir-act]")?.dataset.dirAct;
       if (act === "connect") {
         let handle;
@@ -2862,7 +2896,9 @@
         saveDirHandle(null);
         setLink({ handle: null, status: "none" });
       }
-    });
+    };
+    dirLine.addEventListener("click", onDirAct);
+    dirLineLehrer.addEventListener("click", onDirAct);
 
     if (dirSupported) {
       loadDirHandle().then(async (handle) => {
@@ -2883,19 +2919,35 @@
         const tasks = (Array.isArray(rows) ? rows : []).map(([q, a]) => ({ q: String(q || "").trim(), a: String(a || "").trim() })).filter(t => t.q);
         title = cleanTitle(title);
         if (!title || !tasks.length) throw new Error("leer");
-        if (!addAndLoad(title, "", tasks)) return;
+        if (isLauncher) {
+          if (!putSet(title, "", tasks)) return;
+          setDropStatus(tr("importedLink", title, tasks.length));
+          return;
+        }
+        // alter Link auf das Lehrer:innen-Fenster: dort gleich laden
+        const askLoad = listIsUnsaved();
+        const id = putSet(title, "", tasks);
+        if (id && (!askLoad || confirm(tr("confirmLoad")))) loadSet(id, true);
         document.getElementById("tasksBox").open = true;
-        setDropStatus(tr("importedLink", title, tasks.length));
       }).catch(() => alert(tr("linkBroken")));
     }
+
+    // Startseite und Lehrer:innen-Fenster teilen die Sammlung: ändert das eine sie, übernimmt das
+    // andere den Stand und spiegelt ihn auch (doppelt geschrieben schadet nicht und so kommt er
+    // in den Ordner, auch wenn das ändernde Fenster keine Freigabe hatte)
+    window.addEventListener("storage", (e) => {
+      if (e.key !== COLL_KEY || !e.newValue) return;
+      try { coll = cleanColl(JSON.parse(e.newValue)); } catch { return; }
+      collVer++;
+      renderColl();
+      mirrorSoon();
+    });
 
     renderCollHook = renderColl;
   }
 
   // ---------- Init ----------
   render();
-  // Ohne Aufgaben startet die Box "Aufgaben" offen — der erste Schritt ist dann das Erfassen.
-  if (isTeacher && state.tasks.length === 0) document.getElementById("tasksBox").open = true;
   window.addEventListener("load", () => requestAnimationFrame(positionBall));
 })();
 </script>

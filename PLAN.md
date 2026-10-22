@@ -23,12 +23,14 @@
 - Wichtig, weil `localStorage` an Browser + Gerät gebunden ist (weg beim Löschen der Website-Daten); deckt auch den Gerätewechsel ab.
 
 ### 3. Teilen per Link
-- ✅ Umgesetzt (21.10.2026): 🔗 an der Set-Zeile zeigt Link und QR-Code (`?view=lehrer#t=…`, komprimiert). Wer ihn öffnet, bekommt das Set in die eigene Sammlung.
+- ✅ Umgesetzt (21.10.2026): 🔗 an der Set-Zeile zeigt Link und QR-Code (seit 22.10.2026 auf die Startseite `#t=…`, alte `?view=lehrer#t=` gelten weiter; komprimiert). Wer ihn öffnet, bekommt das Set in die eigene Sammlung.
 - Grenze: Bei sehr grossen Sets passt der Link nicht mehr in einen QR-Code; der Link selbst geht trotzdem.
 
 ### 4. Gemeinsame Ablage mit den anderen My-Apps (21.10.2026)
 - ✅ Regeln aus MySuite `ABLAGE.md`, Code aus `design/js/my-ablage.js`: Datei mit `# Titel`, Dateinamen ohne Umlaute/Sonderzeichen (alte Dateien behalten ihren Namen), Ordner ziehen, Ordner-Pfade behalten bestehende Teile, «Set erstellen» mit Einfügefeld und Vorschau, KI-Prompt im gemeinsamen Aufbau. Headless-Test `tools/test-ordner.js`.
-- Offen: am iPad und mit einem echten Ordner am Mac von Hand ausprobieren.
+- ✅ Angleichung (22.10.2026): Startseite wie MyVoci/MyKahoot — Kasten «Tafelfussball erstellen» (ein Feld für Text oder Datei, «von Hand») und die Sammlung «Meine Tafelfussbälle»; jede Set-Zeile mit den Kacheln Beamer und Lehrer:in. Das Lehrer:innen-Fenster behält nur die aktuelle Liste.
+- Offen: am iPad und mit einem echten Ordner am Mac von Hand ausprobieren (auch: Startseite und Lehrer:innen-Fenster gleichzeitig offen, Speichern in beiden).
+- Offen (Idee): «Speichern unter …» im Lehrer:innen-Fenster mit Ordnerwahl (heute: Ordner des geladenen Sets, verschieben per Ziehen auf der Startseite).
 
 ### Bewusst nicht geplant
 - Backend/Accounts (Supabase o.ä.): würde Synchronisation zwischen Geräten bringen, macht aber aus der wartungsfreien statischen Seite ein System mit Datenbank, Datenschutzfragen (Schulkontext) und Betriebsverantwortung.

@@ -8,16 +8,16 @@ Ein digitales Quizspiel im Stil von „Tafelfussball" für den Unterricht — ko
 
 Die Lehrperson stellt Fragen. Die richtig antwortende Mannschaft bewegt den Ball ein Feld Richtung gegnerisches Tor. Wer zuerst trifft, bekommt einen Punkt.
 
-## Zwei Ansichten, ein Gerät
+## Startseite und zwei Ansichten
 
-Öffne die App und wähle im Launcher eine Ansicht (jeweils in einem eigenen Fenster):
+Die **Startseite** zeigt den Kasten „Tafelfussball erstellen" und deine Sammlung. Jede Set-Zeile hat zwei Kacheln, die das Set laden und eine Ansicht öffnen (jeweils in einem eigenen Fenster):
 
-- **📺 Beamer-Ansicht** (`?view=beamer`) — für die Klasse auf dem Projektor. Zeigt Spielfeld, Ball, Punkte und Frage, darüber eine Tribüne mit den Fans beider Teams (in den Farben des Schemas). **Nie die Lösung.**
-- **🎛️ Lehrer:innen-Ansicht** (`?view=lehrer`) — auf dem Laptop. Steuerung, Aufgabenverwaltung und die Lösung.
+- **📺 Beamer** (`?view=beamer`) — für die Klasse auf dem Projektor. Zeigt Spielfeld, Ball, Punkte und Frage, darüber eine Tribüne mit den Fans beider Teams (in den Farben des Schemas). **Nie die Lösung.**
+- **🎛️ Lehrer:in** (`?view=lehrer`) — auf dem Laptop. Steuerung, die aktuelle Liste und die Lösung.
 
-Beide Fenster synchronisieren sich live über `BroadcastChannel`, mit `localStorage` als Fallback und Persistenz.
+Die Fenster synchronisieren sich live über `BroadcastChannel`, mit `localStorage` als Fallback und Persistenz.
 
-Jede Ansicht hat einen Wechsel-Button zur anderen (Lehrer:innen: oben rechts in der Kopfleiste; Beamer: dezent unten rechts). Ist das Zielfenster schon offen, wird es nur in den Vordergrund geholt — sonst öffnet es sich neu.
+Startseite und Lehrer:innen-Ansicht haben oben in der Kopfleiste alle drei Fenster, der Beamer dezent unten rechts den Wechsel zur Lehrer:innen-Ansicht. Ist das Zielfenster schon offen, wird es nur in den Vordergrund geholt — sonst öffnet es sich neu.
 
 ## Bedienung
 
@@ -37,14 +37,15 @@ In den Einstellungen der Lehrer:innen-Ansicht lässt sich die Oberfläche zwisch
 
 Ebenfalls in den Einstellungen: **Auto / Hell / Dunkel**. „Auto" folgt der Systemeinstellung, Hell/Dunkel erzwingen den Modus. Dazu **Farbschema** (fünf Schemen des My-Designsystems) und **Akzentfarbe** (Standard: Moonrise Kingdom, Tanne). Die Teamfarben kommen aus dem Schema, der Rasen bleibt grün. Alles synchron in beiden Fenstern.
 
-## Set erstellen (KI, Datei, Text)
+## Tafelfussball erstellen (KI, Datei, Text)
 
-In der Box „Aufgaben" unter **„Set erstellen"** (＋ an einem Ordner wählt ihn gleich als Ziel):
+Auf der Startseite im Kasten **„Tafelfussball erstellen"** (wie in MyVoci, MyMemory und MyKahoot; ＋ an einem Ordner öffnet ihn mit diesem Ordner):
 
-1. **„KI-Prompt kopieren"** und mit dem Arbeitsblatt (PDF) oder einem Thema in ein KI-Tool (Claude/ChatGPT) einfügen. Oben im Prompt füllt man Thema/Material, Klasse und Anzahl aus. Er verlangt kurze, beamertaugliche Fragen, Teilaufgaben als eigene Aufgaben, nur Endergebnisse als Lösung, einen Titel und eine `.txt`-Datei samt Code-Block.
-2. Die **Antwort ins Feld einfügen** oder die erhaltene **`.txt`-Datei** aufs Fenster ziehen bzw. auf die Ablage-Fläche klicken. Eine **Vorschau** zeigt Titel, Ordner und die erkannten Fragen; Titel und Ordner lassen sich ändern. Erst **„In die Sammlung"** legt das Set an und lädt es. Gibt es den Platz schon, wird nach dem Ersetzen gefragt. Mehrere Dateien auf einmal kommen ohne Vorschau direkt in den Hauptordner.
+1. Oben **„Speichern in"** den Ordner wählen.
+2. **„KI-Prompt kopieren"** und mit dem Arbeitsblatt (PDF) oder einem Thema in ein KI-Tool (Claude/ChatGPT) einfügen. Oben im Prompt füllt man Thema/Material, Klasse und Anzahl aus. Er verlangt kurze, beamertaugliche Fragen, Teilaufgaben als eigene Aufgaben, nur Endergebnisse als Lösung, einen Titel und eine `.txt`-Datei samt Code-Block.
+3. Die **Antwort ins Feld einfügen** oder die erhaltene **`.txt`-Datei** ins Feld (oder aufs Fenster) ziehen. Eine **Vorschau** zeigt Titel, Ordner und die erkannten Fragen; der Titel lässt sich ändern. Erst **„In die Sammlung"** legt das Set an. Gibt es den Platz schon, wird nach dem Ersetzen gefragt. Mehrere Dateien auf einmal kommen ohne Vorschau direkt in den gewählten Ordner.
 
-Von Hand: Fragen unter der aktuellen Liste erfassen (Frage, Lösung, „+" bzw. Enter) und speichern.
+**„Leeres Tafelfussball von Hand anlegen"** öffnet die Lehrer:innen-Ansicht mit einer leeren Liste: Fragen erfassen (Frage, Lösung, „+" bzw. Enter) und „Speichern" — das Set kommt in den gewählten Ordner.
 
 Format:
 
@@ -63,12 +64,12 @@ Die Zeile `# Titel` ist der Titel des Sets; fehlt sie (ältere Dateien), gilt de
 
 ## Sammlung
 
-In der Box „Aufgaben" liegt die **Sammlung** (solange sie leer ist, steht „Set erstellen" zuoberst): beliebig viele benannte Sets; der Name des geladenen Sets steht auch in der Kopfzeile der Box, geordnet in Ordnern (Unterordner mit „/", z. B. `Mathe/Klasse 8`). Neue Datei- und Ordnernamen kommen ohne Umlaute und Sonderzeichen auf die Platte (`Brueche - Kuerzen.txt`), der Titel bleibt, wie er ist.
+Auf der Startseite unter **„Meine Tafelfussbälle"** liegt die **Sammlung**: beliebig viele benannte Sets (das geladene ist markiert, sein Name steht in der Lehrer:innen-Ansicht auch in der Kopfzeile der Box „Aufgaben"), geordnet in Ordnern (Unterordner mit „/", z. B. `Mathe/Klasse 8`). Neue Datei- und Ordnernamen kommen ohne Umlaute und Sonderzeichen auf die Platte (`Brueche - Kuerzen.txt`), der Titel bleibt, wie er ist.
 
-- **Speichern** legt die aktuelle Liste als Set ab (bzw. überschreibt das geladene Set), **Speichern unter …** als neues Set; 💾 an einem Ordner speichert direkt dort hinein.
-- Klick auf ein Set **lädt** es (ersetzt die aktuelle Liste, startet eine neue Runde; die Punkte bleiben). Ist die aktuelle Liste nicht gespeichert, wird vorher nachgefragt.
+- **Beamer** bzw. **Lehrer:in** an einem Set **lädt** es (ersetzt die aktuelle Liste, startet eine neue Runde; die Punkte bleiben) und öffnet die Ansicht. Ist die aktuelle Liste nicht gespeichert, wird vorher nachgefragt; ist das Set schon geladen, bleibt die Liste, wie sie ist.
+- In der Lehrer:innen-Ansicht legt **Speichern** die aktuelle Liste als Set ab (bzw. überschreibt das geladene Set), **Speichern unter …** als neues Set im selben Ordner.
 - Sets und Ordner per **Ziehen** in einen anderen Ordner verschieben (auf ein Set gezogen = in dessen Ordner); 🔗/⤓/✎/🗑 zum Teilen, Herunterladen, Umbenennen und Löschen. Ordner lassen sich nur löschen, wenn sie leer sind.
-- **🔗 Teilen**: Link und QR-Code. Wer ihn öffnet, bekommt das Set in die eigene Sammlung (Hauptordner) und gleich geladen.
+- **🔗 Teilen**: Link und QR-Code. Wer ihn öffnet, bekommt das Set in die eigene Sammlung (Hauptordner).
 - **⤓ Alle als ZIP**: alle Sets samt Ordnern. **Sicherung speichern/einlesen**: alle Sets in einer Datei, z. B. für Safari/iPad ohne Ordner; Einlesen ergänzt, was fehlt, und ersetzt nichts.
 
 **Ordner auf dem Computer** (Chrome/Edge am Computer, wie in MyVoci und MyMemory): Mit „Mit Ordner auf dem Computer verbinden" liegen die Sets als `.txt`-Dateien in einem Ordner deiner Wahl (am besten „MyTafelfussball" in Dokumente), Unterordner = Ordner der Sammlung. Dateien, die im Finder hinzukommen, umbenannt oder gelöscht werden, erscheinen beim Zurückwechseln ins Fenster. Nach einem Neustart des Browsers braucht der Ordner einmal „Ordner freigeben". Ohne Ordner bleibt die Sammlung im Browser (`localStorage`).
